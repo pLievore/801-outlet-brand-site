@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand */
+  --bg: 250 248 243; /* off-white/cream */
+  --fg: 12 22 31; /* navy-ish */
+  --muted: 90 102 112; /* slate */
+  --border: 220 225 230; /* soft border */
+  --accent: 198 108 48; /* outlet orange */
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: rgb(var(--fg));
+  background: rgb(var(--bg));
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(var(--accent), 0.25);
+}
+
+/* Utility: subtle grid texture */
+.bg-grid {
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
