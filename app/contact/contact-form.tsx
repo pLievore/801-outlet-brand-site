@@ -106,8 +106,8 @@ export default function ContactForm() {
             Get in touch
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[rgb(var(--muted))]">
-            Have questions about our products or delivery? We're here to help. Reach out through
-            any of the methods below, and we'll get back to you as soon as possible.
+            Have questions about our products or delivery? Were here to help. Reach out through
+            any of the methods below, and well get back to you as soon as possible.
           </p>
         </div>
 
@@ -150,7 +150,7 @@ export default function ContactForm() {
           <div className="rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
             <h2 className="text-lg font-semibold">Send us a message</h2>
             <p className="mt-2 text-sm leading-relaxed text-[rgb(var(--muted))]">
-              Fill out the form below and we'll get back to you within 24 hours.
+              Fill out the form below and well get back to you within 24 hours.
             </p>
 
             {submitted ? (
@@ -174,7 +174,7 @@ export default function ContactForm() {
                   <div>
                     <div className="text-sm font-semibold">Message sent!</div>
                     <div className="text-xs text-[rgb(var(--muted))]">
-                      We'll get back to you soon.
+                      Well get back to you soon.
                     </div>
                   </div>
                 </div>
@@ -348,7 +348,7 @@ export default function ContactForm() {
             <div className="rounded-3xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] p-8 md:p-10">
               <h2 className="text-lg font-semibold">Why reach out?</h2>
               <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
-                We're here to help with anything you need:
+                Were here to help with anything you need:
               </p>
 
               <ul className="mt-4 space-y-3 text-sm leading-relaxed text-[rgb(var(--muted))]">

@@ -120,6 +120,12 @@ function SiteFooter() {
             <Link className="hover:text-[rgb(var(--fg))]" href="/contact">
               Contact
             </Link>
+            <Link className="hover:text-[rgb(var(--fg))]" href="/about">
+              About
+            </Link>
+            <Link className="hover:text-[rgb(var(--fg))]" href="/delivery">
+              Delivery
+            </Link>
           </div>
         </div>
 
