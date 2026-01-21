@@ -19,10 +19,10 @@ Este projeto utiliza variáveis de ambiente para configurações que podem varia
 
 **Exemplo:**
 ```
-NEXT_PUBLIC_SHOPIFY_STORE_URL=https://801-outlet-furniture.myshopify.com
+NEXT_PUBLIC_SHOPIFY_STORE_URL=https://801outlet.com
 ```
 
-**Padrão:** `https://801-outlet-furniture.myshopify.com`
+**Padrão:** `https://801outlet.com`
 
 **Uso:** Utilizada para gerar links de redirecionamento para o Shopify com parâmetros UTM.
 
