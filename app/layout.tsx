@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import { env } from '../src/config/env';
 
 export const metadata: Metadata = {
   title: '801 Outlet — Premium Furniture Deals in Utah',
@@ -25,12 +26,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 }
 
 function SiteHeader() {
-  const SHOPIFY_URL =
-    'https://your-shopify-store.com/?utm_source=brand_site&utm_medium=nav&utm_campaign=shop_redirect';
-
-  // TODO: troque pelo número real (US)
-  const PHONE_E164 = '+1 385 201 6328';
-  const phoneHref = `tel:${PHONE_E164.replace(/[^+\d]/g, '')}`;
+  const SHOPIFY_URL = env.getShopifyUrl();
+  const phoneHref = env.getPhoneHref();
 
   const btnBase =
     'inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ' +

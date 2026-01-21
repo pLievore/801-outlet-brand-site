@@ -1,6 +1,8 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { getProductBySlug } from '../../../src/data/products';
 import type { Product } from '../../../src/data/products';
+import { env } from '../../../src/config/env';
 
 type PageProps = { params: { slug: string } };
 
@@ -18,9 +20,7 @@ export default function ProductDetailPage({ params }: PageProps) {
     );
   }
 
-  // TODO: troque pelo número real (US)
-  const PHONE_E164 = '+1 385 201 6328';
-  const phoneHref = `tel:${PHONE_E164.replace(/[^+\d]/g, '')}`;
+  const phoneHref = env.getPhoneHref();
 
   const btnBase =
     'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold ' +
@@ -43,11 +43,16 @@ export default function ProductDetailPage({ params }: PageProps) {
         <div className="space-y-4">
           <div className="overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white">
             <div className="relative aspect-4/3 bg-neutral-100">
-              <img
-                src={p.images[0]?.src}
-                alt={p.images[0]?.alt || p.title}
-                className="h-full w-full object-cover"
-              />
+              {p.images[0] ? (
+                <Image
+                  src={p.images[0].src}
+                  alt={p.images[0].alt || p.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
+                  priority
+                />
+              ) : null}
             </div>
           </div>
 
@@ -60,11 +65,12 @@ export default function ProductDetailPage({ params }: PageProps) {
                     className="overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-white transition hover:-translate-y-[1px] hover:shadow-sm"
                   >
                     <div className="relative aspect-4/3 bg-neutral-100">
-                      <img
+                      <Image
                         src={img.src}
                         alt={img.alt}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover"
                       />
                     </div>
                   </div>

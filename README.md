@@ -2,6 +2,29 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### 1. Install Dependencies
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+### 2. Configure Environment Variables
+
+Configure as variáveis de ambiente antes de iniciar o projeto. Veja [ENV.md](./ENV.md) para mais detalhes.
+
+Crie um arquivo `.env.local` na raiz do projeto:
+
+```bash
+NEXT_PUBLIC_SHOPIFY_STORE_URL=https://801-outlet-furniture.myshopify.com
+NEXT_PUBLIC_PHONE_E164=+1 385 201 6328
+```
+
+### 3. Run the Development Server
+
 First, run the development server:
 
 ```bash

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import HeroVideo from './components/herovideo';
+import { env } from '../src/config/env';
 
 export default function HomePage() {
   return (
@@ -36,7 +37,7 @@ export default function HomePage() {
 
               {/* External link can be <a> */}
               <a
-                href="https://801-outlet-furniture.myshopify.com"
+                href={env.getShopifyUrl('', 'brand_site', 'hero', 'shop_redirect')}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center justify-center rounded-full border border-[rgb(var(--border))] bg-white px-6 py-3 text-sm font-semibold text-[rgb(var(--fg))] transition hover:-translate-y-[1px] hover:bg-neutral-50 hover:shadow-sm active:translate-y-0"
