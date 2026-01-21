@@ -19,7 +19,7 @@ export default function ProductDetailPage({ params }: PageProps) {
   }
 
   // TODO: troque pelo número real (US)
-  const PHONE_E164 = '+1 801 555 1234';
+  const PHONE_E164 = '+1 385 201 6328';
   const phoneHref = `tel:${PHONE_E164.replace(/[^+\d]/g, '')}`;
 
   const btnBase =

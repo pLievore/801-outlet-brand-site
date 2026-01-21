@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import HeroVideo from './components/herovideo';
 
 export default function HomePage() {
@@ -25,13 +26,15 @@ export default function HomePage() {
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
-              <a
+              {/* Internal navigation must use Link */}
+              <Link
                 href="/products"
                 className="inline-flex items-center justify-center rounded-full bg-[rgb(var(--fg))] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0"
               >
                 Browse products
-              </a>
+              </Link>
 
+              {/* External link can be <a> */}
               <a
                 href="https://801-outlet-furniture.myshopify.com"
                 target="_blank"
@@ -76,7 +79,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SEÇÃO DE CATEGORIAS (se você já tinha) */}
+      {/* CATEGORIES */}
       <section className="mx-auto max-w-6xl px-5 py-14">
         <div className="flex items-end justify-between">
           <div>
@@ -88,12 +91,12 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <a
+          <Link
             href="/products"
             className="hidden text-sm font-semibold text-[rgb(var(--accent))] transition hover:opacity-80 md:inline-block"
           >
             Browse all →
-          </a>
+          </Link>
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -107,27 +110,25 @@ export default function HomePage() {
               desc: 'Browse selection',
             },
           ].map((c) => (
-            <a
+            <Link
               key={c.title}
               href={c.href}
               className="rounded-2xl border border-[rgb(var(--border))] bg-white p-5 transition hover:-translate-y-[1px] hover:shadow-sm"
             >
               <div className="text-sm font-semibold">{c.title}</div>
               <div className="mt-1 text-xs text-[rgb(var(--muted))]">{c.desc}</div>
-              <div className="mt-4 text-xs font-semibold text-[rgb(var(--accent))]">
-                View →
-              </div>
-            </a>
+              <div className="mt-4 text-xs font-semibold text-[rgb(var(--accent))]">View →</div>
+            </Link>
           ))}
         </div>
 
         <div className="mt-6 md:hidden">
-          <a
+          <Link
             href="/products"
             className="inline-block text-sm font-semibold text-[rgb(var(--accent))] transition hover:opacity-80"
           >
             Browse all →
-          </a>
+          </Link>
         </div>
       </section>
     </main>
