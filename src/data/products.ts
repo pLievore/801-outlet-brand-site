@@ -83,7 +83,9 @@ export const products: Product[] = [
     price: 699,
     compareAtPrice: 999,
     shortDescription: 'Clean lines, comfy cushions, durable linen blend. Great everyday sofa.',
-    images: [{ src: '/products/placeholder-3.jpg', alt: 'Milo sofa in sand linen' }],
+    images: [{ src: '/products/placeholder-3.jpg', alt: 'Milo sofa in sand linen' },
+             { src: '/products/placeholder-2.jpg', alt: 'Milo sofa close-up' },
+    ],
     specs: {
       material: 'Linen blend',
       color: 'Sand',
@@ -103,7 +105,8 @@ export const products: Product[] = [
     category: 'recliners',
     price: 599,
     shortDescription: 'Smooth recline, supportive comfort, modern finish. Outlet pricing.',
-    images: [{ src: '/products/placeholder-4.jpg', alt: 'Atlas recliner charcoal' }],
+    images: [{ src: '/products/placeholder-4.jpg', alt: 'Atlas recliner charcoal' }, 
+             { src: '/products/placeholder-2.jpg', alt: 'Harlow Sectional close-up texture' }],
     specs: {
       material: 'Performance fabric',
       color: 'Charcoal',
@@ -123,7 +126,8 @@ export const products: Product[] = [
     category: 'beds',
     price: 399,
     shortDescription: 'Modern frame, sturdy build, easy setup. Delivery Utah only.',
-    images: [{ src: '/products/placeholder-5.jpg', alt: 'Nova bed frame queen' }],
+    images: [{ src: '/products/placeholder-5.jpg', alt: 'Nova bed frame queen' }, 
+             { src: '/products/placeholder-2.jpg', alt: 'Harlow Sectional close-up texture' }],
     specs: {
       material: 'Wood + upholstered headboard',
       color: 'Oat',
