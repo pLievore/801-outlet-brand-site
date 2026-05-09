@@ -35,9 +35,6 @@ export type Product = {
   inStock: boolean;
   fastDelivery: boolean;
   utahOnly: boolean;
-
-  // link para Shopify (por produto)
-  shopifyUrl: string;
 };
 
 export const categories: { key: ProductCategory; label: string }[] = [
@@ -73,8 +70,6 @@ export const products: Product[] = [
     inStock: true,
     fastDelivery: true,
     utahOnly: true,
-    shopifyUrl:
-      'https://your-shopify-store.com/products/harlow-sectional-cream?utm_source=brand_site&utm_medium=product&utm_campaign=shop_redirect',
   },
   {
     slug: 'milo-sofa-sand',
@@ -96,8 +91,6 @@ export const products: Product[] = [
     inStock: true,
     fastDelivery: true,
     utahOnly: true,
-    shopifyUrl:
-      'https://your-shopify-store.com/products/milo-sofa-sand?utm_source=brand_site&utm_medium=product&utm_campaign=shop_redirect',
   },
   {
     slug: 'atlas-recliner-charcoal',
@@ -117,8 +110,6 @@ export const products: Product[] = [
     inStock: true,
     fastDelivery: false,
     utahOnly: true,
-    shopifyUrl:
-      'https://your-shopify-store.com/products/atlas-recliner-charcoal?utm_source=brand_site&utm_medium=product&utm_campaign=shop_redirect',
   },
   {
     slug: 'nova-bed-frame-queen',
@@ -137,10 +128,7 @@ export const products: Product[] = [
     inStock: true,
     fastDelivery: true,
     utahOnly: true,
-    shopifyUrl:
-      'https://your-shopify-store.com/products/nova-bed-frame-queen?utm_source=brand_site&utm_medium=product&utm_campaign=shop_redirect',
   },
-  // Adicione os próximos aqui (até 40)
 ];
 
 export function getProductBySlug(slug: string) {

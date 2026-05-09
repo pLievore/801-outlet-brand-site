@@ -14,13 +14,12 @@ pnpm install
 
 ### 2. Configure Environment Variables
 
-Configure as variáveis de ambiente antes de iniciar o projeto. Veja [ENV.md](./ENV.md) para mais detalhes.
+Configure as variáveis de ambiente antes de iniciar o projeto. Veja [ENV.md](./ENV.md) para a lista completa (Supabase, Square, Resend).
 
-Crie um arquivo `.env.local` na raiz do projeto:
+Crie `.env.local` a partir do template:
 
 ```bash
-NEXT_PUBLIC_SHOPIFY_STORE_URL=https://801-outlet-furniture.myshopify.com
-NEXT_PUBLIC_PHONE_E164=+1 385 201 6328
+cp env.example .env.local
 ```
 
 ### 3. Run the Development Server

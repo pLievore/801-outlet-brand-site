@@ -1,12 +1,22 @@
 @import "tailwindcss";
 
+@theme inline {
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+}
+
 :root {
   /* Brand */
-  --bg: 250 248 243; /* off-white/cream */
-  --fg: 12 22 31; /* navy-ish */
-  --muted: 90 102 112; /* slate */
-  --border: 220 225 230; /* soft border */
-  --accent: 198 108 48; /* outlet orange */
+  --bg: 250 248 243;        /* off-white/cream */
+  --fg: 12 22 31;           /* navy-ish */
+  --muted: 90 102 112;      /* slate */
+  --border: 220 225 230;    /* soft border */
+  --accent: 198 108 48;     /* outlet orange */
+  --accent-soft: 247 237 226;
+
+  /* Premium feel */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html,
@@ -14,21 +24,97 @@ body {
   height: 100%;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   color: rgb(var(--fg));
   background: rgb(var(--bg));
-  text-rendering: geometricPrecision;
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: rgba(var(--accent), 0.25);
+  background: rgba(var(--accent), 0.22);
+  color: rgb(var(--fg));
 }
 
-/* Utility: subtle grid texture */
+/* Refined focus ring (replaces default outline universally) */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline-offset: 3px;
+}
+
+/* Premium grid texture util */
 .bg-grid {
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
   background-size: 64px 64px;
+}
+
+/* Display utility for editorial headlines */
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "ss01", "ss02";
+  letter-spacing: -0.02em;
+}
+
+/* Editorial number style — for prices, stats */
+.tabular-nums-tight {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Premium image fade-in */
+@keyframes premium-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.animate-fade-up {
+  animation: premium-fade-up 0.6s var(--ease-out-expo) both;
+}
+
+/* Subtle shimmer for loading states */
+@keyframes premium-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: premium-shimmer 1.6s linear infinite;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

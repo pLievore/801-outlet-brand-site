@@ -1,73 +1,56 @@
 # Variáveis de Ambiente
 
-Este projeto utiliza variáveis de ambiente para configurações que podem variar entre ambientes (desenvolvimento, produção, etc.).
+Este projeto utiliza variáveis de ambiente para integrações (Supabase, Square, Resend) e configuração do site.
 
-## Configuração
+## Setup
 
-1. Copie o arquivo `.env.example` para `.env.local` (ou crie manualmente):
+1. Copie `env.example` para `.env.local`:
    ```bash
-   cp .env.example .env.local
+   cp env.example .env.local
    ```
+2. Preencha cada chave com os valores do seu ambiente (sandbox para dev).
 
-2. Edite o arquivo `.env.local` com os valores corretos para seu ambiente.
+## Variáveis
 
-## Variáveis Disponíveis
+### App
 
-### `NEXT_PUBLIC_SHOPIFY_STORE_URL`
+| Variável | Pública? | Descrição | Padrão |
+|---|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | sim | URL canônica do site | `https://801outlet.com` |
+| `NEXT_PUBLIC_PHONE_E164` | sim | Telefone em E.164 | `+13852016328` |
 
-**Descrição:** URL base da loja Shopify (sem trailing slash)
+### Database / Auth (Supabase)
 
-**Exemplo:**
-```
-NEXT_PUBLIC_SHOPIFY_STORE_URL=https://801outlet.com
-```
+| Variável | Pública? | Descrição |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | sim | URL do projeto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | sim | Chave anônima (RLS aplicado) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **não** | Chave de service role — somente server-side |
 
-**Padrão:** `https://801outlet.com`
+### Pagamento (Square Hosted Checkout)
 
-**Uso:** Utilizada para gerar links de redirecionamento para o Shopify com parâmetros UTM.
+| Variável | Descrição |
+|---|---|
+| `SQUARE_ACCESS_TOKEN` | Token da API |
+| `SQUARE_LOCATION_ID` | ID da localização da conta |
+| `SQUARE_ENVIRONMENT` | `sandbox` ou `production` |
+| `SQUARE_WEBHOOK_SIGNATURE_KEY` | Chave para validar assinatura do webhook |
 
----
+### Email (Resend)
 
-### `NEXT_PUBLIC_PHONE_E164`
+| Variável | Descrição |
+|---|---|
+| `RESEND_API_KEY` | Chave da API Resend |
+| `EMAIL_FROM` | Endereço verificado de envio (ex: `orders@801outlet.com`) |
 
-**Descrição:** Número de telefone no formato E.164
+### Admin
 
-**Exemplo:**
-```
-NEXT_PUBLIC_PHONE_E164=+1 385 201 6328
-```
+| Variável | Descrição |
+|---|---|
+| `ADMIN_ALLOWED_EMAILS` | Lista separada por vírgula de e-mails autorizados ao painel admin |
 
-**Padrão:** `+1 385 201 6328`
+## Notas
 
-**Formato:** Deve seguir o padrão E.164: `+[código do país][número]` (sem espaços ou caracteres especiais)
-
-**Uso:** Utilizado para gerar links `tel:` para chamadas diretas.
-
----
-
-## Como Funciona
-
-As variáveis são lidas através do arquivo `src/config/env.ts`, que:
-
-1. Valida se as variáveis estão definidas
-2. Fornece valores padrão se não estiverem definidas
-3. Exporta funções utilitárias para gerar URLs e links formatados
-
-### Exemplo de Uso
-
-```typescript
-import { env } from '@/src/config/env';
-
-// Obter URL do Shopify com parâmetros UTM
-const shopifyUrl = env.getShopifyUrl('', 'brand_site', 'hero', 'shop_redirect');
-
-// Obter link de telefone formatado
-const phoneHref = env.getPhoneHref();
-```
-
-## Notas Importantes
-
-- Variáveis que começam com `NEXT_PUBLIC_` são expostas ao cliente (browser)
-- Nunca commite arquivos `.env.local` ou `.env` no repositório
-- O arquivo `.env.local` já está no `.gitignore` por padrão
-- Para produção, configure as variáveis diretamente na plataforma de hospedagem (Vercel, etc.)
+- Variáveis com prefixo `NEXT_PUBLIC_` são expostas ao browser. Não use esse prefixo em chaves secretas.
+- `.env.local` está no `.gitignore`. Em produção, configure direto no Vercel.
+- Em dev local, use o ambiente `sandbox` do Square. O webhook precisa ser exposto com ngrok ou similar.
