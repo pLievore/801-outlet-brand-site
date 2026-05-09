@@ -1,7 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
-import { Geist, Fraunces } from 'next/font/google';
+import { Geist, Instrument_Serif } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { env } from '../src/config/env';
 
@@ -11,11 +11,12 @@ const geistSans = Geist({
   variable: '--font-geist-sans',
 });
 
-const fraunces = Fraunces({
+const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
   display: 'swap',
-  axes: ['SOFT', 'opsz'],
-  variable: '--font-fraunces',
+  weight: '400',
+  style: ['normal', 'italic'],
+  variable: '--font-instrument-serif',
 });
 
 export const metadata: Metadata = {
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${fraunces.variable}`}>
+    <html lang="en" className={`${geistSans.variable} ${instrumentSerif.variable}`}>
       <body>
         {children}
         <Analytics />

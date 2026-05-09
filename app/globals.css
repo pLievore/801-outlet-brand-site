@@ -2,7 +2,7 @@
 
 @theme inline {
   --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-display: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
 }
 
 :root {
@@ -63,11 +63,14 @@ a:focus-visible {
   background-size: 64px 64px;
 }
 
-/* Display utility for editorial headlines */
+/* Display utility for editorial headlines.
+   Instrument Serif ships in 400 only — disable faux-bold synthesis so heavier
+   weight classes (font-medium/semibold) fall back gracefully without distortion. */
 .font-display {
   font-family: var(--font-display);
-  font-feature-settings: "ss01", "ss02";
-  letter-spacing: -0.02em;
+  font-weight: 400 !important;
+  font-synthesis: none;
+  letter-spacing: -0.015em;
 }
 
 /* Editorial number style — for prices, stats */
