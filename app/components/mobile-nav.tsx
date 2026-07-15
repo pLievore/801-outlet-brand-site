@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 
 import type { NavigationLink } from '../../src/lib/navigation/types';
+import { PredictiveSearch } from './predictive-search';
 import { Button, buttonStyles } from './ui/button';
 import { Drawer } from './ui/dialog';
 
@@ -51,6 +52,10 @@ export function MobileNav({
         description="Explore 801 Outlet"
       >
         <nav className="flex min-h-full flex-col p-5" aria-label="Mobile navigation">
+          <PredictiveSearch
+            className="mb-4"
+            onNavigate={() => setOpen(false)}
+          />
           <ul className="space-y-1">
             {links.map((link) => {
               const active =

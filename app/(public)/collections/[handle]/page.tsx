@@ -3,6 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { env } from '../../../../src/config/env';
+import { safeJsonLd } from '../../../../src/lib/seo';
 import {
   getCollectionByHandle,
   getCollections,
@@ -57,8 +59,47 @@ export default async function CollectionPage({ params }: PageProps) {
 
   const products = collection.products.nodes.map(adaptProductCard);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: collection.seo.title || collection.title,
+    description: collection.seo.description || collection.description || undefined,
+    url: `${env.siteUrl}/collections/${collection.handle}`,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Products',
+          item: `${env.siteUrl}/products`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: collection.title,
+          item: `${env.siteUrl}/collections/${collection.handle}`,
+        },
+      ],
+    },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: products.length,
+      itemListElement: products.map((product, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: product.title,
+        url: `${env.siteUrl}/products/${product.handle}`,
+      })),
+    },
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 md:py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
+      />
       <FadeMount delay={0} distance={10} duration={0.35}>
         <Link
           className="text-xs font-semibold tracking-[0.18em] text-[rgb(var(--muted))] transition hover:text-[rgb(var(--fg))]"

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 
 import { env } from '../../../../src/config/env';
 import { formatMoney } from '../../../../src/lib/format';
+import { safeJsonLd } from '../../../../src/lib/seo';
 import {
   getProductByHandle,
   getProducts,
@@ -61,10 +62,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         : undefined,
     },
   };
-}
-
-function safeJsonLd(value: unknown) {
-  return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {

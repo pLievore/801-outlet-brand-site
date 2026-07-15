@@ -62,7 +62,7 @@ function toImage(
   };
 }
 
-function validCompareAtPrice(
+export function validCompareAtPrice(
   price: CatalogMoney,
   compareAtPrice: CatalogMoney | null | undefined
 ): CatalogMoney | null {

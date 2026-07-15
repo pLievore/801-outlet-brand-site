@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, ShoppingBag } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 import { env } from '../../src/config/env';
 import type { NavigationLink } from '../../src/lib/navigation/types';
 import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { MobileNav } from '../components/mobile-nav';
+import { PredictiveSearch } from '../components/predictive-search';
 import { buttonStyles } from '../components/ui/button';
 import { Container } from '../components/ui/container';
 
@@ -88,24 +89,7 @@ function SiteHeader({
           ))}
         </nav>
 
-        <form action="/products" className="ml-auto hidden w-full max-w-xs md:block">
-          <label htmlFor="site-search" className="sr-only">
-            Search furniture
-          </label>
-          <div className="relative">
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[rgb(var(--muted))]"
-            />
-            <input
-              id="site-search"
-              name="q"
-              type="search"
-              placeholder="Search furniture"
-              className="min-h-11 w-full rounded-full border border-[rgb(var(--border-strong))] bg-white py-2 pl-11 pr-4 text-sm outline-none transition placeholder:text-[rgb(var(--muted))] focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15"
-            />
-          </div>
-        </form>
+        <PredictiveSearch className="ml-auto hidden w-full max-w-xs md:block" />
 
         <button
           type="button"
