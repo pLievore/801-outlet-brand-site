@@ -24,4 +24,3 @@ Se um pedido alterar escopo, arquitetura ou uma decisão aprovada, registre prim
 - Não alterar DNS, tema publicado ou produção sem aprovação explícita.
 - Desenvolver de forma incremental em preview, seguindo os gates de `docs/09-plano-de-desenvolvimento.md`.
 - Para toda mudança, executar lint, TypeScript, testes e build proporcionais ao risco.
-
