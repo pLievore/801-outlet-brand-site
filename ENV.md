@@ -19,7 +19,16 @@ Este projeto utiliza variáveis de ambiente para integrações (Supabase, Square
 | `NEXT_PUBLIC_SITE_URL` | sim | URL canônica do site | `https://801outlet.com` |
 | `NEXT_PUBLIC_PHONE_E164` | sim | Telefone em E.164 | `+13852016328` |
 
-### Database / Auth (Supabase)
+### Shopify Headless
+
+| Variável | Pública? | Descrição |
+|---|---|---|
+| `SHOPIFY_STORE_DOMAIN` | não | Domínio canônico `myshopify.com` |
+| `SHOPIFY_STOREFRONT_API_VERSION` | não | Versão fixada da Storefront API |
+| `SHOPIFY_STOREFRONT_PRIVATE_ACCESS_TOKEN` | **não** | Token privado server-side do Headless channel |
+| `SHOPIFY_REVALIDATION_SECRET` | **não** | Segredo aleatório de no mínimo 32 caracteres compartilhado somente entre o app Admin e o endpoint interno de revalidação |
+
+### Database / Auth legado (Supabase)
 
 | Variável | Pública? | Descrição |
 |---|---|---|

@@ -1,236 +1,231 @@
-import Image from 'next/image';
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
 import {
-  getCategoriesWithProducts,
-  searchActiveProducts,
-  type ProductSort,
-} from '../../../src/lib/products';
-import { formatUsdCents } from '../../../src/lib/format';
-import { FadeIn, StaggerGrid, StaggerItem } from '../../components/motion';
+  normalizeCatalogSearch,
+  normalizePriceRange,
+  parseCatalogAvailability,
+  parseCatalogPrice,
+  parseCatalogSort,
+} from '../../../src/lib/catalog/filters';
+import { getShopifyCatalogPage } from '../../../src/lib/shopify/catalog';
+import { CatalogProductCard } from '../../components/catalog-product-card';
+import { StaggerGrid, StaggerItem } from '../../components/motion';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
-const SORT_OPTIONS: Array<{ value: ProductSort; label: string }> = [
+export const metadata: Metadata = {
+  title: 'Furniture Catalog — 801 Outlet',
+  description:
+    'Browse premium outlet furniture available for delivery and pickup in Utah.',
+  alternates: { canonical: '/products' },
+};
+
+const SORT_OPTIONS = [
+  { value: 'featured', label: 'Featured' },
   { value: 'newest', label: 'Newest' },
   { value: 'price_asc', label: 'Price: Low to high' },
   { value: 'price_desc', label: 'Price: High to low' },
-];
+] as const;
 
-function parseCents(input: string | undefined): number | undefined {
-  if (!input) return undefined;
-  const dollars = Number(input);
-  if (!Number.isFinite(dollars) || dollars < 0) return undefined;
-  return Math.round(dollars * 100);
-}
+type SearchParams = {
+  q?: string;
+  sort?: string;
+  availability?: string;
+  priceMin?: string;
+  priceMax?: string;
+  after?: string;
+  before?: string;
+};
 
-function parseSort(input: string | undefined): ProductSort {
-  if (input === 'price_asc' || input === 'price_desc' || input === 'newest') return input;
-  return 'newest';
-}
-
-function parsePage(input: string | undefined): number {
-  const n = Number(input ?? 1);
-  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+function safeCursor(value: string | undefined) {
+  if (!value || value.length > 1_000) return undefined;
+  return /^[A-Za-z0-9+/_=-]+$/.test(value) ? value : undefined;
 }
 
 function buildQuery(
   base: Record<string, string | undefined>,
   override: Record<string, string | undefined>
-): string {
-  const merged = { ...base, ...override };
+) {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(merged)) {
-    if (value && value.length > 0) params.set(key, value);
+  for (const [key, value] of Object.entries({ ...base, ...override })) {
+    if (value) params.set(key, value);
   }
-  const qs = params.toString();
-  return qs ? `?${qs}` : '';
+
+  const query = params.toString();
+  return query ? `?${query}` : '';
 }
 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{
-    category?: string;
-    q?: string;
-    sort?: string;
-    priceMin?: string;
-    priceMax?: string;
-    page?: string;
-  }>;
+  searchParams?: Promise<SearchParams>;
 }) {
-  const sp = (await searchParams) ?? {};
-  const activeCategory = (sp.category || 'all').toLowerCase();
-  const q = (sp.q || '').trim();
-  const sort = parseSort(sp.sort);
-  const priceMinCents = parseCents(sp.priceMin);
-  const priceMaxCents = parseCents(sp.priceMax);
-  const page = parsePage(sp.page);
+  const params = (await searchParams) ?? {};
+  const search = normalizeCatalogSearch(params.q);
+  const sort = parseCatalogSort(params.sort);
+  const availability = parseCatalogAvailability(params.availability);
+  const parsedPrices = normalizePriceRange(
+    parseCatalogPrice(params.priceMin),
+    parseCatalogPrice(params.priceMax)
+  );
+  const after = safeCursor(params.after);
+  const before = after ? undefined : safeCursor(params.before);
 
-  const [result, categories] = await Promise.all([
-    searchActiveProducts({
-      category: activeCategory,
-      q,
-      priceMinCents,
-      priceMaxCents,
-      sort,
-      page,
-      pageSize: 12,
-    }),
-    getCategoriesWithProducts(),
-  ]);
+  const result = await getShopifyCatalogPage({
+    search,
+    sort,
+    availability,
+    ...parsedPrices,
+    after,
+    before,
+    pageSize: 12,
+  });
 
   const baseQuery = {
-    category: activeCategory === 'all' ? undefined : activeCategory,
-    q: q || undefined,
-    sort: sort === 'newest' ? undefined : sort,
-    priceMin: sp.priceMin || undefined,
-    priceMax: sp.priceMax || undefined,
+    q: search || undefined,
+    sort: sort === 'featured' ? undefined : sort,
+    availability:
+      availability === 'available' ? availability : undefined,
+    priceMin: params.priceMin || undefined,
+    priceMax: params.priceMax || undefined,
   };
-
-  const chipBase =
-    'inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold transition ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--bg))] ' +
-    'hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0';
-
-  const inputBase =
+  const hasFilters = Boolean(
+    search ||
+      availability === 'available' ||
+      parsedPrices.minPrice !== undefined ||
+      parsedPrices.maxPrice !== undefined ||
+      sort !== 'featured'
+  );
+  const inputClass =
     'w-full rounded-xl border border-[rgb(var(--border))] bg-white px-4 py-2.5 text-sm transition ' +
     'focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20';
 
   return (
     <main>
-      <section className="mx-auto max-w-6xl px-5 pt-10 pb-14">
+      <section className="mx-auto max-w-6xl px-5 pb-14 pt-10">
         <div className="flex items-start justify-between gap-6">
           <div>
-            <div className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
-              801 OUTLET • CATALOG
-            </div>
+            <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
+              801 OUTLET · UTAH
+            </p>
             <h1 className="mt-3 font-display text-4xl font-medium tracking-tight md:text-6xl">
-              Browse products
+              Browse furniture
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[rgb(var(--muted))]">
-              Utah-only delivery. Browse our curated catalog and reach out to order.
+              Premium outlet pieces with live pricing and availability from our
+              Shopify catalog.
             </p>
           </div>
 
-          <div className="hidden text-xs text-[rgb(var(--muted))] md:block">
-            {result.total} item{result.total === 1 ? '' : 's'} • Utah delivery only
-          </div>
+          <p className="hidden text-xs text-[rgb(var(--muted))] md:block">
+            {result.totalCount !== null
+              ? `${result.totalCount} matching ${result.totalCount === 1 ? 'piece' : 'pieces'}`
+              : `${result.products.length} ${result.products.length === 1 ? 'piece' : 'pieces'} shown`}
+          </p>
         </div>
 
-        {/* Search + filters — mobile-first */}
         <form
           method="get"
           action="/products"
-          className="mt-8 flex flex-col gap-3"
+          className="mt-8 rounded-2xl border border-[rgb(var(--border))] bg-white/70 p-4 sm:p-5"
         >
-          {/* Preserve current category as hidden input */}
-          {activeCategory !== 'all' ? (
-            <input type="hidden" name="category" value={activeCategory} />
-          ) : null}
-
-          {/* Row 1: Search */}
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Search products…"
-            className={inputBase}
-            aria-label="Search products"
-          />
-
-          {/* Row 2: Price range */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,0.7fr))_auto]">
+            <input
+              type="search"
+              name="q"
+              defaultValue={search}
+              placeholder="Search sofas, sectionals, colors…"
+              className={inputClass}
+              aria-label="Search products"
+            />
             <input
               type="number"
               name="priceMin"
-              defaultValue={sp.priceMin ?? ''}
-              placeholder="Min price ($)"
+              defaultValue={params.priceMin ?? ''}
+              placeholder="Min price"
               min="0"
               step="1"
-              inputMode="numeric"
-              className={inputBase}
-              aria-label="Minimum price"
+              inputMode="decimal"
+              className={inputClass}
+              aria-label="Minimum price in US dollars"
             />
             <input
               type="number"
               name="priceMax"
-              defaultValue={sp.priceMax ?? ''}
-              placeholder="Max price ($)"
+              defaultValue={params.priceMax ?? ''}
+              placeholder="Max price"
               min="0"
               step="1"
-              inputMode="numeric"
-              className={inputBase}
-              aria-label="Maximum price"
+              inputMode="decimal"
+              className={inputClass}
+              aria-label="Maximum price in US dollars"
             />
-          </div>
-
-          {/* Row 3: Sort + Apply */}
-          <div className="grid grid-cols-[1fr_auto] gap-3">
             <select
-              name="sort"
-              defaultValue={sort}
-              className={inputBase}
-              aria-label="Sort"
+              name="availability"
+              defaultValue={availability}
+              className={inputClass}
+              aria-label="Availability"
             >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
+              <option value="all">All availability</option>
+              <option value="available">In stock</option>
             </select>
-
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-full bg-[rgb(var(--fg))] px-6 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0"
+              className="inline-flex items-center justify-center rounded-full bg-[rgb(var(--fg))] px-6 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-px hover:shadow-sm"
             >
               Apply
             </button>
           </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <label className="text-xs font-semibold text-[rgb(var(--muted))]">
+              Sort by
+              <select
+                name="sort"
+                defaultValue={sort}
+                className="ml-2 rounded-lg border border-[rgb(var(--border))] bg-white px-3 py-1.5 text-xs text-[rgb(var(--fg))]"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Link
+              href="/collections/all-products"
+              className="text-xs font-semibold text-[rgb(var(--accent))] transition hover:opacity-75"
+            >
+              View the complete collection
+            </Link>
+            {hasFilters ? (
+              <Link
+                href="/products"
+                className="text-xs font-semibold text-[rgb(var(--muted))] underline decoration-[rgb(var(--border))] underline-offset-4 transition hover:text-[rgb(var(--fg))]"
+              >
+                Clear filters
+              </Link>
+            ) : null}
+          </div>
         </form>
 
-        {/* Category chips */}
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Link
-            href={`/products${buildQuery(baseQuery, { category: undefined, page: undefined })}`}
-            className={
-              chipBase +
-              (activeCategory === 'all'
-                ? ' border-[rgb(var(--fg))] bg-[rgb(var(--fg))] text-white'
-                : ' border-[rgb(var(--border))] bg-white text-[rgb(var(--fg))] hover:bg-neutral-50')
-            }
-          >
-            All
-          </Link>
-
-          {categories.map((c) => (
-            <Link
-              key={c.slug}
-              href={`/products${buildQuery(baseQuery, { category: c.slug, page: undefined })}`}
-              className={
-                chipBase +
-                (activeCategory === c.slug
-                  ? ' border-[rgb(var(--fg))] bg-[rgb(var(--fg))] text-white'
-                  : ' border-[rgb(var(--border))] bg-white text-[rgb(var(--fg))] hover:bg-neutral-50')
-              }
-            >
-              {c.name}
-            </Link>
-          ))}
-        </div>
-
-        {/* Results */}
         {result.products.length === 0 ? (
           <div className="relative mt-12 overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white p-12 text-center sm:p-16">
-            <div className="font-display text-3xl font-medium tracking-tight md:text-4xl">
+            <h2 className="font-display text-3xl font-medium tracking-tight md:text-4xl">
               Nothing matched
-              <span className="italic text-[rgb(var(--accent))]"> that filter.</span>
-            </div>
+              <span className="italic text-[rgb(var(--accent))]">
+                {' '}
+                this search.
+              </span>
+            </h2>
             <p className="mx-auto mt-3 max-w-md text-sm text-[rgb(var(--muted))]">
-              Try a different category or clear the search to see everything.
+              Try a broader term or clear the filters to see every available
+              piece.
             </p>
             <Link
               href="/products"
-              className="mt-7 inline-flex items-center justify-center rounded-full bg-[rgb(var(--fg))] px-7 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:shadow-md"
+              className="mt-7 inline-flex items-center justify-center rounded-full bg-[rgb(var(--fg))] px-7 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-px hover:shadow-md"
             >
               See all products
             </Link>
@@ -238,126 +233,38 @@ export default async function ProductsPage({
           </div>
         ) : (
           <StaggerGrid className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-            {result.products.map((p) => {
-              const primary = p.images[0];
-              const secondary = p.images[1];
-              const savings =
-                p.compareAtPriceCents && p.compareAtPriceCents > p.priceCents
-                  ? p.compareAtPriceCents - p.priceCents
-                  : null;
-
-              return (
-                <StaggerItem key={p.slug}>
-                  <Link
-                    href={`/products/${p.slug}`}
-                    className="group flex h-full flex-col rounded-2xl border border-[rgb(var(--border))] bg-white p-3 sm:p-4 transition hover:-translate-y-[1px] hover:shadow-sm"
-                >
-                  <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-neutral-100">
-                    {primary ? (
-                      <Image
-                        src={primary.url}
-                        alt={primary.alt || p.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className={
-                          'object-cover transition duration-300 ' +
-                          (secondary ? 'opacity-100 group-hover:opacity-0' : 'opacity-100') +
-                          ' group-hover:scale-[1.02]'
-                        }
-                      />
-                    ) : null}
-
-                    {secondary ? (
-                      <Image
-                        src={secondary.url}
-                        alt={secondary.alt || p.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover opacity-0 transition duration-300 group-hover:opacity-100 group-hover:scale-[1.02]"
-                      />
-                    ) : null}
-
-                    {savings !== null ? (
-                      <div className="absolute left-3 top-3 rounded-full bg-[rgb(var(--fg))] px-3 py-1 text-xs font-semibold text-white">
-                        Save {formatUsdCents(savings)}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-4 flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-sm font-semibold">{p.name}</div>
-                      {p.description ? (
-                        <div className="mt-1 text-xs text-[rgb(var(--muted))]">
-                          {p.description}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="text-right">
-                      <div className="text-sm font-semibold">
-                        {formatUsdCents(p.priceCents)}
-                      </div>
-                      {p.compareAtPriceCents &&
-                      p.compareAtPriceCents > p.priceCents ? (
-                        <div className="text-xs text-[rgb(var(--muted))] line-through">
-                          {formatUsdCents(p.compareAtPriceCents)}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1 text-[11px] font-semibold text-[rgb(var(--fg))]">
-                      {p.stockQty > 0 ? 'In stock' : 'Out of stock'}
-                    </span>
-                    {p.stockQty > 0 && p.stockQty <= 3 ? (
-                      <span className="rounded-full border border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/10 px-3 py-1 text-[11px] font-semibold text-[rgb(var(--accent))]">
-                        Only {p.stockQty} left
-                      </span>
-                    ) : null}
-                    <span className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1 text-[11px] font-semibold text-[rgb(var(--fg))]">
-                      Utah delivery
-                    </span>
-                  </div>
-
-                  <div className="mt-4 text-xs font-semibold text-[rgb(var(--accent))]">
-                    View details →
-                  </div>
-                </Link>
+            {result.products.map((product) => (
+              <StaggerItem key={product.id}>
+                <CatalogProductCard product={product} />
               </StaggerItem>
-              );
-            })}
+            ))}
           </StaggerGrid>
         )}
 
-        {/* Pagination */}
-        {result.totalPages > 1 ? (
+        {result.pageInfo.hasNextPage || result.pageInfo.hasPreviousPage ? (
           <nav
-            className="mt-10 flex items-center justify-center gap-2"
-            aria-label="Pagination"
+            className="mt-10 flex items-center justify-center gap-3"
+            aria-label="Catalog pagination"
           >
-            {result.page > 1 ? (
+            {result.pageInfo.hasPreviousPage &&
+            result.pageInfo.startCursor ? (
               <Link
                 href={`/products${buildQuery(baseQuery, {
-                  page: String(result.page - 1),
+                  before: result.pageInfo.startCursor,
+                  after: undefined,
                 })}`}
-                className="rounded-full border border-[rgb(var(--border))] bg-white px-4 py-2 text-sm font-semibold transition hover:bg-neutral-50"
+                className="rounded-full border border-[rgb(var(--border))] bg-white px-5 py-2.5 text-sm font-semibold transition hover:bg-neutral-50"
               >
                 ← Previous
               </Link>
             ) : null}
-
-            <span className="text-xs text-[rgb(var(--muted))]">
-              Page {result.page} of {result.totalPages}
-            </span>
-
-            {result.page < result.totalPages ? (
+            {result.pageInfo.hasNextPage && result.pageInfo.endCursor ? (
               <Link
                 href={`/products${buildQuery(baseQuery, {
-                  page: String(result.page + 1),
+                  after: result.pageInfo.endCursor,
+                  before: undefined,
                 })}`}
-                className="rounded-full border border-[rgb(var(--border))] bg-white px-4 py-2 text-sm font-semibold transition hover:bg-neutral-50"
+                className="rounded-full border border-[rgb(var(--border))] bg-white px-5 py-2.5 text-sm font-semibold transition hover:bg-neutral-50"
               >
                 Next →
               </Link>
@@ -365,9 +272,11 @@ export default async function ProductsPage({
           </nav>
         ) : null}
 
-        <div className="mt-8 text-center text-xs text-[rgb(var(--muted))] md:hidden">
-          {result.total} item{result.total === 1 ? '' : 's'} • Utah delivery only
-        </div>
+        <p className="mt-8 text-center text-xs text-[rgb(var(--muted))] md:hidden">
+          {result.totalCount !== null
+            ? `${result.totalCount} matching ${result.totalCount === 1 ? 'piece' : 'pieces'}`
+            : `${result.products.length} ${result.products.length === 1 ? 'piece' : 'pieces'} shown`}
+        </p>
       </section>
     </main>
   );

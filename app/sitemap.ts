@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { env } from '../src/config/env';
-import { getAllActiveProductSlugs } from '../src/lib/products';
+import { getCollections, getProducts } from '../src/lib/shopify';
 
 export const revalidate = 3600;
 
@@ -18,13 +18,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/terms`, lastModified: now, priority: 0.3, changeFrequency: 'yearly' },
   ];
 
-  const slugs = await getAllActiveProductSlugs();
-  const productRoutes: MetadataRoute.Sitemap = slugs.map((slug) => ({
-    url: `${base}/products/${slug}`,
-    lastModified: now,
+  const [products, collections] = await Promise.all([
+    getProducts({ first: 250 }),
+    getCollections({ first: 100 }),
+  ]);
+  const productRoutes: MetadataRoute.Sitemap = products.nodes.map((product) => ({
+    url: `${base}/products/${product.handle}`,
+    lastModified: new Date(product.updatedAt),
     priority: 0.7,
     changeFrequency: 'weekly',
   }));
+  const collectionRoutes: MetadataRoute.Sitemap = collections.nodes.map(
+    (collection) => ({
+      url: `${base}/collections/${collection.handle}`,
+      lastModified: new Date(collection.updatedAt),
+      priority: 0.8,
+      changeFrequency: 'daily',
+    })
+  );
 
-  return [...staticRoutes, ...productRoutes];
+  return [...staticRoutes, ...collectionRoutes, ...productRoutes];
 }

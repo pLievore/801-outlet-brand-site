@@ -1,15 +1,18 @@
 import Link from 'next/link';
 import HeroVideo from '../components/herovideo';
-import { ProductCard } from '../components/product-card';
+import { CatalogProductCard } from '../components/catalog-product-card';
 import { env } from '../../src/config/env';
-import { getRecentProducts } from '../../src/lib/products';
+import { getProducts } from '../../src/lib/shopify';
+import { adaptProductCard } from '../../src/lib/shopify/adapters/products';
 import { FadeIn, FadeMount, StaggerGrid, StaggerItem } from '../components/motion';
 
 export const revalidate = 60;
 
 export default async function HomePage() {
   const phoneHref = env.getPhoneHref();
-  const featured = await getRecentProducts(4);
+  const featured = (await getProducts({ first: 4 })).nodes.map(
+    adaptProductCard
+  );
 
   return (
     <main>
@@ -20,7 +23,7 @@ export default async function HomePage() {
           <div>
             <FadeMount delay={0.05}>
               <div className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
-                801 OUTLET • UTAH ONLY DELIVERY
+                801 OUTLET · UTAH DELIVERY
               </div>
             </FadeMount>
 
@@ -34,7 +37,7 @@ export default async function HomePage() {
 
             <FadeMount delay={0.2}>
               <p className="mt-5 max-w-xl text-sm leading-relaxed text-[rgb(var(--muted))]">
-                Discover sofas, beds, recliners and more — curated deals ready for fast delivery
+                Discover sofas, sectionals, recliners and more — curated deals ready for delivery
                 across Utah.
               </p>
             </FadeMount>
@@ -111,9 +114,9 @@ export default async function HomePage() {
           </FadeIn>
 
           <StaggerGrid className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {featured.map((p) => (
-              <StaggerItem key={p.slug}>
-                <ProductCard p={p} />
+            {featured.map((product) => (
+              <StaggerItem key={product.id}>
+                <CatalogProductCard product={product} />
               </StaggerItem>
             ))}
           </StaggerGrid>
@@ -152,10 +155,10 @@ export default async function HomePage() {
 
         <StaggerGrid className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {[
-            { n: '01', title: 'Sofas', href: '/products?category=sofas', desc: 'Plush & modern' },
-            { n: '02', title: 'Beds', href: '/products?category=beds', desc: 'Restful nights' },
-            { n: '03', title: 'Recliners', href: '/products?category=recliners', desc: 'Ultimate comfort' },
-            { n: '04', title: 'Sectionals', href: '/products?category=sectionals', desc: 'Room-fillers' },
+            { n: '01', title: 'Sectionals', href: '/products?q=Sectional', desc: 'Space to stretch out' },
+            { n: '02', title: 'Sleeper sofas', href: '/products?q=Sleeper', desc: 'Comfort that converts' },
+            { n: '03', title: 'Leather', href: '/products?q=Leather', desc: 'Durable, timeless comfort' },
+            { n: '04', title: 'In stock', href: '/products?availability=available', desc: 'Available right now' },
           ].map((c) => (
             <StaggerItem key={c.title}>
               <Link
@@ -209,7 +212,7 @@ export default async function HomePage() {
                 },
                 {
                   label: 'Secure checkout',
-                  sub: 'PCI-safe by Square',
+                  sub: 'Secure Shopify checkout',
                   icon: (
                     <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V8a4 4 0 118 0v3" />
@@ -218,8 +221,8 @@ export default async function HomePage() {
                   ),
                 },
                 {
-                  label: 'Real humans',
-                  sub: 'Call us anytime',
+                  label: 'Personal support',
+                  sub: 'Talk with our team',
                   icon: (
                     <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.21l-2 1a11 11 0 005.16 5.16l1-2a1 1 0 011.21-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1A14 14 0 013 6V5z" />
@@ -227,8 +230,8 @@ export default async function HomePage() {
                   ),
                 },
                 {
-                  label: 'Curated quality',
-                  sub: 'Hand-picked, every piece',
+                  label: 'Showroom visits',
+                  sub: 'Available by appointment',
                   icon: (
                     <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

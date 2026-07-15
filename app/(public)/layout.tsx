@@ -1,151 +1,259 @@
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ReactNode } from 'react';
-import { env } from '../../src/config/env';
-import { MiniCart } from '../components/mini-cart';
-import { MobileNav } from '../components/mobile-nav';
-import { NewsletterSignup } from '../components/newsletter-signup';
+import { Search, ShoppingBag } from 'lucide-react';
 
-export default function PublicLayout({ children }: { children: ReactNode }) {
+import { env } from '../../src/config/env';
+import type { NavigationLink } from '../../src/lib/navigation/types';
+import { getMainNavigation } from '../../src/lib/shopify/navigation';
+import { MobileNav } from '../components/mobile-nav';
+import { buttonStyles } from '../components/ui/button';
+import { Container } from '../components/ui/container';
+
+export default async function PublicLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const navigation = await getMainNavigation();
+  const phoneHref = env.getPhoneHref();
+
   return (
     <div className="min-h-dvh">
-      <SiteHeader />
-      <main>{children}</main>
+      <a
+        href="#main-content"
+        className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-full bg-[rgb(var(--fg))] px-5 py-3 text-sm font-semibold text-white transition focus:translate-y-0"
+      >
+        Skip to content
+      </a>
+      <AnnouncementBar />
+      <SiteHeader navigation={navigation} phoneHref={phoneHref} />
+      <div id="main-content" tabIndex={-1}>
+        {children}
+      </div>
       <SiteFooter />
     </div>
   );
 }
 
-function SiteHeader() {
-  const phoneHref = env.getPhoneHref();
-
-  const btnBase =
-    'inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ' +
-    'transition will-change-transform focus-visible:outline-none focus-visible:ring-2 ' +
-    'focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--bg))]';
-
-  const btnLift = 'hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0';
-
-  const navLink =
-    'rounded-md px-2 py-1 text-sm font-medium text-[rgb(var(--fg))] transition ' +
-    'hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 ' +
-    'focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--bg))]';
-
+function AnnouncementBar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--bg))]/80 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="relative size-9 overflow-hidden rounded-full border border-[rgb(var(--border))] bg-white">
+    <div className="bg-[rgb(var(--sage-ink))] text-white">
+      <Container className="flex min-h-9 items-center justify-center py-2 text-center text-xs font-semibold tracking-wide">
+        Utah delivery available · Showroom visits by appointment
+      </Container>
+    </div>
+  );
+}
+
+function SiteHeader({
+  navigation,
+  phoneHref,
+}: {
+  navigation: NavigationLink[];
+  phoneHref: string;
+}) {
+  return (
+    <header className="sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 backdrop-blur-xl">
+      <Container size="wide" className="flex min-h-20 items-center gap-4 py-3">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-3 rounded-xl"
+          aria-label="801 Outlet home"
+        >
+          <span className="relative size-11 overflow-hidden rounded-xl border border-[rgb(var(--border))] bg-white">
             <Image
               src="/brand/icon-512x512.png"
-              alt="801 Outlet"
+              alt=""
               fill
+              sizes="44px"
               className="object-contain p-1"
               priority
             />
-          </div>
-
-          <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight">801 Outlet</div>
-            <div className="text-xs text-[rgb(var(--muted))]">Utah • Furniture Deals</div>
-          </div>
+          </span>
+          <span className="hidden leading-tight sm:block">
+            <span className="block text-sm font-bold tracking-tight">801 Outlet</span>
+            <span className="block text-[11px] text-[rgb(var(--muted))]">
+              Best Furniture Store
+            </span>
+          </span>
         </Link>
 
-        <nav className="hidden items-center gap-3 md:flex">
-          <Link className={navLink} href="/products">
-            Products
-          </Link>
-          <Link className={navLink} href="/delivery">
-            Delivery
-          </Link>
-          <Link className={navLink} href="/about">
-            About
-          </Link>
+        <nav
+          className="ml-3 hidden items-center gap-1 lg:flex"
+          aria-label="Main navigation"
+        >
+          {navigation.map((link) => (
+            <NavigationItem key={link.id} link={link} />
+          ))}
         </nav>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          <Link
-            href="/account"
-            className="hidden md:inline-flex items-center justify-center rounded-full p-2 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--bg))]"
-            aria-label="My account"
-          >
-            <svg className="size-5 text-[rgb(var(--fg))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-            </svg>
-          </Link>
+        <form action="/products" className="ml-auto hidden w-full max-w-xs md:block">
+          <label htmlFor="site-search" className="sr-only">
+            Search furniture
+          </label>
+          <div className="relative">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[rgb(var(--muted))]"
+            />
+            <input
+              id="site-search"
+              name="q"
+              type="search"
+              placeholder="Search furniture"
+              className="min-h-11 w-full rounded-full border border-[rgb(var(--border-strong))] bg-white py-2 pl-11 pr-4 text-sm outline-none transition placeholder:text-[rgb(var(--muted))] focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15"
+            />
+          </div>
+        </form>
 
-          <MiniCart />
+        <button
+          type="button"
+          disabled
+          className={buttonStyles({ variant: 'ghost', size: 'icon' })}
+          aria-label="Cart is coming in the Shopify checkout phase"
+          title="Cart is coming in the Shopify checkout phase"
+        >
+          <ShoppingBag aria-hidden="true" className="size-5" />
+        </button>
 
-          <a
-            className={btnBase + ' hidden md:inline-flex bg-[rgb(var(--fg))] text-white hover:opacity-95 ' + btnLift}
-            href={phoneHref}
-          >
-            Call Now
-          </a>
+        <a
+          href={phoneHref}
+          className={buttonStyles({
+            variant: 'sage',
+            size: 'md',
+            className: 'hidden xl:inline-flex',
+          })}
+        >
+          Call now
+        </a>
 
-          <MobileNav phoneHref={phoneHref} />
-        </div>
-      </div>
+        <MobileNav phoneHref={phoneHref} links={navigation} />
+      </Container>
     </header>
+  );
+}
+
+function NavigationItem({ link }: { link: NavigationLink }) {
+  const className =
+    'rounded-full px-3 py-2 text-sm font-semibold text-[rgb(var(--fg))] transition hover:bg-[rgb(var(--surface-muted))]';
+
+  if (link.external) {
+    return (
+      <a href={link.href} target="_blank" rel="noreferrer" className={className}>
+        {link.label}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={link.href} className={className}>
+      {link.label}
+    </Link>
   );
 }
 
 function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]">
-      <div className="mx-auto max-w-6xl px-5 py-14">
-        {/* Top: brand statement + newsletter */}
-        <div className="grid gap-10 md:grid-cols-[1.2fr_1fr] md:gap-16">
+    <footer className="mt-20 border-t border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
+      <Container size="wide" className="py-14 md:py-16">
+        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-16">
           <div>
-            <div className="font-display text-3xl tracking-tight md:text-4xl">
-              Made for living.
-              <br />
-              <span className="italic text-[rgb(var(--accent))]">Built to last.</span>
+            <div className="flex items-center gap-3">
+              <span className="relative size-12 overflow-hidden rounded-xl border border-[rgb(var(--border))] bg-white">
+                <Image
+                  src="/brand/icon-512x512.png"
+                  alt=""
+                  fill
+                  sizes="48px"
+                  className="object-contain p-1"
+                />
+              </span>
+              <div>
+                <p className="font-bold tracking-tight">801 Outlet</p>
+                <p className="text-xs text-[rgb(var(--muted))]">
+                  Best Furniture Store
+                </p>
+              </div>
             </div>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-[rgb(var(--muted))]">
-              Premium furniture, outlet pricing. Delivery available throughout Utah —
-              we&apos;ll bring it home.
+            <p className="mt-5 max-w-md text-sm leading-6 text-[rgb(var(--muted))]">
+              Quality furniture at outlet pricing, with delivery throughout Utah and
+              personal service from our South Salt Lake showroom.
             </p>
           </div>
 
-          <NewsletterSignup />
-        </div>
-
-        {/* Divider */}
-        <div className="my-12 h-px bg-[rgb(var(--border))]" />
-
-        {/* Bottom: links + copyright */}
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-sm font-semibold tracking-tight">801 Outlet</div>
-            <div className="mt-1 text-xs text-[rgb(var(--muted))]">
-              Utah, USA · Furniture for the long way home.
-            </div>
+            <h2 className="text-sm font-bold">Explore</h2>
+            <ul className="mt-4 space-y-3 text-sm text-[rgb(var(--muted))]">
+              <li>
+                <Link className="hover:text-[rgb(var(--fg))]" href="/products">
+                  Catalog
+                </Link>
+              </li>
+              <li>
+                <Link className="hover:text-[rgb(var(--fg))]" href="/showroom">
+                  Showroom
+                </Link>
+              </li>
+              <li>
+                <Link className="hover:text-[rgb(var(--fg))]" href="/delivery">
+                  Delivery
+                </Link>
+              </li>
+              <li>
+                <Link className="hover:text-[rgb(var(--fg))]" href="/about">
+                  About us
+                </Link>
+              </li>
+              <li>
+                <Link className="hover:text-[rgb(var(--fg))]" href="/contact">
+                  Contact
+                </Link>
+              </li>
+            </ul>
           </div>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgb(var(--muted))]">
-            <Link className="transition hover:text-[rgb(var(--fg))]" href="/about">
-              About
-            </Link>
-            <Link className="transition hover:text-[rgb(var(--fg))]" href="/delivery">
-              Delivery
-            </Link>
-            <Link className="transition hover:text-[rgb(var(--fg))]" href="/contact">
-              Contact
-            </Link>
-            <Link className="transition hover:text-[rgb(var(--fg))]" href="/privacy">
+          <div className="rounded-3xl bg-[rgb(var(--sage-soft))] p-6">
+            <h2 className="text-sm font-bold text-[rgb(var(--sage-ink))]">
+              Visit by appointment
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-[rgb(var(--sage-ink))]">
+              2251 South 400 East
+              <br />
+              South Salt Lake, UT 84115
+            </p>
+            <div className="mt-4 space-y-2 text-sm font-semibold">
+              <a className="block hover:underline" href="tel:+18018546060">
+                (801) 854-6060
+              </a>
+              <a
+                className="block hover:underline"
+                href="https://wa.me/13852016328"
+              >
+                WhatsApp: +1 (385) 201-6328
+              </a>
+              <a
+                className="block break-all hover:underline"
+                href="mailto:support@801outlet.com"
+              >
+                support@801outlet.com
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 flex flex-col gap-5 border-t border-[rgb(var(--border))] pt-8 text-xs text-[rgb(var(--muted))] sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} 801 Outlet. All rights reserved.</p>
+          <div className="flex gap-5">
+            <Link className="hover:text-[rgb(var(--fg))]" href="/privacy">
               Privacy
             </Link>
-            <Link className="transition hover:text-[rgb(var(--fg))]" href="/terms">
+            <Link className="hover:text-[rgb(var(--fg))]" href="/terms">
               Terms
             </Link>
           </div>
         </div>
-
-        <div className="mt-8 text-xs text-[rgb(var(--muted))]">
-          © {new Date().getFullYear()} 801 Outlet. Crafted in Utah.
-        </div>
-      </div>
+      </Container>
     </footer>
   );
 }

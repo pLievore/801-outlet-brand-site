@@ -10,10 +10,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "graphql-codegen": "graphql-codegen",
+    "shopify:check": "tsx --conditions=react-server --env-file=.env.local scripts/check-shopify.ts",
+    "test": "npm run test:shopify",
+    "test:shopify": "tsx --test src/lib/format.test.ts src/lib/catalog/filters.test.ts src/lib/shopify/config-schema.test.ts src/lib/shopify/errors.test.ts src/lib/shopify/adapters/menu.test.ts src/lib/shopify/adapters/products.test.ts src/lib/shopify/revalidation.test.ts",
     "db:seed": "tsx --env-file=.env.local db/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@shopify/storefront-api-client": "^1.0.10",
     "@supabase/supabase-js": "^2.105.4",
     "@vercel/analytics": "^1.6.1",
     "clsx": "^2.1.1",
@@ -32,6 +38,7 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@shopify/api-codegen-preset": "^2.0.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^20",
     "@types/react": "^19",

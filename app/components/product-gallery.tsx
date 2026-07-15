@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,23 +14,47 @@ type Props = {
 export function ProductGallery({ images, productName }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
+  const zoomTriggerRef = useRef<HTMLButtonElement>(null);
+  const zoomDialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const main = images[activeIndex] ?? images[0];
 
-  // Lock scroll while zoom open + ESC to close + arrow nav
   useEffect(() => {
     if (!zoomOpen) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setZoomOpen(false);
       if (e.key === 'ArrowRight') setActiveIndex((i) => (i + 1) % images.length);
       if (e.key === 'ArrowLeft')
         setActiveIndex((i) => (i - 1 + images.length) % images.length);
+
+      if (e.key === 'Tab') {
+        const focusable = zoomDialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable || focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
+    closeButtonRef.current?.focus();
+
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKey);
+      previouslyFocused?.focus();
     };
   }, [zoomOpen, images.length]);
 
@@ -41,6 +65,7 @@ export function ProductGallery({ images, productName }: Props) {
       <div className="space-y-3 sm:space-y-4">
         {/* Main image — clickable */}
         <motion.button
+          ref={zoomTriggerRef}
           type="button"
           onClick={() => setZoomOpen(true)}
           whileHover={{ scale: 1.005 }}
@@ -125,6 +150,7 @@ export function ProductGallery({ images, productName }: Props) {
       <AnimatePresence>
         {zoomOpen && (
           <motion.div
+            ref={zoomDialogRef}
             key="zoom-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -132,6 +158,9 @@ export function ProductGallery({ images, productName }: Props) {
             transition={{ duration: 0.25 }}
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-md"
             onClick={() => setZoomOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${productName} image gallery`}
           >
             <motion.div
               key={`zoom-${main.url}`}
@@ -154,6 +183,7 @@ export function ProductGallery({ images, productName }: Props) {
 
             {/* Close */}
             <button
+              ref={closeButtonRef}
               type="button"
               onClick={() => setZoomOpen(false)}
               aria-label="Close"

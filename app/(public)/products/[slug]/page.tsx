@@ -1,136 +1,187 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import {
-  getAllActiveProductSlugs,
-  getProductBySlug,
-  getRelatedProducts,
-} from '../../../../src/lib/products';
-import { formatUsdCents } from '../../../../src/lib/format';
-import { ProductCard } from '../../../components/product-card';
-import { AddToCartButton } from '../../../components/add-to-cart-button';
-import { ProductGallery } from '../../../components/product-gallery';
-import { FadeIn, FadeMount, StaggerGrid, StaggerItem } from '../../../components/motion';
 
-export const revalidate = 60;
+import { env } from '../../../../src/config/env';
+import { formatMoney } from '../../../../src/lib/format';
+import {
+  getProductByHandle,
+  getProducts,
+  getRelatedProducts,
+} from '../../../../src/lib/shopify';
+import {
+  adaptProductCard,
+  adaptProductDetail,
+} from '../../../../src/lib/shopify/adapters/products';
+import { CatalogProductCard } from '../../../components/catalog-product-card';
+import {
+  FadeIn,
+  FadeMount,
+  StaggerGrid,
+  StaggerItem,
+} from '../../../components/motion';
+import { ProductGallery } from '../../../components/product-gallery';
+
+export const revalidate = 300;
 
 type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  const slugs = await getAllActiveProductSlugs();
-  return slugs.map((slug) => ({ slug }));
+  const products = await getProducts({ first: 250 });
+  return products.nodes.map((product) => ({ slug: product.handle }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product) return { title: 'Product not found — 801 Outlet' };
+  const shopifyProduct = await getProductByHandle(slug);
+
+  if (!shopifyProduct) return { title: 'Product not found — 801 Outlet' };
+
+  const product = adaptProductDetail(shopifyProduct);
+  const title = product.seo.title || product.title;
+  const description = product.seo.description || product.description || undefined;
 
   return {
-    title: `${product.name} — 801 Outlet`,
-    description: product.description ?? undefined,
+    title: `${title} — 801 Outlet`,
+    description,
+    alternates: { canonical: `/products/${product.handle}` },
     openGraph: {
-      title: product.name,
-      description: product.description ?? undefined,
-      images: product.images[0] ? [{ url: product.images[0].url }] : undefined,
+      title,
+      description,
+      type: 'website',
+      images: product.images[0]
+        ? [
+            {
+              url: product.images[0].url,
+              width: product.images[0].width ?? undefined,
+              height: product.images[0].height ?? undefined,
+              alt: product.images[0].alt || product.title,
+            },
+          ]
+        : undefined,
     },
   };
 }
 
-const SPEC_LABELS: Record<string, string> = {
-  material: 'Material',
-  color: 'Color',
-  dimensions: 'Dimensions',
-  seating: 'Seating',
-  condition: 'Condition',
-};
-
-function specEntries(attributes: Record<string, unknown>) {
-  return Object.entries(SPEC_LABELS).flatMap(([key, label]) => {
-    const value = attributes[key];
-    if (typeof value !== 'string' || value.length === 0) return [];
-    return [{ key, label, value }];
-  });
+function safeJsonLd(value: unknown) {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const p = await getProductBySlug(slug);
+  const shopifyProduct = await getProductByHandle(slug);
 
-  if (!p) notFound();
+  if (!shopifyProduct) notFound();
 
-  const related = await getRelatedProducts(slug, 4);
+  const product = adaptProductDetail(shopifyProduct);
+  const primaryVariant =
+    product.variants.find((variant) => variant.availableForSale) ??
+    product.variants[0];
+  const price = primaryVariant?.price ?? product.price;
+  const compareAtPrice =
+    primaryVariant?.compareAtPrice ?? product.compareAtPrice;
+  const inStock = Boolean(primaryVariant?.availableForSale);
+  const quantity = primaryVariant?.quantityAvailable ?? null;
+  const showLowStock = inStock && quantity !== null && quantity <= 3;
+  const related = (await getRelatedProducts(product.id, 4)).map(
+    adaptProductCard
+  );
+  const whatsappHref = `https://wa.me/${env.phoneE164.replace(/\D/g, '')}?text=${encodeURIComponent(
+    `Hi 801 Outlet, I would like more information about ${product.title}: ${env.siteUrl}/products/${product.handle}`
+  )}`;
+  const visibleOptions = product.options.filter(
+    (option) =>
+      option.name.toLowerCase() !== 'title' &&
+      !(option.values.length === 1 && option.values[0] === 'Default Title')
+  );
 
-  const specs = specEntries(p.attributes);
-  const showLowStock = p.stockQty > 0 && p.stockQty <= 3;
-  const inStock = p.stockQty > 0;
-
-  // Product JSON-LD
   const jsonLd = {
-    '@context': 'https://schema.org/',
+    '@context': 'https://schema.org',
     '@type': 'Product',
-    name: p.name,
-    description: p.description ?? undefined,
-    sku: p.sku,
-    image: p.images.map((i) => i.url),
-    offers: {
+    name: product.title,
+    description: product.description ?? undefined,
+    image: product.images.map((image) => image.url),
+    sku: primaryVariant?.sku ?? undefined,
+    brand: product.vendor
+      ? { '@type': 'Brand', name: product.vendor }
+      : undefined,
+    url: `${env.siteUrl}/products/${product.handle}`,
+    offers: product.variants.map((variant) => ({
       '@type': 'Offer',
-      priceCurrency: 'USD',
-      price: (p.priceCents / 100).toFixed(2),
-      availability: inStock
+      price: variant.price.amount,
+      priceCurrency: variant.price.currencyCode,
+      sku: variant.sku ?? undefined,
+      availability: variant.availableForSale
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
-    },
+      url: `${env.siteUrl}/products/${product.handle}`,
+    })),
   };
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 md:py-14">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
 
       <FadeMount delay={0} distance={10} duration={0.35}>
         <Link
-          className="text-xs font-semibold tracking-[0.18em] text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] transition"
-          href="/products"
+          className="text-xs font-semibold tracking-[0.18em] text-[rgb(var(--muted))] transition hover:text-[rgb(var(--fg))]"
+          href="/collections/all-products"
         >
-          ← BACK TO CATALOG
+          ← BACK TO COLLECTION
         </Link>
       </FadeMount>
 
-      <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
-        {/* LEFT: Gallery */}
+      <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10">
         <FadeMount delay={0.05} distance={24}>
-          <ProductGallery images={p.images} productName={p.name} />
+          {product.images.length > 0 ? (
+            <ProductGallery
+              images={product.images}
+              productName={product.title}
+            />
+          ) : (
+            <div className="flex aspect-4/3 items-center justify-center rounded-3xl border border-[rgb(var(--border))] bg-neutral-100 text-sm font-medium text-[rgb(var(--muted))]">
+              Product imagery coming soon
+            </div>
+          )}
         </FadeMount>
 
-        {/* RIGHT: Details */}
         <FadeMount delay={0.15} distance={24}>
           <div className="flex flex-col">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">{p.name}</h1>
+            {product.vendor ? (
+              <p className="text-xs font-semibold tracking-[0.2em] text-[rgb(var(--accent))]">
+                {product.vendor.toUpperCase()}
+              </p>
+            ) : null}
+            <h1 className="mt-3 font-display text-4xl font-medium leading-tight tracking-tight sm:text-5xl">
+              {product.title}
+            </h1>
 
-            <div className="mt-3 flex items-end gap-3">
-              <div className="text-2xl font-semibold">{formatUsdCents(p.priceCents)}</div>
-              {p.compareAtPriceCents && p.compareAtPriceCents > p.priceCents ? (
-                <div className="text-sm text-[rgb(var(--muted))] line-through">
-                  {formatUsdCents(p.compareAtPriceCents)}
+            <div className="mt-5 flex items-end gap-3">
+              <div className="text-2xl font-semibold">
+                {formatMoney(price)}
+              </div>
+              {compareAtPrice ? (
+                <div className="pb-0.5 text-sm text-[rgb(var(--muted))] line-through">
+                  {formatMoney(compareAtPrice)}
                 </div>
               ) : null}
             </div>
 
-            {p.description ? (
-              <p className="mt-4 text-sm leading-relaxed text-[rgb(var(--muted))]">
-                {p.description}
+            {product.description ? (
+              <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-[rgb(var(--muted))]">
+                {product.description}
               </p>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap gap-2 text-xs">
+            <div className="mt-6 flex flex-wrap gap-2 text-xs">
               <span
                 className={
                   'rounded-full border px-3 py-1 font-medium ' +
                   (inStock
-                    ? 'border-green-200 bg-green-50 text-green-800'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
                     : 'border-[rgb(var(--border))] bg-white text-[rgb(var(--muted))]')
                 }
               >
@@ -138,49 +189,92 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </span>
               {showLowStock ? (
                 <span className="rounded-full border border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/10 px-3 py-1 font-semibold text-[rgb(var(--accent))]">
-                  Only {p.stockQty} left
+                  Only {quantity} left
                 </span>
               ) : null}
               <span className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1">
-                🚚 Utah delivery
+                Delivery & pickup at checkout
               </span>
             </div>
 
-            {/* Add to cart */}
-            <div className="mt-7">
-              <AddToCartButton
-                item={{
-                  variantId: p.variantId,
-                  productSlug: p.slug,
-                  productName: p.name,
-                  variantName: p.sku.replace(`${p.slug}-`, ''),
-                  sku: p.sku,
-                  unitPriceCents: p.priceCents,
-                  imageUrl: p.images[0]?.url ?? null,
-                }}
-                stockQty={p.stockQty}
-              />
-            </div>
-
-            {specs.length > 0 ? (
-              <div className="mt-7 rounded-2xl border border-[rgb(var(--border))] bg-white p-5">
-                <div className="text-sm font-semibold">Details</div>
-
-                <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                  {specs.map((s) => (
-                    <div key={s.key}>
-                      <dt className="text-xs text-[rgb(var(--muted))]">{s.label}</dt>
-                      <dd className="font-medium">{s.value}</dd>
+            {visibleOptions.length > 0 ? (
+              <div className="mt-7 space-y-4">
+                {visibleOptions.map((option) => (
+                  <div key={option.id}>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[rgb(var(--muted))]">
+                      {option.name}
                     </div>
-                  ))}
-                </dl>
-
-                <div className="mt-4 text-xs text-[rgb(var(--muted))]">
-                  Delivery is available in Utah only. After purchase, we&apos;ll confirm a delivery
-                  window.
-                </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {option.values.map((value) => (
+                        <span
+                          key={value}
+                          className="rounded-full border border-[rgb(var(--fg))] bg-white px-3 py-1.5 text-xs font-semibold"
+                        >
+                          {value}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : null}
+
+            <div className="mt-8 rounded-2xl border border-[rgb(var(--border))] bg-white p-5">
+              <button
+                type="button"
+                disabled
+                aria-describedby="commerce-preview-note"
+                className="w-full cursor-not-allowed rounded-full bg-[rgb(var(--fg))] px-6 py-3 text-sm font-semibold text-white opacity-55"
+              >
+                {inStock ? 'Add to cart' : 'Currently unavailable'}
+              </button>
+              <p
+                id="commerce-preview-note"
+                className="mt-3 text-center text-xs leading-relaxed text-[rgb(var(--muted))]"
+              >
+                Online ordering will be enabled before this preview launches.
+              </p>
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 flex w-full items-center justify-center rounded-full border border-[rgb(var(--border))] px-6 py-3 text-sm font-semibold transition hover:bg-neutral-50"
+              >
+                Ask about this piece on WhatsApp
+              </a>
+            </div>
+
+            <div className="mt-7 rounded-2xl border border-[rgb(var(--border))] bg-white p-5">
+              <div className="text-sm font-semibold">Product details</div>
+              <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                {product.productType ? (
+                  <div>
+                    <dt className="text-xs text-[rgb(var(--muted))]">Type</dt>
+                    <dd className="font-medium">{product.productType}</dd>
+                  </div>
+                ) : null}
+                {primaryVariant?.sku ? (
+                  <div>
+                    <dt className="text-xs text-[rgb(var(--muted))]">SKU</dt>
+                    <dd className="font-medium">{primaryVariant.sku}</dd>
+                  </div>
+                ) : null}
+                {primaryVariant?.selectedOptions
+                  .filter((option) => option.name.toLowerCase() !== 'title')
+                  .map((option) => (
+                    <div key={option.name}>
+                      <dt className="text-xs text-[rgb(var(--muted))]">
+                        {option.name}
+                      </dt>
+                      <dd className="font-medium">{option.value}</dd>
+                    </div>
+                  ))}
+              </dl>
+              <p className="mt-4 text-xs leading-relaxed text-[rgb(var(--muted))]">
+                Delivery and pickup availability are confirmed during Shopify
+                checkout.
+              </p>
+            </div>
           </div>
         </FadeMount>
       </div>
@@ -188,18 +282,18 @@ export default async function ProductDetailPage({ params }: PageProps) {
       {related.length > 0 ? (
         <section className="mt-16">
           <FadeIn>
-            <div className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
+            <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
               YOU MAY ALSO LIKE
-            </div>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
-              Similar pieces
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-medium tracking-tight md:text-4xl">
+              Similar <span className="italic">pieces</span>
             </h2>
           </FadeIn>
 
-          <StaggerGrid className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {related.map((rp) => (
-              <StaggerItem key={rp.slug}>
-                <ProductCard p={rp} />
+          <StaggerGrid className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {related.map((relatedProduct) => (
+              <StaggerItem key={relatedProduct.id}>
+                <CatalogProductCard product={relatedProduct} />
               </StaggerItem>
             ))}
           </StaggerGrid>
