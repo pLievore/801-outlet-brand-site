@@ -27,6 +27,8 @@ Este projeto utiliza variáveis de ambiente para integrações (Supabase, Square
 | `SHOPIFY_STOREFRONT_API_VERSION` | não | Versão fixada da Storefront API |
 | `SHOPIFY_STOREFRONT_PRIVATE_ACCESS_TOKEN` | **não** | Token privado server-side do Headless channel |
 | `SHOPIFY_REVALIDATION_SECRET` | **não** | Segredo aleatório de no mínimo 32 caracteres compartilhado somente entre o app Admin e o endpoint interno de revalidação |
+| `SHOPIFY_SHOP_ID` | não | ID numérico da loja, usado nos endpoints do Customer Account API |
+| `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` | não | Client ID público (PKCE) do Customer Account API no canal Headless; sem client secret |
 
 ### Database / Auth legado (Supabase)
 
