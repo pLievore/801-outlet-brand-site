@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { env } from '../../../src/config/env';
+import { sendContactMessageAction } from '../../actions/contact';
 
 export default function ContactForm() {
   const phoneHref = env.getPhoneHref();
@@ -12,9 +13,11 @@ export default function ContactForm() {
     phone: '',
     subject: '',
     message: '',
+    company: '', // honeypot — hidden from real users
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -28,16 +31,28 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
-    // Simular envio (aqui você integraria com um serviço de email ou API)
-    setTimeout(() => {
+    try {
+      const result = await sendContactMessageAction(formData);
+      if (result.ok) {
+        setSubmitted(true);
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+          company: '',
+        });
+      } else {
+        setError(result.error ?? 'Something went wrong. Please try again.');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      setSubmitted(true);
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-      
-      // Reset submitted state after 5 seconds
-      setTimeout(() => setSubmitted(false), 5000);
-    }, 1000);
+    }
   };
 
   const contactMethods = [
@@ -72,8 +87,8 @@ export default function ContactForm() {
       title: 'Email us',
       description: 'Send us a message anytime',
       action: 'Mail to',
-      href: 'mailto:info@801outlet.com',
-      value: 'info@801outlet.com',
+      href: 'mailto:support@801outlet.com',
+      value: 'support@801outlet.com',
     },
     {
       icon: (
@@ -181,6 +196,28 @@ export default function ContactForm() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                {error ? (
+                  <p
+                    role="alert"
+                    className="rounded-xl border border-[rgb(var(--accent))]/40 bg-[rgb(var(--accent-soft))] px-4 py-3 text-sm leading-6"
+                  >
+                    {error}
+                  </p>
+                ) : null}
+
+                <div aria-hidden="true" className="hidden">
+                  <label htmlFor="company">Company</label>
+                  <input
+                    type="text"
+                    id="company"
+                    name="company"
+                    value={formData.company}
+                    onChange={handleChange}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </div>
+
                 <div>
                   <label
                     htmlFor="name"

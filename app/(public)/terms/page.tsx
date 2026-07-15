@@ -103,8 +103,8 @@ export default function TermsPage() {
               <li className="flex gap-3">
                 <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[rgb(var(--accent))]" />
                 <span>
-                  Payments are processed by Square, our payment provider. By placing an order you
-                  also accept Square's terms and privacy policy.
+                  Payments are processed securely by Shopify, our checkout provider. By placing an
+                  order you also accept Shopify's terms and privacy policy.
                 </span>
               </li>
               <li className="flex gap-3">
@@ -184,7 +184,7 @@ export default function TermsPage() {
         <div className="mt-8 rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
           <h2 className="text-lg font-semibold">Third-party links</h2>
           <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
-            Our site uses third-party services such as Square (payments) and may link to other
+            Our site uses third-party services such as Shopify (secure checkout and payments) and may link to other
             external sites. We are not responsible for the content, terms, or practices of those
             services. Your interactions with them are governed by their own terms.
           </p>
