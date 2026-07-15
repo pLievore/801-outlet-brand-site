@@ -14,6 +14,7 @@ import {
   adaptProductCard,
   adaptProductDetail,
 } from '../../../../src/lib/shopify/adapters/products';
+import { PurchasePanel } from '../../../components/cart/purchase-panel';
 import { CatalogProductCard } from '../../../components/catalog-product-card';
 import {
   FadeIn,
@@ -86,12 +87,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const whatsappHref = `https://wa.me/${env.phoneE164.replace(/\D/g, '')}?text=${encodeURIComponent(
     `Hi 801 Outlet, I would like more information about ${product.title}: ${env.siteUrl}/products/${product.handle}`
   )}`;
-  const visibleOptions = product.options.filter(
-    (option) =>
-      option.name.toLowerCase() !== 'title' &&
-      !(option.values.length === 1 && option.values[0] === 'Default Title')
-  );
-
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -194,43 +189,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </span>
             </div>
 
-            {visibleOptions.length > 0 ? (
-              <div className="mt-7 space-y-4">
-                {visibleOptions.map((option) => (
-                  <div key={option.id}>
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[rgb(var(--muted))]">
-                      {option.name}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {option.values.map((value) => (
-                        <span
-                          key={value}
-                          className="rounded-full border border-[rgb(var(--fg))] bg-white px-3 py-1.5 text-xs font-semibold"
-                        >
-                          {value}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
             <div className="mt-8 rounded-2xl border border-[rgb(var(--border))] bg-white p-5">
-              <button
-                type="button"
-                disabled
-                aria-describedby="commerce-preview-note"
-                className="w-full cursor-not-allowed rounded-full bg-[rgb(var(--fg))] px-6 py-3 text-sm font-semibold text-white opacity-55"
-              >
-                {inStock ? 'Add to cart' : 'Currently unavailable'}
-              </button>
-              <p
-                id="commerce-preview-note"
-                className="mt-3 text-center text-xs leading-relaxed text-[rgb(var(--muted))]"
-              >
-                Online ordering will be enabled before this preview launches.
-              </p>
+              <PurchasePanel
+                options={product.options}
+                variants={product.variants}
+              />
               <a
                 href={whatsappHref}
                 target="_blank"

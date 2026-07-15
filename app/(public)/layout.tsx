@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
 
 import { env } from '../../src/config/env';
 import type { NavigationLink } from '../../src/lib/navigation/types';
 import { getMainNavigation } from '../../src/lib/shopify/navigation';
+import { CartProvider } from '../components/cart/cart-provider';
+import { CartButton, MiniCart } from '../components/cart/mini-cart';
 import { MobileNav } from '../components/mobile-nav';
 import { PredictiveSearch } from '../components/predictive-search';
 import { buttonStyles } from '../components/ui/button';
@@ -20,20 +21,23 @@ export default async function PublicLayout({
   const phoneHref = env.getPhoneHref();
 
   return (
-    <div className="min-h-dvh">
-      <a
-        href="#main-content"
-        className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-full bg-[rgb(var(--fg))] px-5 py-3 text-sm font-semibold text-white transition focus:translate-y-0"
-      >
-        Skip to content
-      </a>
-      <AnnouncementBar />
-      <SiteHeader navigation={navigation} phoneHref={phoneHref} />
-      <div id="main-content" tabIndex={-1}>
-        {children}
+    <CartProvider>
+      <div className="min-h-dvh">
+        <a
+          href="#main-content"
+          className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-full bg-[rgb(var(--fg))] px-5 py-3 text-sm font-semibold text-white transition focus:translate-y-0"
+        >
+          Skip to content
+        </a>
+        <AnnouncementBar />
+        <SiteHeader navigation={navigation} phoneHref={phoneHref} />
+        <div id="main-content" tabIndex={-1}>
+          {children}
+        </div>
+        <SiteFooter />
+        <MiniCart />
       </div>
-      <SiteFooter />
-    </div>
+    </CartProvider>
   );
 }
 
@@ -91,15 +95,7 @@ function SiteHeader({
 
         <PredictiveSearch className="ml-auto hidden w-full max-w-xs md:block" />
 
-        <button
-          type="button"
-          disabled
-          className={buttonStyles({ variant: 'ghost', size: 'icon' })}
-          aria-label="Cart is coming in the Shopify checkout phase"
-          title="Cart is coming in the Shopify checkout phase"
-        >
-          <ShoppingBag aria-hidden="true" className="size-5" />
-        </button>
+        <CartButton />
 
         <a
           href={phoneHref}
