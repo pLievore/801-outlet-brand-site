@@ -15,7 +15,7 @@
   --surface: 255 255 255;
   --surface-muted: 244 244 239;
   --border: 220 225 230;    /* soft border */
-  --border-strong: 190 198 195;
+  --border-strong: 134 144 140; /* >=3:1 on white and bg per WCAG 1.4.11 */
   --accent: 168 79 27;      /* accessible outlet orange */
   --accent-soft: 247 237 226;
   --sage: 122 143 122;

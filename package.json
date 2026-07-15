@@ -13,9 +13,10 @@
     "typecheck": "tsc --noEmit",
     "graphql-codegen": "graphql-codegen",
     "shopify:check": "tsx --conditions=react-server --env-file=.env.local scripts/check-shopify.ts",
-    "test": "npm run test:shopify",
+    "test": "npm run test:shopify && npm run test:design",
     "test:shopify": "tsx --test src/lib/format.test.ts src/lib/catalog/filters.test.ts src/lib/shopify/config-schema.test.ts src/lib/shopify/errors.test.ts src/lib/shopify/adapters/menu.test.ts src/lib/shopify/adapters/products.test.ts src/lib/shopify/revalidation.test.ts",
-    "db:seed": "tsx --env-file=.env.local db/seed.ts"
+    "db:seed": "tsx --env-file=.env.local db/seed.ts",
+    "test:design": "tsx --test src/lib/design/contrast.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
