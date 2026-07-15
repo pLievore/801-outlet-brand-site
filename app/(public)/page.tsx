@@ -1,10 +1,16 @@
 import Link from 'next/link';
+import { CalendarDays, MapPin } from 'lucide-react';
+
 import HeroVideo from '../components/herovideo';
 import { CatalogProductCard } from '../components/catalog-product-card';
+import { ReviewsSection } from '../components/reviews-section';
 import { env } from '../../src/config/env';
 import { getProducts } from '../../src/lib/shopify';
 import { adaptProductCard } from '../../src/lib/shopify/adapters/products';
 import { FadeIn, FadeMount, StaggerGrid, StaggerItem } from '../components/motion';
+import { ButtonLink } from '../components/ui/button';
+import { Container } from '../components/ui/container';
+import { Section } from '../components/ui/section';
 
 export const revalidate = 60;
 
@@ -90,6 +96,9 @@ export default async function HomePage() {
           </FadeMount>
         </div>
       </section>
+
+      {/* TRUST STRIP */}
+      <TrustStrip />
 
       {/* FEATURED PRODUCTS */}
       {featured.length > 0 ? (
@@ -195,65 +204,163 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* TRUST STRIP */}
+      {/* EDITORIAL VALUE PROP */}
       <FadeIn>
-        <section className="border-y border-[rgb(var(--border))] bg-white/50">
-          <div className="mx-auto max-w-6xl px-5 py-10">
-            <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
-              {[
-                {
-                  label: 'Utah delivery',
-                  sub: 'Fast & local',
-                  icon: (
-                    <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h11v9H3zM14 11h4l3 3v2h-7M5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm12 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                    </svg>
-                  ),
-                },
-                {
-                  label: 'Secure checkout',
-                  sub: 'Secure Shopify checkout',
-                  icon: (
-                    <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V8a4 4 0 118 0v3" />
-                      <rect x="5" y="11" width="14" height="9" rx="1.5" strokeLinejoin="round" />
-                    </svg>
-                  ),
-                },
-                {
-                  label: 'Personal support',
-                  sub: 'Talk with our team',
-                  icon: (
-                    <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.21l-2 1a11 11 0 005.16 5.16l1-2a1 1 0 011.21-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1A14 14 0 013 6V5z" />
-                    </svg>
-                  ),
-                },
-                {
-                  label: 'Showroom visits',
-                  sub: 'Available by appointment',
-                  icon: (
-                    <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ),
-                },
-              ].map((t) => (
-                <div key={t.label} className="flex items-start gap-3">
-                  <div className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--accent-soft))] text-[rgb(var(--accent))]">
-                    {t.icon}
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold">{t.label}</div>
-                    <div className="mt-0.5 text-xs text-[rgb(var(--muted))]">{t.sub}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        <section className="border-y border-[rgb(var(--border))] bg-[rgb(var(--sage-soft))]">
+          <Container size="narrow" className="py-16 text-center md:py-20">
+            <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--sage-ink))]">
+              WHY 801 OUTLET
+            </p>
+            <h2 className="mt-4 font-display text-3xl leading-tight tracking-tight text-[rgb(var(--sage-ink))] md:text-5xl">
+              Quality furniture at outlet pricing,
+              <br className="hidden md:block" /> with{' '}
+              <span className="italic">personal service</span>.
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-[rgb(var(--sage-ink))]">
+              Every piece is hand-picked, priced below retail, and backed by our
+              team in South Salt Lake — from your first question to delivery at
+              your door.
+            </p>
+          </Container>
         </section>
+      </FadeIn>
+
+      {/* REVIEWS */}
+      <ReviewsSection />
+
+      {/* SHOWROOM */}
+      <FadeIn>
+        <Section spacing="sm">
+          <Container>
+            <div className="grid overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white lg:grid-cols-2">
+              <div className="flex flex-col justify-center p-8 md:p-12">
+                <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[rgb(var(--sage-soft))] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[rgb(var(--sage-ink))]">
+                  <CalendarDays aria-hidden="true" className="size-4" />
+                  By appointment only
+                </span>
+                <h2 className="mt-5 font-display text-3xl tracking-tight md:text-4xl">
+                  Visit our <span className="italic">showroom</span>
+                </h2>
+                <p className="mt-4 max-w-md text-sm leading-6 text-[rgb(var(--muted))]">
+                  See and feel available pieces in person, and get help finding
+                  the right fit for your home.
+                </p>
+                <div className="mt-6">
+                  <ButtonLink href="/showroom" variant="sage" size="lg">
+                    Schedule a visit
+                  </ButtonLink>
+                </div>
+              </div>
+              <div className="flex flex-col justify-center gap-4 border-t border-[rgb(var(--border))] bg-[rgb(var(--surface-muted))] p-8 md:p-12 lg:border-l lg:border-t-0">
+                <div className="flex items-start gap-3">
+                  <MapPin
+                    aria-hidden="true"
+                    className="mt-0.5 size-5 shrink-0 text-[rgb(var(--sage-ink))]"
+                  />
+                  <p className="text-sm leading-6">
+                    <span className="font-semibold">801 Outlet showroom</span>
+                    <br />
+                    2251 South 400 East
+                    <br />
+                    South Salt Lake, UT 84115
+                  </p>
+                </div>
+                <p className="text-xs leading-relaxed text-[rgb(var(--muted))]">
+                  Appointments are confirmed by our team over WhatsApp or phone
+                  before your visit.
+                </p>
+              </div>
+            </div>
+          </Container>
+        </Section>
+      </FadeIn>
+
+      {/* FINAL CTA */}
+      <FadeIn>
+        <Section aria-labelledby="final-cta-heading">
+          <Container size="narrow" className="text-center">
+            <h2
+              id="final-cta-heading"
+              className="font-display text-4xl leading-tight tracking-tight md:text-5xl"
+            >
+              Ready to find <span className="italic">your piece</span>?
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[rgb(var(--muted))]">
+              Browse what&apos;s in stock today — new deals land every week.
+            </p>
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <ButtonLink href="/products" variant="primary" size="lg">
+                Browse products
+              </ButtonLink>
+              <ButtonLink href="/showroom" variant="secondary" size="lg">
+                Plan a showroom visit
+              </ButtonLink>
+            </div>
+          </Container>
+        </Section>
       </FadeIn>
     </main>
   );
 }
 
+function TrustStrip() {
+  return (
+    <FadeIn>
+      <section className="border-y border-[rgb(var(--border))] bg-white/50">
+        <div className="mx-auto max-w-6xl px-5 py-10">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+            {[
+              {
+                label: 'Utah delivery',
+                sub: 'Fast & local',
+                icon: (
+                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h11v9H3zM14 11h4l3 3v2h-7M5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm12 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                  </svg>
+                ),
+              },
+              {
+                label: 'Secure checkout',
+                sub: 'Secure Shopify checkout',
+                icon: (
+                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V8a4 4 0 118 0v3" />
+                    <rect x="5" y="11" width="14" height="9" rx="1.5" strokeLinejoin="round" />
+                  </svg>
+                ),
+              },
+              {
+                label: 'Personal support',
+                sub: 'Talk with our team',
+                icon: (
+                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.21l-2 1a11 11 0 005.16 5.16l1-2a1 1 0 011.21-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1A14 14 0 013 6V5z" />
+                  </svg>
+                ),
+              },
+              {
+                label: 'Showroom visits',
+                sub: 'Available by appointment',
+                icon: (
+                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ),
+              },
+            ].map((t) => (
+              <div key={t.label} className="flex items-start gap-3">
+                <div className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--accent-soft))] text-[rgb(var(--accent))]">
+                  {t.icon}
+                </div>
+                <div>
+                  <div className="text-xs font-semibold">{t.label}</div>
+                  <div className="mt-0.5 text-xs text-[rgb(var(--muted))]">{t.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </FadeIn>
+  );
+}
