@@ -25,7 +25,7 @@ export default async function AdminLayout({
   children: ReactNode;
 }) {
   const headerList = await headers();
-  const pathname = headerList.get('x-invoke-path') ?? '';
+  const pathname = headerList.get('x-pathname') ?? '';
   const isLogin = pathname === '/admin/login';
 
   const authenticated = await hasValidPanelSession();
