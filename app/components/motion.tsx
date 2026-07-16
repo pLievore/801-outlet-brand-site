@@ -99,7 +99,7 @@ type StaggerGridProps = {
   fast?: boolean;
 };
 
-export function StaggerGrid({ children, className, fast }: StaggerGridProps) {
+export function StaggerGrid({ children, className }: StaggerGridProps) {
   const reduced = useReducedMotion();
   if (reduced) return <div className={className}>{children}</div>;
 

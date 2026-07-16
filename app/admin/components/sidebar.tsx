@@ -147,8 +147,12 @@ export function AdminSidebar({ adminName }: { adminName: string }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Close drawer on route change
-  useEffect(() => { setOpen(false); }, [pathname]);
+  // Close drawer on route change (state adjustment during render)
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
+    setOpen(false);
+  }
 
   // Prevent body scroll when drawer is open
   useEffect(() => {

@@ -104,7 +104,7 @@ export default function TermsPage() {
                 <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[rgb(var(--accent))]" />
                 <span>
                   Payments are processed securely by Shopify, our checkout provider. By placing an
-                  order you also accept Shopify's terms and privacy policy.
+                  order you also accept Shopify’s terms and privacy policy.
                 </span>
               </li>
               <li className="flex gap-3">
@@ -136,7 +136,7 @@ export default function TermsPage() {
         <div className="mt-12 rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
           <h2 className="text-lg font-semibold">Delivery</h2>
           <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
-            Delivery is available within Utah only. After purchase, we'll contact you to confirm
+            Delivery is available within Utah only. After purchase, we’ll contact you to confirm
             address details and schedule a delivery window. Estimated timelines are approximate and
             not guaranteed.{' '}
             <Link
@@ -163,7 +163,7 @@ export default function TermsPage() {
         <div className="mt-8 rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
           <h2 className="text-lg font-semibold">Disclaimers</h2>
           <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
-            The site and its content are provided on an "as is" and "as available" basis without
+            The site and its content are provided on an “as is” and “as available” basis without
             warranties of any kind, whether express or implied. We do not warrant that the site
             will be uninterrupted, error-free, or free of harmful components.
           </p>
@@ -195,7 +195,7 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold">Changes to these terms</h2>
           <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
             We may update these terms from time to time. Updates take effect when posted on this
-            page along with a revised "Last updated" date. Continued use of the site after changes
+            page along with a revised “Last updated” date. Continued use of the site after changes
             constitutes acceptance of the new terms.
           </p>
         </div>

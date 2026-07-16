@@ -229,7 +229,7 @@ export async function getSalesByCategory(period: Period, limit = 6): Promise<Cat
 
   // If category has a parent, use parent name instead (collapse sub-categories)
   const allCatIds = [...new Set((cats ?? []).map((c) => c.parent_id).filter(Boolean))] as string[];
-  let parentNames = new Map<string, string>();
+  const parentNames = new Map<string, string>();
   if (allCatIds.length) {
     const { data: parents } = await supabaseAdmin
       .from('categories')

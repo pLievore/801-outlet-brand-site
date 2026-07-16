@@ -56,7 +56,7 @@ export default function DeliveryPage() {
               <p className="mt-2 text-sm leading-relaxed text-[rgb(var(--muted))]">
                 We currently serve the entire state of Utah. Delivery is available to residential
                 addresses including homes, apartments, and condominiums. After you complete your
-                purchase, we'll contact you within 24-48 hours to confirm your address and schedule
+                purchase, we’ll contact you within 24-48 hours to confirm your address and schedule
                 a delivery window that works for you.
               </p>
             </div>
@@ -103,7 +103,7 @@ export default function DeliveryPage() {
                     <h3 className="text-sm font-semibold">Scheduled Delivery</h3>
                   </div>
                   <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--muted))]">
-                    Standard delivery option for all items. We'll contact you after purchase to
+                    Standard delivery option for all items. We’ll contact you after purchase to
                     schedule a convenient delivery window. Usually 7-14 business days.
                   </p>
                   <div className="mt-4">
@@ -215,7 +215,7 @@ export default function DeliveryPage() {
               Ready to order?
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
-              Browse our collection and place your order. We'll handle the rest and get your
+              Browse our collection and place your order. We’ll handle the rest and get your
               furniture delivered to your Utah home.
             </p>
 

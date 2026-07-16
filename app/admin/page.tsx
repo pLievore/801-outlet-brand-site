@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Suspense } from 'react';
 import { getRevenueKpis, getRevenueChart, getTopProducts, getAdminOrders, getLowStockCount, getSalesByCategory } from '../../src/lib/admin';
 import type { Period } from '../../src/lib/admin';
@@ -82,14 +83,14 @@ export default async function AdminDashboard({ searchParams }: DashboardProps) {
           </div>
         ))}
         {lowStockCount > 0 && (
-          <a
+          <Link
             href="/admin/inventory?filter=low"
             className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-5 hover:bg-yellow-500/15 transition"
           >
             <div className="text-xs text-yellow-400">Low stock alerts</div>
             <div className="mt-1 text-2xl font-bold text-yellow-300">{lowStockCount}</div>
             <div className="mt-1 text-xs text-yellow-500">View inventory →</div>
-          </a>
+          </Link>
         )}
       </div>
 
@@ -145,9 +146,9 @@ export default async function AdminDashboard({ searchParams }: DashboardProps) {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-white">Recent orders</h2>
-            <a href="/admin/orders" className="text-xs text-neutral-400 hover:text-white transition">
+            <Link href="/admin/orders" className="text-xs text-neutral-400 hover:text-white transition">
               View all →
-            </a>
+            </Link>
           </div>
           <div className="space-y-2">
             {recentOrders.map((order) => (

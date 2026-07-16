@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getInventory } from '../../../src/lib/admin';
 import { StockCell } from './stock-cell';
 
@@ -18,7 +19,7 @@ export default async function InventoryPage({ searchParams }: Props) {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Inventory</h1>
         <div className="flex gap-1 rounded-xl bg-white/5 p-1">
-          <a
+          <Link
             href="/admin/inventory"
             className={
               'rounded-lg px-3 py-1.5 text-xs font-medium transition ' +
@@ -26,8 +27,8 @@ export default async function InventoryPage({ searchParams }: Props) {
             }
           >
             All
-          </a>
-          <a
+          </Link>
+          <Link
             href="/admin/inventory?filter=low"
             className={
               'rounded-lg px-3 py-1.5 text-xs font-medium transition ' +
@@ -35,7 +36,7 @@ export default async function InventoryPage({ searchParams }: Props) {
             }
           >
             Low stock
-          </a>
+          </Link>
         </div>
       </div>
 

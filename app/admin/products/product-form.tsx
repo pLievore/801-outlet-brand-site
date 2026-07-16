@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState, useRef, useState } from 'react';
 import { saveProduct } from './actions';
 
@@ -257,12 +258,12 @@ export function ProductForm({ product, saved }: { product: ProductData; saved?: 
         >
           {pending ? 'Saving…' : 'Save product'}
         </button>
-        <a
+        <Link
           href="/admin/products"
           className="rounded-full border border-white/10 px-6 py-2.5 text-sm font-medium text-neutral-300 hover:text-white hover:border-white/20 transition"
         >
           Cancel
-        </a>
+        </Link>
       </div>
     </form>
   );

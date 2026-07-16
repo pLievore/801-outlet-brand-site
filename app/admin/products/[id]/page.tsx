@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '../../../../src/lib/supabase/admin';
 import { ProductForm } from '../product-form';
@@ -54,9 +55,9 @@ export default async function EditProductPage({ params, searchParams }: Props) {
   return (
     <div className="px-6 py-8 space-y-6">
       <div className="flex items-center justify-between">
-        <a href="/admin/products" className="text-sm text-neutral-400 hover:text-white transition">
+        <Link href="/admin/products" className="text-sm text-neutral-400 hover:text-white transition">
           ← Products
-        </a>
+        </Link>
         <ArchiveButton productId={id} />
       </div>
       <h1 className="text-xl font-bold text-white">Edit: {p.name}</h1>

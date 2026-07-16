@@ -38,7 +38,6 @@ function SortHeader({
   current,
   dir,
   search,
-  page,
 }: {
   field: CustomerSortField;
   label: string;

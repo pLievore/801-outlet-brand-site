@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { getSupabaseBrowser } from '../../../src/lib/supabase/browser';
 
 function AdminLoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const next = params.get('next') ?? '/admin';
   const error = params.get('error');

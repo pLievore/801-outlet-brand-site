@@ -268,7 +268,7 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold">Changes to this policy</h2>
           <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
             We may update this privacy policy from time to time. We will notify you of any changes
-            by posting the new policy on this page and updating the "Last updated" date. We
+            by posting the new policy on this page and updating the “Last updated” date. We
             encourage you to review this policy periodically.
           </p>
         </div>
@@ -281,7 +281,7 @@ export default function PrivacyPage() {
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
               If you have any questions or concerns about this privacy policy or our data practices,
-              please don't hesitate to get in touch.
+              please don’t hesitate to get in touch.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

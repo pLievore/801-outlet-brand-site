@@ -22,7 +22,7 @@ export default function AboutPage() {
             Premium comfort. Outlet prices.
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[rgb(var(--muted))]">
-            We're Utah's destination for premium furniture deals. Offering curated collections of
+            We’re Utah’s destination for premium furniture deals. Offering curated collections of
             sofas, beds, recliners, and more — all at outlet prices, delivered directly to your
             home.
           </p>
@@ -49,9 +49,9 @@ export default function AboutPage() {
             <div>
               <h2 className="text-lg font-semibold">Our mission</h2>
               <p className="mt-2 text-sm leading-relaxed text-[rgb(var(--muted))]">
-                We believe everyone deserves premium furniture without the premium price tag. That's
+                We believe everyone deserves premium furniture without the premium price tag. That’s
                 why we source high-quality pieces directly and pass the savings on to you. Clean
-                design, modern aesthetics, and reliable quality — that's the 801 Outlet promise.
+                design, modern aesthetics, and reliable quality — that’s the 801 Outlet promise.
               </p>
             </div>
           </div>

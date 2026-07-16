@@ -1,18 +1,10 @@
 import 'server-only';
 
-import { createHash, randomBytes } from 'node:crypto';
-
 import { getCustomerAccountConfig } from './config';
 
 const SCOPES = 'openid email customer-account-api:full';
 
-export function generateRandomToken(bytes = 32): string {
-  return randomBytes(bytes).toString('base64url');
-}
-
-export function codeChallengeFromVerifier(verifier: string): string {
-  return createHash('sha256').update(verifier).digest('base64url');
-}
+export { codeChallengeFromVerifier, generateRandomToken } from './pkce';
 
 export function buildAuthorizationUrl({
   redirectUri,
