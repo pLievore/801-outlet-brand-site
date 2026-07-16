@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Download, Upload } from 'lucide-react';
+import { Download, Plus, Upload } from 'lucide-react';
 
 import { listPanelProducts } from '../../../src/lib/panel/products';
 import { ProductsManager } from './products-manager';
@@ -37,10 +37,17 @@ export default async function PanelProductsPage({
           </a>
           <Link
             href="/admin/products/import"
-            className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-4 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90"
+            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-sm font-semibold transition hover:border-[rgb(var(--fg))]"
           >
             <Upload aria-hidden="true" className="size-4" />
             Import CSV
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-4 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+            New product
           </Link>
         </div>
       </div>

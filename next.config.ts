@@ -1,6 +1,13 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Panel photo uploads arrive as FormData (resized client-side to
+      // ~<1.5 MB each); Vercel still caps any request at ~4.5 MB.
+      bodySizeLimit: '8mb',
+    },
+  },
   images: {
     remotePatterns: [
       {
