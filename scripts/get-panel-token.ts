@@ -14,7 +14,9 @@ import { exec } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SHOP_DOMAIN = '801-outlet.myshopify.com';
+// Canonical myshopify domain (801-outlet.myshopify.com is a legacy alias
+// that redirects; OAuth callbacks always carry the canonical domain).
+const SHOP_DOMAIN = 'xwn9c1-m8.myshopify.com';
 const PORT = 53134;
 const REDIRECT_URI = `http://localhost:${PORT}/callback`;
 const SCOPES =
@@ -67,14 +69,16 @@ const server = createServer(async (request, response) => {
   }
 
   const params = url.searchParams;
-  if (
-    params.get('state') !== state ||
-    params.get('shop') !== SHOP_DOMAIN ||
-    !params.get('code') ||
-    !validHmac(params)
-  ) {
+  const checks = {
+    state: params.get('state') === state,
+    shop: params.get('shop') === SHOP_DOMAIN,
+    code: Boolean(params.get('code')),
+    hmac: validHmac(params),
+  };
+  if (!checks.state || !checks.shop || !checks.code || !checks.hmac) {
     response.writeHead(400).end('Invalid callback. Check the terminal.');
-    console.error('Callback validation failed. Try again.');
+    console.error('Callback validation failed:', checks);
+    console.error('shop param received:', params.get('shop'));
     server.close();
     return;
   }

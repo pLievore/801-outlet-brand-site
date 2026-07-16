@@ -1,153 +1,263 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { requireAdmin } from '../../../src/lib/admin';
-import { supabaseAdmin } from '../../../src/lib/supabase/admin';
 
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
+import { hasValidPanelSession } from '../../../src/lib/panel/session';
+import {
+  listPanelProducts,
+  setInventoryQuantities,
+  updateProductStatus,
+  updateVariantPricing,
+  type PanelProduct,
+} from '../../../src/lib/panel/products';
+import { AdminUserErrorsError } from '../../../src/lib/shopify-admin/client';
+
+export type PanelActionResult = { ok: boolean; error?: string };
+
+function errorMessage(error: unknown): string {
+  if (error instanceof AdminUserErrorsError) {
+    return error.userErrors.map((entry) => entry.message).join(' ');
+  }
+  return 'The update failed. Please try again.';
 }
 
-export async function saveProduct(
-  productId: string | null,
-  _prevState: { error: string } | null,
-  fd: FormData
-): Promise<{ error: string } | null> {
-  try {
-    await requireAdmin();
-  } catch {
-    return { error: 'Unauthorized.' };
+async function guard(): Promise<boolean> {
+  return hasValidPanelSession();
+}
+
+const MONEY_PATTERN = /^\d+(\.\d{1,2})?$/;
+const PRODUCT_GID = /^gid:\/\/shopify\/Product\/\d+$/;
+const VARIANT_GID = /^gid:\/\/shopify\/ProductVariant\/\d+$/;
+const INVENTORY_GID = /^gid:\/\/shopify\/InventoryItem\/\d+$/;
+
+export async function saveProductAction(input: {
+  productId: string;
+  status: PanelProduct['status'];
+  variants: Array<{
+    id: string;
+    inventoryItemId: string;
+    price: string;
+    compareAtPrice: string;
+    quantity: number;
+    pricingChanged: boolean;
+    quantityChanged: boolean;
+  }>;
+  statusChanged: boolean;
+}): Promise<PanelActionResult> {
+  if (!(await guard())) return { ok: false, error: 'Session expired. Sign in again.' };
+
+  if (!PRODUCT_GID.test(input.productId)) return { ok: false, error: 'Invalid product.' };
+  if (!['ACTIVE', 'DRAFT', 'ARCHIVED'].includes(input.status)) {
+    return { ok: false, error: 'Invalid status.' };
   }
 
-  const name = fd.get('name') as string;
-  const description = (fd.get('description') as string) || null;
-  const status = (fd.get('status') as string) || 'draft';
-  const isFeatured = fd.get('is_featured') === 'on';
-  const sku = fd.get('sku') as string;
-  const priceStr = fd.get('price') as string;
-  const compareStr = (fd.get('compare_price') as string) || '';
-  const stockStr = fd.get('stock_qty') as string;
-  const lowThresholdStr = (fd.get('low_stock_threshold') as string) || '5';
-  const imageUrlInput = (fd.get('image_url') as string) || '';
-  const imageFile = fd.get('image_file');
+  const pricing = input.variants.filter((variant) => variant.pricingChanged);
+  const stock = input.variants.filter((variant) => variant.quantityChanged);
 
-  if (!name || !sku || !priceStr) {
-    return { error: 'Name, SKU, and price are required.' };
-  }
-
-  try {
-
-  // Upload image file to Supabase Storage if provided
-  let imageUrl = imageUrlInput;
-  if (imageFile instanceof File && imageFile.size > 0) {
-    if (imageFile.size > 5 * 1024 * 1024) {
-      return { error: 'Image must be smaller than 5 MB.' };
+  for (const variant of pricing) {
+    if (
+      !VARIANT_GID.test(variant.id) ||
+      !MONEY_PATTERN.test(variant.price) ||
+      (variant.compareAtPrice !== '' && !MONEY_PATTERN.test(variant.compareAtPrice))
+    ) {
+      return { ok: false, error: 'Invalid price value.' };
     }
-    const ext = imageFile.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const buffer = Buffer.from(await imageFile.arrayBuffer());
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('products')
-      .upload(path, buffer, { contentType: imageFile.type, upsert: false });
-    if (uploadError) return { error: `Image upload failed: ${uploadError.message}` };
-    const { data: { publicUrl } } = supabaseAdmin.storage.from('products').getPublicUrl(path);
-    imageUrl = publicUrl;
+  }
+  for (const variant of stock) {
+    if (
+      !INVENTORY_GID.test(variant.inventoryItemId) ||
+      !Number.isInteger(variant.quantity) ||
+      variant.quantity < 0 ||
+      variant.quantity > 100000
+    ) {
+      return { ok: false, error: 'Invalid quantity value.' };
+    }
   }
 
-  const priceCents = Math.round(parseFloat(priceStr) * 100);
-  const compareCents = compareStr ? Math.round(parseFloat(compareStr) * 100) : null;
-  const stockQty = parseInt(stockStr, 10) || 0;
-  const lowStockThreshold = parseInt(lowThresholdStr, 10) || 5;
-
-  if (productId) {
-    // Update product
-    await supabaseAdmin
-      .from('products')
-      .update({ name, description, status: status as 'draft' | 'active' | 'archived', is_featured: isFeatured, updated_at: new Date().toISOString() })
-      .eq('id', productId);
-
-    // Update first variant
-    const { data: variants } = await supabaseAdmin
-      .from('product_variants')
-      .select('id')
-      .eq('product_id', productId)
-      .limit(1);
-
-    if (variants?.[0]) {
-      await supabaseAdmin
-        .from('product_variants')
-        .update({ sku, price_cents: priceCents, compare_at_price_cents: compareCents, stock_qty: stockQty, low_stock_threshold: lowStockThreshold })
-        .eq('id', variants[0].id);
+  try {
+    if (input.statusChanged) {
+      await updateProductStatus(input.productId, input.status);
+    }
+    if (pricing.length > 0) {
+      await updateVariantPricing(
+        input.productId,
+        pricing.map((variant) => ({
+          id: variant.id,
+          price: variant.price,
+          compareAtPrice:
+            variant.compareAtPrice === '' ? null : variant.compareAtPrice,
+        }))
+      );
+    }
+    if (stock.length > 0) {
+      await setInventoryQuantities(
+        stock.map((variant) => ({
+          inventoryItemId: variant.inventoryItemId,
+          quantity: variant.quantity,
+        }))
+      );
     }
 
-    // Update image if provided
-    if (imageUrl) {
-      const { data: imgs } = await supabaseAdmin
-        .from('product_images')
-        .select('id')
-        .eq('product_id', productId)
-        .order('sort_order')
-        .limit(1);
+    revalidatePath('/admin/products');
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+}
 
-      if (imgs?.[0]) {
-        await supabaseAdmin.from('product_images').update({ url: imageUrl }).eq('id', imgs[0].id);
-      } else {
-        await supabaseAdmin.from('product_images').insert({ product_id: productId, url: imageUrl, sort_order: 0 });
+export type ImportRow = {
+  variantId: string;
+  price?: string;
+  compareAtPrice?: string;
+  quantity?: number;
+};
+
+export type ImportPreviewRow = {
+  variantId: string;
+  label: string;
+  changes: string[];
+  valid: boolean;
+  error?: string;
+};
+
+export async function previewImportAction(
+  rows: ImportRow[]
+): Promise<{ ok: boolean; error?: string; preview?: ImportPreviewRow[] }> {
+  if (!(await guard())) return { ok: false, error: 'Session expired. Sign in again.' };
+  if (rows.length === 0 || rows.length > 500) {
+    return { ok: false, error: 'The file must contain between 1 and 500 rows.' };
+  }
+
+  const products = await listPanelProducts();
+  const byVariant = new Map(
+    products.flatMap((product) =>
+      product.variants.map((variant) => [
+        variant.id,
+        { product, variant },
+      ] as const)
+    )
+  );
+
+  const preview = rows.map((row): ImportPreviewRow => {
+    const match = byVariant.get(row.variantId);
+    if (!match) {
+      return {
+        variantId: row.variantId,
+        label: row.variantId,
+        changes: [],
+        valid: false,
+        error: 'Variant not found in the store.',
+      };
+    }
+
+    const { product, variant } = match;
+    const label =
+      variant.title === 'Default Title'
+        ? product.title
+        : `${product.title} — ${variant.title}`;
+    const changes: string[] = [];
+
+    if (row.price !== undefined && row.price !== variant.price) {
+      if (!MONEY_PATTERN.test(row.price)) {
+        return { variantId: row.variantId, label, changes, valid: false, error: 'Invalid price.' };
       }
+      changes.push(`price ${variant.price} → ${row.price}`);
+    }
+    const currentCompare = variant.compareAtPrice ?? '';
+    if (row.compareAtPrice !== undefined && row.compareAtPrice !== currentCompare) {
+      if (row.compareAtPrice !== '' && !MONEY_PATTERN.test(row.compareAtPrice)) {
+        return { variantId: row.variantId, label, changes, valid: false, error: 'Invalid compare-at price.' };
+      }
+      changes.push(
+        `compare-at ${currentCompare || '—'} → ${row.compareAtPrice || '—'}`
+      );
+    }
+    if (row.quantity !== undefined && row.quantity !== variant.inventoryQuantity) {
+      if (!Number.isInteger(row.quantity) || row.quantity < 0 || row.quantity > 100000) {
+        return { variantId: row.variantId, label, changes, valid: false, error: 'Invalid quantity.' };
+      }
+      changes.push(`stock ${variant.inventoryQuantity} → ${row.quantity}`);
     }
 
-    const { data: slugRow } = await supabaseAdmin.from('products').select('slug').eq('id', productId).single();
-    revalidatePath('/admin/products');
-    if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
-    redirect(`/admin/products/${productId}?saved=1`);
-  } else {
-    // Create product
-    const slug = slugify(name);
-    const { data: product, error } = await supabaseAdmin
-      .from('products')
-      .insert({ name, description, slug, status: status as 'draft' | 'active' | 'archived', is_featured: isFeatured })
-      .select('id')
-      .single();
+    return { variantId: row.variantId, label, changes, valid: true };
+  });
 
-    if (error || !product) return { error: error?.message ?? 'Failed to create product' };
-
-    await supabaseAdmin.from('product_variants').insert({
-      product_id: product.id,
-      sku,
-      name: 'Default',
-      price_cents: priceCents,
-      compare_at_price_cents: compareCents,
-      stock_qty: stockQty,
-      low_stock_threshold: lowStockThreshold,
-      is_default: true,
-    });
-
-    if (imageUrl) {
-      await supabaseAdmin
-        .from('product_images')
-        .insert({ product_id: product.id, url: imageUrl, sort_order: 0 });
-    }
-
-    revalidatePath('/admin/products');
-    redirect(`/admin/products/${product.id}?saved=1`);
-  }
-  } catch (e) {
-    // Re-throw Next.js redirect/notFound so the framework can handle navigation
-    if ((e as { digest?: string }).digest?.startsWith('NEXT_REDIRECT')) throw e;
-    return { error: (e as Error).message ?? 'Unexpected error.' };
-  }
-  return null;
+  return { ok: true, preview };
 }
 
-export async function archiveProduct(productId: string) {
-  await requireAdmin();
-  await supabaseAdmin.from('products').update({ status: 'archived' }).eq('id', productId);
-  revalidatePath('/admin/products');
-  redirect('/admin/products');
+export async function applyImportAction(
+  rows: ImportRow[]
+): Promise<{ ok: boolean; error?: string; applied?: number }> {
+  if (!(await guard())) return { ok: false, error: 'Session expired. Sign in again.' };
+
+  const validation = await previewImportAction(rows);
+  if (!validation.ok || !validation.preview) {
+    return { ok: false, error: validation.error };
+  }
+  if (validation.preview.some((row) => !row.valid)) {
+    return { ok: false, error: 'Fix the invalid rows before applying.' };
+  }
+
+  const products = await listPanelProducts();
+  const byVariant = new Map(
+    products.flatMap((product) =>
+      product.variants.map((variant) => [
+        variant.id,
+        { product, variant },
+      ] as const)
+    )
+  );
+
+  const pricingByProduct = new Map<
+    string,
+    Array<{ id: string; price: string; compareAtPrice: string | null }>
+  >();
+  const stockUpdates: Array<{ inventoryItemId: string; quantity: number }> = [];
+  let applied = 0;
+
+  for (const row of rows) {
+    const match = byVariant.get(row.variantId);
+    if (!match) continue;
+    const { product, variant } = match;
+
+    const priceChanged = row.price !== undefined && row.price !== variant.price;
+    const compareChanged =
+      row.compareAtPrice !== undefined &&
+      row.compareAtPrice !== (variant.compareAtPrice ?? '');
+    if (priceChanged || compareChanged) {
+      const list = pricingByProduct.get(product.id) ?? [];
+      list.push({
+        id: variant.id,
+        price: row.price ?? variant.price,
+        compareAtPrice:
+          row.compareAtPrice === undefined
+            ? variant.compareAtPrice
+            : row.compareAtPrice === ''
+              ? null
+              : row.compareAtPrice,
+      });
+      pricingByProduct.set(product.id, list);
+      applied += 1;
+    }
+    if (row.quantity !== undefined && row.quantity !== variant.inventoryQuantity) {
+      stockUpdates.push({
+        inventoryItemId: variant.inventoryItemId,
+        quantity: row.quantity,
+      });
+      applied += 1;
+    }
+  }
+
+  try {
+    for (const [productId, variants] of pricingByProduct) {
+      await updateVariantPricing(productId, variants);
+    }
+    if (stockUpdates.length > 0) {
+      await setInventoryQuantities(stockUpdates);
+    }
+    revalidatePath('/admin/products');
+    return { ok: true, applied };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
 }

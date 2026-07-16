@@ -1,113 +1,75 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { Suspense, useActionState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getSupabaseBrowser } from '../../../src/lib/supabase/browser';
+import Image from 'next/image';
 
-function AdminLoginForm() {
-  const params = useSearchParams();
-  const next = params.get('next') ?? '/admin';
-  const error = params.get('error');
+import { loginAction } from './actions';
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(
-    error === 'unauthorized' ? 'Your account does not have admin access.' : null
-  );
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErr(null);
-    setLoading(true);
-
-    const supabase = getSupabaseBrowser();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (signInError) {
-      setErr(signInError.message);
-      setLoading(false);
-      return;
-    }
-
-    // Hard navigate so middleware re-runs and reads the new auth cookie
-    window.location.href = next;
-  };
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next') ?? '/admin/products';
+  const [state, formAction, pending] = useActionState(loginAction, {});
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-5">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="text-2xl font-bold text-white">801 Outlet</div>
-          <div className="mt-1 text-sm text-neutral-400">Admin panel</div>
-        </div>
+    <main className="flex min-h-dvh items-center justify-center bg-[rgb(var(--bg))] px-5">
+      <div className="w-full max-w-sm rounded-3xl border border-[rgb(var(--border))] bg-white p-8 text-center">
+        <span className="relative mx-auto block size-14 overflow-hidden rounded-2xl border border-[rgb(var(--border))]">
+          <Image
+            src="/brand/icon-512x512.png"
+            alt=""
+            fill
+            sizes="56px"
+            className="object-contain p-1.5"
+          />
+        </span>
+        <h1 className="mt-5 font-display text-3xl tracking-tight">
+          Team <span className="italic">panel</span>
+        </h1>
+        <p className="mt-2 text-sm text-[rgb(var(--muted))]">
+          Restricted access for 801 Outlet staff.
+        </p>
 
-        <form
-          onSubmit={onSubmit}
-          className="rounded-2xl border border-white/10 bg-white/5 p-7 backdrop-blur"
-        >
-          <h1 className="text-base font-semibold text-white">Sign in</h1>
-
-          {err ? (
-            <div className="mt-4 rounded-xl bg-red-500/15 px-4 py-3 text-sm text-red-400">
-              {err}
-            </div>
-          ) : null}
-
-          <div className="mt-5 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-neutral-400" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-orange-500/60 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                placeholder="admin@example.com"
-              />
-            </div>
-
-            <div>
-              <label
-                className="mb-1.5 block text-xs font-medium text-neutral-400"
-                htmlFor="password"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-orange-500/60 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                placeholder="••••••••"
-              />
-            </div>
+        <form action={formAction} className="mt-6 space-y-4 text-left">
+          <input type="hidden" name="next" value={next} />
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-2 block text-xs font-semibold"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              className="min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15"
+            />
           </div>
-
+          {state.error ? (
+            <p role="alert" className="text-xs font-semibold text-[rgb(var(--accent))]">
+              {state.error}
+            </p>
+          ) : null}
           <button
             type="submit"
-            disabled={loading}
-            className="mt-6 w-full rounded-full bg-orange-500 py-3 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:opacity-60"
+            disabled={pending}
+            className="min-h-11 w-full rounded-full bg-[rgb(var(--fg))] text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90 disabled:opacity-60"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {pending ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }
 
 export default function AdminLoginPage() {
   return (
     <Suspense>
-      <AdminLoginForm />
+      <LoginForm />
     </Suspense>
   );
 }

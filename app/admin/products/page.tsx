@@ -1,106 +1,67 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getAdminProducts } from '../../../src/lib/admin';
-import { ProductsTable } from './products-table';
+import { Download, Upload } from 'lucide-react';
 
-export const revalidate = 30;
+import { listPanelProducts } from '../../../src/lib/panel/products';
+import { ProductsManager } from './products-manager';
 
-interface Props {
-  searchParams: Promise<{ status?: string; search?: string; page?: string }>;
-}
+export const metadata: Metadata = { title: 'Products — 801 Outlet Panel' };
 
-const STATUSES = ['all', 'active', 'archived', 'draft'];
-
-export default async function AdminProductsPage({ searchParams }: Props) {
-  const sp = await searchParams;
-  const status = sp.status ?? 'all';
-  const search = sp.search ?? '';
-  const page = Number(sp.page ?? 1);
-  const pageSize = 20;
-
-  const { products, total } = await getAdminProducts({ status, search, page, pageSize });
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-  function pageUrl(p: number) {
-    const params = new URLSearchParams({
-      ...(status !== 'all' ? { status } : {}),
-      ...(search ? { search } : {}),
-      ...(p > 1 ? { page: String(p) } : {}),
-    });
-    return '/admin/products' + (params.size ? '?' + params.toString() : '');
-  }
+export default async function PanelProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const search = q?.trim().slice(0, 100) || undefined;
+  const products = await listPanelProducts(search);
 
   return (
-    <div className="px-6 py-8 space-y-6 max-w-7xl">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Products</h1>
-        <Link
-          href="/admin/products/new"
-          className="rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-400 transition"
-        >
-          + New product
-        </Link>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-1 flex-wrap rounded-xl bg-white/5 p-1">
-          {STATUSES.map((s) => (
-            <a
-              key={s}
-              href={`/admin/products?status=${s}${search ? `&search=${search}` : ''}`}
-              className={
-                'rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition ' +
-                (status === s
-                  ? 'bg-white/10 text-white'
-                  : 'text-neutral-400 hover:text-white')
-              }
-            >
-              {s}
-            </a>
-          ))}
+    <main className="px-5 py-8 md:px-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
+            CATALOG
+          </p>
+          <h1 className="mt-2 font-display text-4xl tracking-tight">
+            Products <span className="italic">({products.length})</span>
+          </h1>
         </div>
-
-        <form method="GET" action="/admin/products" className="flex gap-2">
-          <input type="hidden" name="status" value={status} />
-          <input
-            type="search"
-            name="search"
-            defaultValue={search}
-            placeholder="Search products�"
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:border-orange-500/50 focus:outline-none w-48"
-          />
-          <button
-            type="submit"
-            className="rounded-xl bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15 transition"
+        <div className="flex gap-2">
+          <a
+            href="/admin/products/export"
+            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-sm font-semibold transition hover:border-[rgb(var(--fg))]"
           >
-            Search
-          </button>
-        </form>
+            <Download aria-hidden="true" className="size-4" />
+            Export CSV
+          </a>
+          <Link
+            href="/admin/products/import"
+            className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-4 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90"
+          >
+            <Upload aria-hidden="true" className="size-4" />
+            Import CSV
+          </Link>
+        </div>
       </div>
 
-      {/* Table with bulk actions */}
-      <ProductsTable products={products} />
+      <form method="get" className="mt-6 max-w-sm">
+        <label htmlFor="q" className="sr-only">
+          Search products
+        </label>
+        <input
+          id="q"
+          name="q"
+          type="search"
+          defaultValue={search ?? ''}
+          placeholder="Search by title…"
+          className="min-h-11 w-full rounded-full border border-[rgb(var(--border-strong))] bg-white px-5 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15"
+        />
+      </form>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-neutral-500">{total} product{total !== 1 ? 's' : ''}</span>
-          <div className="flex gap-2">
-            {page > 1 && (
-              <a href={pageUrl(page - 1)} className="rounded-xl bg-white/5 px-3 py-1.5 text-neutral-300 hover:bg-white/10 transition">
-                Prev
-              </a>
-            )}
-            <span className="rounded-xl bg-white/10 px-3 py-1.5 text-white">
-              {page} / {totalPages}
-            </span>
-            {page < totalPages && (
-              <a href={pageUrl(page + 1)} className="rounded-xl bg-white/5 px-3 py-1.5 text-neutral-300 hover:bg-white/10 transition">
-                Next
-              </a>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+      <div className="mt-6">
+        <ProductsManager products={products} />
+      </div>
+    </main>
   );
 }
