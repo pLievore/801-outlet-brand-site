@@ -10,8 +10,10 @@ import {
   createCart,
   fetchCart,
   removeCartLines,
+  updateCartBuyerIdentity,
   updateCartLines,
 } from '../../src/lib/shopify/queries/cart';
+import { getCustomerAccessToken } from '../../src/lib/shopify/customer/session';
 
 const CART_COOKIE = 'shopify_cart_id';
 const CART_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -95,12 +97,22 @@ export async function addCartLineAction(
     const cartId = await readCartId();
     const existingCart = cartId ? await fetchCart(cartId, buyerIp) : null;
 
-    const cart = existingCart
+    let cart = existingCart
       ? await addCartLines(existingCart.id, [line], buyerIp)
       : await createCart([line], buyerIp);
 
     if (cart && cart.id !== cartId) {
       await persistCartId(cart.id);
+
+      // Fresh cart: attach the signed-in customer so checkout is prefilled.
+      const customerToken = await getCustomerAccessToken().catch(() => null);
+      if (customerToken) {
+        try {
+          cart = (await updateCartBuyerIdentity(cart.id, customerToken)) ?? cart;
+        } catch {
+          // Buyer identity is best-effort; the cart itself is intact.
+        }
+      }
     }
 
     return toResult(cart);

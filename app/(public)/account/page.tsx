@@ -120,9 +120,22 @@ export default async function AccountPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[rgb(var(--border))]">
-                  {orders.map((order) => (
+                  {orders.map((order) => {
+                    const numericId = order.id.split('/').pop()?.split('?')[0];
+                    return (
                     <tr key={order.id}>
-                      <td className="px-5 py-4 font-semibold">{order.name}</td>
+                      <td className="px-5 py-4 font-semibold">
+                        {numericId ? (
+                          <Link
+                            href={`/account/orders/${numericId}`}
+                            className="underline-offset-2 hover:underline"
+                          >
+                            {order.name}
+                          </Link>
+                        ) : (
+                          order.name
+                        )}
+                      </td>
                       <td className="px-5 py-4 text-[rgb(var(--muted))]">
                         {new Date(order.processedAt).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -140,7 +153,8 @@ export default async function AccountPage() {
                         {formatMoney(order.totalPrice)}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

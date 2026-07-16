@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'node:crypto';
 
 import { exchangeCodeForTokens } from '../../../../src/lib/shopify/customer/oauth';
 import { persistCustomerSession } from '../../../../src/lib/shopify/customer/session';
+import { updateCartBuyerIdentity } from '../../../../src/lib/shopify/queries/cart';
 
 function safeEqual(a: string, b: string): boolean {
   const bufferA = Buffer.from(a);
@@ -38,5 +39,16 @@ export async function GET(request: NextRequest) {
   if (!tokens) return failure;
 
   await persistCustomerSession(tokens);
+
+  // Attach any existing cart to the signed-in customer (best-effort).
+  const cartId = cookieStore.get('shopify_cart_id')?.value;
+  if (cartId) {
+    try {
+      await updateCartBuyerIdentity(cartId, tokens.accessToken);
+    } catch {
+      // Sign-in succeeds even if the cart association fails.
+    }
+  }
+
   return NextResponse.redirect(new URL('/account', origin));
 }

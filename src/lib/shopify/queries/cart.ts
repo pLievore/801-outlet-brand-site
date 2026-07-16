@@ -3,6 +3,8 @@ import 'server-only';
 import type {
   CartAddLinesMutation,
   CartAddLinesMutationVariables,
+  CartBuyerIdentityUpdateMutation,
+  CartBuyerIdentityUpdateMutationVariables,
   CartCreateMutation,
   CartCreateMutationVariables,
   CartQuery,
@@ -155,6 +157,25 @@ export const CART_REMOVE_LINES_MUTATION = `#graphql
   ${CART_FRAGMENT}
 ` as const;
 
+export const CART_BUYER_IDENTITY_UPDATE_MUTATION = `#graphql
+  mutation CartBuyerIdentityUpdate(
+    $cartId: ID!
+    $buyerIdentity: CartBuyerIdentityInput!
+  ) {
+    cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+      cart {
+        ...CartFields
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+  ${CART_FRAGMENT}
+` as const;
+
 type CartUserError = { field?: string[] | null; message: string; code?: string | null };
 
 export class CartUserErrorsError extends Error {
@@ -247,6 +268,29 @@ export async function updateCartLines(
 
   assertNoUserErrors('cartLinesUpdate', result.data.cartLinesUpdate?.userErrors);
   return result.data.cartLinesUpdate?.cart ?? null;
+}
+
+export async function updateCartBuyerIdentity(
+  cartId: string,
+  customerAccessToken: string,
+  buyerIp?: string
+) {
+  const result = await shopifyStorefrontRequest<
+    CartBuyerIdentityUpdateMutation,
+    CartBuyerIdentityUpdateMutationVariables
+  >(CART_BUYER_IDENTITY_UPDATE_MUTATION, {
+    operationName: 'CartBuyerIdentityUpdate',
+    variables: { cartId, buyerIdentity: { customerAccessToken } },
+    cache: 'no-store',
+    retries: 0,
+    buyerIp,
+  });
+
+  assertNoUserErrors(
+    'cartBuyerIdentityUpdate',
+    result.data.cartBuyerIdentityUpdate?.userErrors
+  );
+  return result.data.cartBuyerIdentityUpdate?.cart ?? null;
 }
 
 export async function removeCartLines(

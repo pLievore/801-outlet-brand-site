@@ -123,6 +123,128 @@ type OrdersResponse = {
   };
 };
 
+export type CustomerOrderDetail = {
+  id: string;
+  name: string;
+  processedAt: string;
+  financialStatus: string | null;
+  totalPrice: { amount: string; currencyCode: string };
+  subtotal: { amount: string; currencyCode: string } | null;
+  totalShipping: { amount: string; currencyCode: string } | null;
+  totalTax: { amount: string; currencyCode: string } | null;
+  shippingAddressLines: string[];
+  lineItems: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    price: { amount: string; currencyCode: string } | null;
+    imageUrl: string | null;
+    imageAlt: string | null;
+  }>;
+};
+
+const CUSTOMER_ORDER_QUERY = /* GraphQL */ `
+  query CustomerOrder($orderId: ID!) {
+    order(id: $orderId) {
+      id
+      name
+      processedAt
+      financialStatus
+      totalPrice {
+        amount
+        currencyCode
+      }
+      subtotal {
+        amount
+        currencyCode
+      }
+      totalShipping {
+        amount
+        currencyCode
+      }
+      totalTax {
+        amount
+        currencyCode
+      }
+      shippingAddress {
+        formatted
+      }
+      lineItems(first: 50) {
+        nodes {
+          id
+          name
+          quantity
+          price {
+            amount
+            currencyCode
+          }
+          image {
+            url
+            altText
+          }
+        }
+      }
+    }
+  }
+`;
+
+type OrderDetailResponse = {
+  order: {
+    id: string;
+    name: string;
+    processedAt: string;
+    financialStatus: string | null;
+    totalPrice: { amount: string; currencyCode: string };
+    subtotal: { amount: string; currencyCode: string } | null;
+    totalShipping: { amount: string; currencyCode: string } | null;
+    totalTax: { amount: string; currencyCode: string } | null;
+    shippingAddress: { formatted: string[] } | null;
+    lineItems: {
+      nodes: Array<{
+        id: string;
+        name: string;
+        quantity: number;
+        price: { amount: string; currencyCode: string } | null;
+        image: { url: string; altText: string | null } | null;
+      }>;
+    };
+  } | null;
+};
+
+export async function getCustomerOrder(
+  accessToken: string,
+  orderId: string
+): Promise<CustomerOrderDetail | null> {
+  const data = await customerAccountRequest<OrderDetailResponse>(
+    accessToken,
+    CUSTOMER_ORDER_QUERY,
+    { orderId }
+  );
+
+  const order = data.order;
+  if (!order) return null;
+
+  return {
+    id: order.id,
+    name: order.name,
+    processedAt: order.processedAt,
+    financialStatus: order.financialStatus,
+    totalPrice: order.totalPrice,
+    subtotal: order.subtotal,
+    totalShipping: order.totalShipping,
+    totalTax: order.totalTax,
+    shippingAddressLines: order.shippingAddress?.formatted ?? [],
+    lineItems: order.lineItems.nodes.map((item) => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      imageUrl: item.image?.url ?? null,
+      imageAlt: item.image?.altText ?? null,
+    })),
+  };
+}
+
 export async function getCustomerProfile(
   accessToken: string
 ): Promise<CustomerProfile> {
