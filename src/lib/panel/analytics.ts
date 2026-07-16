@@ -27,6 +27,12 @@ export type RecentOrder = {
   total: number;
 };
 
+export type StatusBreakdown = {
+  status: string;
+  count: number;
+  revenue: number;
+};
+
 export type SalesSummary = {
   currencyCode: string;
   timezone: string;
@@ -34,6 +40,13 @@ export type SalesSummary = {
   orderCount: number;
   unitsSold: number;
   averageOrderValue: number;
+  /**
+   * Percentage change vs the previous window of the same length, or null
+   * when the previous window falls outside the 60-day read_orders horizon.
+   */
+  revenueDelta: number | null;
+  ordersDelta: number | null;
+  byStatus: StatusBreakdown[];
   daily: DailyRevenue[];
   bestSellers: BestSeller[];
   recentOrders: RecentOrder[];
@@ -106,6 +119,63 @@ async function getShopInfo() {
   return cachedShopInfo;
 }
 
+// Lightweight query for the previous window: only totals, no line items.
+const PREVIOUS_ORDERS_QUERY = `#graphql
+  query PanelPreviousOrders($query: String!, $after: String) {
+    orders(first: 100, query: $query, sortKey: CREATED_AT, reverse: true, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        cancelledAt
+        currentTotalPriceSet { shopMoney { amount } }
+      }
+    }
+  }
+`;
+
+async function getPreviousWindowTotals(
+  days: SalesPeriodDays
+): Promise<{ revenue: number; orders: number } | null> {
+  // read_orders only exposes the trailing 60 days; a previous window that
+  // starts earlier than that would silently undercount.
+  if (days * 2 > 60) return null;
+
+  const end = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const start = new Date(Date.now() - days * 2 * 24 * 60 * 60 * 1000);
+  const query = `created_at:>='${start.toISOString()}' AND created_at:<'${end.toISOString()}'`;
+
+  type PreviousResponse = {
+    orders: {
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+      nodes: Array<{
+        cancelledAt: string | null;
+        currentTotalPriceSet: { shopMoney: { amount: string } };
+      }>;
+    };
+  };
+
+  let revenue = 0;
+  let orders = 0;
+  let after: string | null = null;
+  let fetched = 0;
+  do {
+    const data: PreviousResponse = await adminGraphql<PreviousResponse>(
+      PREVIOUS_ORDERS_QUERY,
+      { query, after }
+    );
+    for (const order of data.orders.nodes) {
+      if (order.cancelledAt) continue;
+      revenue += Number(order.currentTotalPriceSet.shopMoney.amount);
+      orders += 1;
+    }
+    fetched += data.orders.nodes.length;
+    after = data.orders.pageInfo.hasNextPage
+      ? data.orders.pageInfo.endCursor
+      : null;
+  } while (after && fetched < 2000);
+
+  return { revenue, orders };
+}
+
 function toLocalDateString(iso: string, timeZone: string): string {
   // en-CA formats as YYYY-MM-DD.
   return new Intl.DateTimeFormat('en-CA', {
@@ -124,7 +194,10 @@ function toLocalDateString(iso: string, timeZone: string): string {
 export async function getSalesSummary(
   days: SalesPeriodDays
 ): Promise<SalesSummary> {
-  const { timezone, currencyCode } = await getShopInfo();
+  const [{ timezone, currencyCode }, previous] = await Promise.all([
+    getShopInfo(),
+    getPreviousWindowTotals(days),
+  ]);
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const query = `created_at:>='${since.toISOString()}'`;
@@ -155,12 +228,19 @@ export async function getSalesSummary(
   }
 
   const sellers = new Map<string, BestSeller>();
+  const statusMap = new Map<string, { count: number; revenue: number }>();
   let totalRevenue = 0;
   let unitsSold = 0;
 
   for (const order of active) {
     const amount = Number(order.currentTotalPriceSet.shopMoney.amount);
     totalRevenue += amount;
+
+    const status = order.displayFinancialStatus ?? 'UNKNOWN';
+    const statusEntry = statusMap.get(status) ?? { count: 0, revenue: 0 };
+    statusEntry.count += 1;
+    statusEntry.revenue += amount;
+    statusMap.set(status, statusEntry);
 
     const day = toLocalDateString(order.createdAt, timezone);
     const bucket = dailyMap.get(day);
@@ -187,6 +267,12 @@ export async function getSalesSummary(
 
   const orderCount = active.length;
 
+  const deltaOf = (current: number, prior: number | undefined) => {
+    if (prior === undefined) return null;
+    if (prior === 0) return current > 0 ? 1 : 0;
+    return (current - prior) / prior;
+  };
+
   return {
     currencyCode,
     timezone,
@@ -194,6 +280,15 @@ export async function getSalesSummary(
     orderCount,
     unitsSold,
     averageOrderValue: orderCount > 0 ? totalRevenue / orderCount : 0,
+    revenueDelta: deltaOf(totalRevenue, previous?.revenue),
+    ordersDelta: deltaOf(orderCount, previous?.orders),
+    byStatus: [...statusMap.entries()]
+      .map(([status, value]) => ({
+        status,
+        count: value.count,
+        revenue: value.revenue,
+      }))
+      .sort((a, b) => b.count - a.count),
     daily: [...dailyMap.entries()].map(([date, value]) => ({
       date,
       revenue: value.revenue,

@@ -110,6 +110,67 @@ export async function listPanelProducts(search?: string): Promise<PanelProduct[]
   return products;
 }
 
+export type LowStockEntry = {
+  productId: string;
+  title: string;
+  variantTitle: string | null;
+  imageUrl: string | null;
+  quantity: number;
+};
+
+export type CatalogStats = {
+  total: number;
+  active: number;
+  draft: number;
+  archived: number;
+  outOfStock: number;
+  lowStock: LowStockEntry[];
+};
+
+export const LOW_STOCK_THRESHOLD = 2;
+
+export function computeCatalogStats(products: PanelProduct[]): CatalogStats {
+  const stats: CatalogStats = {
+    total: products.length,
+    active: 0,
+    draft: 0,
+    archived: 0,
+    outOfStock: 0,
+    lowStock: [],
+  };
+
+  for (const product of products) {
+    if (product.status === 'ACTIVE') stats.active += 1;
+    if (product.status === 'DRAFT') stats.draft += 1;
+    if (product.status === 'ARCHIVED') stats.archived += 1;
+
+    const totalQuantity = product.variants.reduce(
+      (sum, variant) => sum + variant.inventoryQuantity,
+      0
+    );
+    if (product.status === 'ACTIVE' && totalQuantity <= 0) {
+      stats.outOfStock += 1;
+    }
+    if (product.status !== 'ACTIVE') continue;
+    for (const variant of product.variants) {
+      if (variant.inventoryQuantity <= LOW_STOCK_THRESHOLD) {
+        stats.lowStock.push({
+          productId: product.id,
+          title: product.title,
+          variantTitle:
+            variant.title === 'Default Title' ? null : variant.title,
+          imageUrl: product.imageUrl,
+          quantity: variant.inventoryQuantity,
+        });
+      }
+    }
+  }
+
+  stats.lowStock.sort((a, b) => a.quantity - b.quantity);
+  stats.lowStock = stats.lowStock.slice(0, 8);
+  return stats;
+}
+
 let cachedLocationId: string | null = null;
 
 export async function getPrimaryLocationId(): Promise<string> {

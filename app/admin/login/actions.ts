@@ -32,7 +32,7 @@ export async function loginAction(
   const next =
     typeof formData.get('next') === 'string'
       ? (formData.get('next') as string)
-      : '/admin/products';
+      : '/admin';
 
   if (isRateLimited('panel-login')) {
     return { error: 'Too many attempts. Try again in a few minutes.' };
@@ -43,7 +43,7 @@ export async function loginAction(
   }
 
   await createPanelSession();
-  redirect(next.startsWith('/admin') && !next.startsWith('//') ? next : '/admin/products');
+  redirect(next.startsWith('/admin') && !next.startsWith('//') ? next : '/admin');
 }
 
 export async function logoutAction() {
