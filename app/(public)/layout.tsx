@@ -202,15 +202,20 @@ function SiteFooter() {
               <br />
               South Salt Lake, UT 84115
             </p>
+            <p className="mt-3 text-sm leading-6 text-[rgb(var(--sage-ink))]">
+              Mon – Sat: 10 AM – 8 PM (by appointment)
+              <br />
+              Sunday: 12 PM – 6 PM (walk-ins welcome)
+            </p>
             <div className="mt-4 space-y-2 text-sm font-semibold">
               <a className="block hover:underline" href="tel:+18018546060">
-                (801) 854-6060
+                Call or text: (801) 854-6060
               </a>
               <a
                 className="block hover:underline"
-                href="https://wa.me/13852016328"
+                href="https://wa.me/18018546060"
               >
-                WhatsApp: +1 (385) 201-6328
+                WhatsApp: (801) 854-6060
               </a>
               <a
                 className="block break-all hover:underline"

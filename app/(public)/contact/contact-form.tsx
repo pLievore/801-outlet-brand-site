@@ -67,11 +67,11 @@ export default function ContactForm() {
           />
         </svg>
       ),
-      title: 'Call us',
+      title: 'Call or text us',
       description: 'Speak directly with our team',
       action: 'Call now',
       href: phoneHref,
-      value: '+1 385 201 6328',
+      value: '(801) 854-6060',
     },
     {
       icon: (
@@ -102,7 +102,7 @@ export default function ContactForm() {
         </svg>
       ),
       title: 'Business hours',
-      description: 'Monday - Friday, 9 AM - 6 PM',
+      description: 'Mon – Sat 10 AM – 8 PM · Sun 12 PM – 6 PM',
       action: null,
       href: null,
       value: 'Mountain Time',
@@ -271,7 +271,7 @@ export default function ContactForm() {
                       value={formData.phone}
                       onChange={handleChange}
                       className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20"
-                      placeholder="+1 (385) 201-6328"
+                      placeholder="(801) 555-0123"
                     />
                   </div>
                 </div>

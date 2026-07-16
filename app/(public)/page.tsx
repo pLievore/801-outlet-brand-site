@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CalendarDays, MapPin } from 'lucide-react';
+import { CalendarDays, Clock, MapPin } from 'lucide-react';
 
 import HeroVideo from '../components/herovideo';
 import { CatalogProductCard } from '../components/catalog-product-card';
@@ -265,8 +265,21 @@ export default async function HomePage() {
                     South Salt Lake, UT 84115
                   </p>
                 </div>
+                <div className="flex items-start gap-3">
+                  <Clock
+                    aria-hidden="true"
+                    className="mt-0.5 size-5 shrink-0 text-[rgb(var(--sage-ink))]"
+                  />
+                  <p className="text-sm leading-6">
+                    <span className="font-semibold">Hours</span>
+                    <br />
+                    Mon – Sat: 10 AM – 8 PM · by appointment
+                    <br />
+                    Sunday: 12 PM – 6 PM · walk-ins welcome
+                  </p>
+                </div>
                 <p className="text-xs leading-relaxed text-[rgb(var(--muted))]">
-                  Appointments are confirmed by our team over WhatsApp or phone
+                  Appointments are confirmed by text message or phone call
                   before your visit.
                 </p>
               </div>
