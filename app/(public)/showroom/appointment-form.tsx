@@ -73,9 +73,11 @@ export function AppointmentForm({ days }: { days: BookingDay[] }) {
 
   return (
     <form action={handleSubmit} className="space-y-6">
-      <fieldset>
+      {/* min-w-0: a fieldset defaults to min-width:min-content, which would
+          stretch past the card instead of letting the day strip scroll. */}
+      <fieldset className="min-w-0">
         <legend className="text-sm font-bold">1. Pick a day</legend>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+        <div className="mt-3 flex snap-x gap-2 overflow-x-auto pb-2">
           {days.map((day) => {
             const active = day.date === activeDay?.date;
             return (
@@ -87,7 +89,7 @@ export function AppointmentForm({ days }: { days: BookingDay[] }) {
                   setSelectedTime('');
                 }}
                 aria-pressed={active}
-                className={`flex min-w-[72px] shrink-0 flex-col items-center rounded-2xl border px-3 py-2.5 transition ${
+                className={`flex min-w-[72px] shrink-0 snap-start flex-col items-center rounded-2xl border px-3 py-2.5 transition ${
                   active
                     ? 'border-[rgb(var(--sage-ink))] bg-[rgb(var(--sage-soft))] text-[rgb(var(--sage-ink))]'
                     : 'border-[rgb(var(--border))] bg-white hover:border-[rgb(var(--fg))]'
@@ -103,7 +105,7 @@ export function AppointmentForm({ days }: { days: BookingDay[] }) {
         </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset className="min-w-0">
         <legend className="text-sm font-bold">2. Pick a time</legend>
         <div className="mt-3 flex flex-wrap gap-2">
           {activeDay?.slots.map((slot) => {
@@ -127,7 +129,7 @@ export function AppointmentForm({ days }: { days: BookingDay[] }) {
         </div>
       </fieldset>
 
-      <fieldset className="space-y-3">
+      <fieldset className="min-w-0 space-y-3">
         <legend className="text-sm font-bold">3. Your details</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
