@@ -114,12 +114,10 @@ function ReviewCard({ review }: { review: CustomerReview }) {
 
 function MarqueeRow({
   reviews,
-  reverse,
   durationSeconds,
   label,
 }: {
   reviews: CustomerReview[];
-  reverse?: boolean;
   durationSeconds: number;
   label: string;
 }) {
@@ -130,9 +128,7 @@ function MarqueeRow({
         { '--marquee-duration': `${durationSeconds}s` } as CSSProperties
       }
     >
-      <div
-        className={`reviews-marquee-track ${reverse ? 'reviews-marquee-track--reverse' : ''}`}
-      >
+      <div className="reviews-marquee-track">
         <ul aria-label={label} className="flex">
           {reviews.map((review) => (
             <ReviewCard key={review.id} review={review} />
@@ -153,11 +149,6 @@ export function ReviewsSection() {
   const total = customerReviews.length;
   const average =
     customerReviews.reduce((sum, review) => sum + review.rating, 0) / total;
-
-  // Split into two bands travelling in opposite directions.
-  const half = Math.ceil(total / 2);
-  const topRow = customerReviews.slice(0, half);
-  const bottomRow = customerReviews.slice(half);
 
   return (
     <section
@@ -184,7 +175,7 @@ export function ReviewsSection() {
               </span>
               <Stars rating={Math.round(average)} className="size-4" />
               <span className="text-sm text-[rgb(var(--muted))]">
-                from our latest {total} Google reviews
+                from our latest Google reviews
               </span>
             </div>
           </div>
@@ -193,15 +184,9 @@ export function ReviewsSection() {
 
       <div className="mt-10">
         <MarqueeRow
-          reviews={topRow}
-          durationSeconds={Math.max(topRow.length * 9, 30)}
+          reviews={customerReviews}
+          durationSeconds={Math.max(total * 9, 30)}
           label="Customer reviews"
-        />
-        <MarqueeRow
-          reviews={bottomRow}
-          reverse
-          durationSeconds={Math.max(bottomRow.length * 10, 32)}
-          label="More customer reviews"
         />
       </div>
     </section>

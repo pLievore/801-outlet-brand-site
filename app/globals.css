@@ -148,9 +148,6 @@ a:focus-visible {
   width: max-content;
   animation: reviews-marquee var(--marquee-duration, 60s) linear infinite;
 }
-.reviews-marquee-track--reverse {
-  animation-direction: reverse;
-}
 .reviews-marquee:hover .reviews-marquee-track,
 .reviews-marquee:focus-within .reviews-marquee-track {
   animation-play-state: paused;
