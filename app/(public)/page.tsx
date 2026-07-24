@@ -1,5 +1,13 @@
 import Link from 'next/link';
-import { CalendarDays, Clock, MapPin } from 'lucide-react';
+import {
+  CalendarDays,
+  Clock,
+  MapPin,
+  PhoneCall,
+  ShieldCheck,
+  Store,
+  Truck,
+} from 'lucide-react';
 
 import HeroVideo from '../components/herovideo';
 import { CatalogProductCard } from '../components/catalog-product-card';
@@ -66,8 +74,16 @@ export default async function HomePage() {
                 </a>
               </div>
 
-              <div className="mt-4 text-xs text-[rgb(var(--muted))]">
-                Delivery available in Utah only. Scheduling confirmed after purchase.
+              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1.5 text-xs font-semibold">
+                  <span aria-hidden="true" className="tracking-tight text-[#c8791a]">
+                    ★★★★★
+                  </span>
+                  5.0 on Google
+                </span>
+                <span className="text-xs text-[rgb(var(--muted))]">
+                  Delivery scheduling confirmed after purchase.
+                </span>
               </div>
             </FadeMount>
           </div>
@@ -75,6 +91,10 @@ export default async function HomePage() {
           {/* Right */}
           <FadeMount delay={0.1} distance={32}>
             <div className="relative">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-br from-[rgb(var(--accent))]/15 via-transparent to-[rgb(var(--sage))]/20 blur-2xl"
+              />
               <div className="relative aspect-4/5 overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white shadow-lg">
                 <HeroVideo />
                 <div className="absolute inset-0 bg-linear-to-t from-black/35 via-black/0 to-black/0" />
@@ -294,23 +314,29 @@ export default async function HomePage() {
       {/* FINAL CTA */}
       <FadeIn>
         <Section aria-labelledby="final-cta-heading">
-          <Container size="narrow" className="text-center">
-            <h2
-              id="final-cta-heading"
-              className="font-display text-4xl leading-tight tracking-tight md:text-5xl"
-            >
-              Ready to find <span className="italic">your piece</span>?
-            </h2>
-            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[rgb(var(--muted))]">
-              Browse what&apos;s in stock today — new deals land every week.
-            </p>
-            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-              <ButtonLink href="/products" variant="primary" size="lg">
-                Browse products
-              </ButtonLink>
-              <ButtonLink href="/showroom" variant="secondary" size="lg">
-                Plan a showroom visit
-              </ButtonLink>
+          <Container>
+            <div className="bg-grid relative overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white px-6 py-16 text-center md:py-20">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 -bottom-16 mx-auto h-48 max-w-md rounded-full bg-[rgb(var(--accent))]/10 blur-3xl"
+              />
+              <h2
+                id="final-cta-heading"
+                className="font-display text-4xl leading-tight tracking-tight md:text-5xl"
+              >
+                Ready to find <span className="italic">your piece</span>?
+              </h2>
+              <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[rgb(var(--muted))]">
+                Browse what&apos;s in stock today — new deals land every week.
+              </p>
+              <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+                <ButtonLink href="/products" variant="primary" size="lg">
+                  Browse products
+                </ButtonLink>
+                <ButtonLink href="/showroom" variant="secondary" size="lg">
+                  Plan a showroom visit
+                </ButtonLink>
+              </div>
             </div>
           </Container>
         </Section>
@@ -326,47 +352,26 @@ function TrustStrip() {
         <div className="mx-auto max-w-6xl px-5 py-10">
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {[
-              {
-                label: 'Utah delivery',
-                sub: 'Fast & local',
-                icon: (
-                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h11v9H3zM14 11h4l3 3v2h-7M5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm12 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                  </svg>
-                ),
-              },
+              { label: 'Utah delivery', sub: 'Fast & local', icon: Truck },
               {
                 label: 'Secure checkout',
-                sub: 'Secure Shopify checkout',
-                icon: (
-                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V8a4 4 0 118 0v3" />
-                    <rect x="5" y="11" width="14" height="9" rx="1.5" strokeLinejoin="round" />
-                  </svg>
-                ),
+                sub: 'Powered by Shopify',
+                icon: ShieldCheck,
               },
               {
                 label: 'Personal support',
                 sub: 'Talk with our team',
-                icon: (
-                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.21l-2 1a11 11 0 005.16 5.16l1-2a1 1 0 011.21-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1A14 14 0 013 6V5z" />
-                  </svg>
-                ),
+                icon: PhoneCall,
               },
               {
                 label: 'Showroom visits',
                 sub: 'Walk in on weekends',
-                icon: (
-                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                ),
+                icon: Store,
               },
             ].map((t) => (
               <div key={t.label} className="flex items-start gap-3">
                 <div className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--accent-soft))] text-[rgb(var(--accent))]">
-                  {t.icon}
+                  <t.icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
                 </div>
                 <div>
                   <div className="text-xs font-semibold">{t.label}</div>

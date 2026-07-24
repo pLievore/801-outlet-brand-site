@@ -1,5 +1,19 @@
 import Link from 'next/link';
+import {
+  Armchair,
+  Home,
+  MapPin,
+  PackageCheck,
+  PhoneCall,
+  Recycle,
+  Sparkles,
+  Truck,
+} from 'lucide-react';
+
 import { env } from '../../../src/config/env';
+import { FadeIn, FadeMount, StaggerGrid, StaggerItem } from '../../components/motion';
+import { ButtonLink } from '../../components/ui/button';
+import { Container } from '../../components/ui/container';
 
 export const metadata = {
   title: 'Delivery Information — 801 Outlet',
@@ -7,262 +21,295 @@ export const metadata = {
     'Fast and reliable furniture delivery across Utah, Wyoming, Idaho and Nevada. Learn about our delivery process, coverage areas, fees and scheduling options.',
 };
 
+const STATES = ['Utah', 'Wyoming', 'Idaho', 'Nevada'];
+
+const PROCESS_STEPS = [
+  {
+    title: 'Place your order',
+    description:
+      'Browse our collection and complete your purchase. Fast delivery items are marked clearly.',
+    icon: PackageCheck,
+  },
+  {
+    title: 'We contact you',
+    description:
+      "Within 24–48 hours we'll reach out by phone or email to confirm your address and preferred dates.",
+    icon: PhoneCall,
+  },
+  {
+    title: 'Schedule delivery',
+    description:
+      "We'll find a delivery window that fits your schedule. Most deliveries happen Monday–Friday.",
+    icon: Truck,
+  },
+  {
+    title: 'Receive your furniture',
+    description:
+      'Our team brings your furniture home, handles placement, and removes the packaging.',
+    icon: Armchair,
+  },
+];
+
 export default function DeliveryPage() {
   const phoneHref = env.getPhoneHref();
 
   return (
     <main>
-      {/* Hero Section */}
-      <section className="mx-auto max-w-6xl px-5 pt-10 pb-14">
-        <div>
-          <div className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
-            801 OUTLET • DELIVERY
-          </div>
-          <h1 className="mt-3 font-display text-4xl font-medium tracking-tight md:text-6xl">
-            Utah delivery service
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[rgb(var(--muted))]">
-            We deliver premium furniture directly to your home across Utah — and
-            to Wyoming, Idaho and Nevada for an additional charge. Fast delivery
-            available for select items, or scheduled delivery at your
-            convenience.
-          </p>
-        </div>
+      {/* Hero */}
+      <section className="border-b border-[rgb(var(--border))] bg-[rgb(var(--sage-soft))]">
+        <Container size="narrow" className="py-16 text-center md:py-24">
+          <FadeMount delay={0.05}>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[rgb(var(--sage-ink))]">
+              <Truck aria-hidden="true" className="size-4" />
+              Utah · Wyoming · Idaho · Nevada
+            </span>
+          </FadeMount>
+          <FadeMount delay={0.12}>
+            <h1 className="font-display mt-6 text-5xl leading-none tracking-tight md:text-7xl">
+              From our floor
+              <br />
+              <span className="italic text-[rgb(var(--sage-ink))]">to your door.</span>
+            </h1>
+          </FadeMount>
+          <FadeMount delay={0.2}>
+            <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-[rgb(var(--muted))] md:text-lg">
+              We deliver across Utah — and to Wyoming, Idaho and Nevada for an
+              additional distance-based charge. Curbside drop-off or full
+              inside-home setup, you pick.
+            </p>
+          </FadeMount>
+        </Container>
+      </section>
 
-        {/* Coverage Area */}
-        <div className="mt-10 rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
-          <div className="flex items-start gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--accent))]/10">
-              <svg
-                className="size-5 text-[rgb(var(--accent))]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold">Where we deliver</h2>
-              <p className="mt-2 text-sm leading-relaxed text-[rgb(var(--muted))]">
-                We serve the entire state of Utah, and we also deliver to
-                Wyoming, Idaho and Nevada for an additional charge based on
-                distance. Delivery is available to residential addresses
-                including homes, apartments, and condominiums. After you
-                complete your purchase, we’ll contact you within 24-48 hours to
-                confirm your address and schedule a delivery window that works
-                for you.
+      <Container className="py-14 md:py-20">
+        {/* Pricing */}
+        <FadeIn>
+          <div className="text-center">
+            <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
+              DELIVERY FEE · SALT LAKE CITY AREA
+            </p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight md:text-4xl">
+              Simple, honest <span className="italic">pricing</span>
+            </h2>
+          </div>
+        </FadeIn>
+
+        <StaggerGrid className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
+          <StaggerItem>
+            <div className="flex h-full flex-col rounded-3xl border border-[rgb(var(--border))] bg-white p-8 transition hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[rgb(var(--muted))]">
+                <MapPin aria-hidden="true" className="size-4" />
+                Curbside
+              </div>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="font-display text-6xl tracking-tight">$60</span>
+                <span className="text-sm text-[rgb(var(--muted))]">flat</span>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-[rgb(var(--muted))]">
+                We bring your furniture right to your doorstep or garage —
+                perfect if you have helping hands at home.
               </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {['Utah', 'Wyoming', 'Idaho', 'Nevada'].map((state) => (
+            </div>
+          </StaggerItem>
+          <StaggerItem>
+            <div className="relative flex h-full flex-col rounded-3xl bg-[rgb(var(--sage-ink))] p-8 text-white transition hover:-translate-y-[2px] hover:shadow-[0_14px_38px_rgba(62,82,64,0.35)]">
+              <span className="absolute right-6 top-6 rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
+                Most popular
+              </span>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-white/70">
+                <Home aria-hidden="true" className="size-4" />
+                Inside home setup
+              </div>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="font-display text-6xl tracking-tight">$120</span>
+                <span className="text-sm text-white/70">flat</span>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-white/80">
+                We carry everything inside, place each piece in the room you
+                choose and take the packaging with us.
+              </p>
+            </div>
+          </StaggerItem>
+        </StaggerGrid>
+
+        <FadeIn>
+          <p className="mx-auto mt-6 max-w-3xl text-center text-sm leading-6 text-[rgb(var(--muted))]">
+            Flat rates cover the Salt Lake City area up to{' '}
+            <span className="font-semibold text-[rgb(var(--fg))]">40 miles</span>.
+            Beyond that we add{' '}
+            <span className="font-semibold text-[rgb(var(--fg))]">$3 per extra mile</span>{' '}
+            — Wyoming, Idaho and Nevada are quoted the same way, based on
+            distance.
+          </p>
+        </FadeIn>
+
+        {/* Coverage */}
+        <FadeIn>
+          <div className="mt-14 grid overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white lg:grid-cols-2">
+            <div className="p-8 md:p-12">
+              <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
+                COVERAGE
+              </p>
+              <h2 className="mt-3 font-display text-3xl tracking-tight md:text-4xl">
+                Where we <span className="italic">deliver</span>
+              </h2>
+              <p className="mt-4 max-w-md text-sm leading-6 text-[rgb(var(--muted))]">
+                The entire state of Utah, plus Wyoming, Idaho and Nevada for an
+                additional distance-based charge. Homes, apartments and
+                condominiums are all welcome.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {STATES.map((state) => (
                   <span
                     key={state}
-                    className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1 text-[11px] font-semibold"
+                    className="rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-1.5 text-xs font-semibold"
                   >
                     {state}
                   </span>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Delivery Options */}
-        <div className="mt-8">
-          <div className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
-            DELIVERY OPTIONS
-          </div>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
-            Choose your delivery speed
-          </h2>
-
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* Fast Delivery */}
-            <div className="rounded-2xl border border-[rgb(var(--border))] bg-white p-6 transition hover:-translate-y-[1px] hover:shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="size-2 rounded-full bg-[rgb(var(--accent))]" />
-                    <h3 className="text-sm font-semibold">Fast Delivery</h3>
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--muted))]">
-                    Available for select items in stock. Typically delivered within 3-5 business
-                    days. Perfect for when you need your furniture quickly.
-                  </p>
-                  <div className="mt-4">
-                    <span className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1 text-[11px] font-semibold text-[rgb(var(--fg))]">
-                      In-stock items only
-                    </span>
-                  </div>
-                </div>
+            <div className="flex flex-col justify-center gap-5 border-t border-[rgb(var(--border))] bg-[rgb(var(--surface-muted))] p-8 md:p-12 lg:border-l lg:border-t-0">
+              <div className="flex items-start gap-3">
+                <Sparkles
+                  aria-hidden="true"
+                  className="mt-0.5 size-5 shrink-0 text-[rgb(var(--accent))]"
+                />
+                <p className="text-sm leading-6">
+                  <span className="font-semibold">Special requests</span>
+                  <br />
+                  <span className="text-[rgb(var(--muted))]">
+                    Something out of the ordinary? Contact us and we&apos;ll
+                    work it out together.
+                  </span>
+                </p>
               </div>
-            </div>
-
-            {/* Scheduled Delivery */}
-            <div className="rounded-2xl border border-[rgb(var(--border))] bg-white p-6 transition hover:-translate-y-[1px] hover:shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="size-2 rounded-full bg-[rgb(var(--muted))]" />
-                    <h3 className="text-sm font-semibold">Scheduled Delivery</h3>
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--muted))]">
-                    Standard delivery option for all items. We’ll contact you after purchase to
-                    schedule a convenient delivery window. Usually 7-14 business days.
-                  </p>
-                  <div className="mt-4">
-                    <span className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1 text-[11px] font-semibold text-[rgb(var(--fg))]">
-                      All items
-                    </span>
-                  </div>
-                </div>
+              <div className="flex items-start gap-3">
+                <Recycle
+                  aria-hidden="true"
+                  className="mt-0.5 size-5 shrink-0 text-[rgb(var(--sage-ink))]"
+                />
+                <p className="text-sm leading-6">
+                  <span className="font-semibold">Old furniture removal</span>
+                  <br />
+                  <span className="text-[rgb(var(--muted))]">
+                    We can haul away your old piece when the new one arrives —
+                    ask when scheduling.
+                  </span>
+                </p>
               </div>
             </div>
           </div>
-        </div>
+        </FadeIn>
 
-        {/* Process */}
-        <div className="mt-12">
-          <div className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
-            HOW IT WORKS
-          </div>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
-            Simple delivery process
-          </h2>
-
-          <div className="mt-8 space-y-6">
-            {[
-              {
-                step: '1',
-                title: 'Place your order',
-                description:
-                  'Browse our collection and complete your purchase. Fast delivery items will be marked clearly.',
-              },
-              {
-                step: '2',
-                title: 'We contact you',
-                description:
-                  "Within 24-48 hours, we'll reach out via phone or email to confirm your delivery address and preferred dates.",
-              },
-              {
-                step: '3',
-                title: 'Schedule delivery',
-                description:
-                  "We'll work with you to find a delivery window that fits your schedule. Most deliveries happen Monday-Friday.",
-              },
-              {
-                step: '4',
-                title: 'Receive your furniture',
-                description:
-                  'Our delivery team will bring your furniture to your home, handle placement, and remove packaging materials.',
-              },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className="flex gap-4 rounded-2xl border border-[rgb(var(--border))] bg-white p-6 transition hover:shadow-sm"
-              >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--bg))] text-sm font-semibold">
-                  {item.step}
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold">{item.title}</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-[rgb(var(--muted))]">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Important Info */}
-        <div className="mt-12 rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
-          <h2 className="text-lg font-semibold">Important information</h2>
-
-          <dl className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <dt className="text-xs font-semibold text-[rgb(var(--muted))]">Delivery fee</dt>
-              <dd className="mt-1 text-sm font-medium">
-                Salt Lake City area, up to 40 miles:{' '}
-                <span className="font-semibold">$60 curbside</span> or{' '}
-                <span className="font-semibold">$120 inside home setup</span>.
-              </dd>
-              <dd className="mt-1 text-sm text-[rgb(var(--muted))]">
-                Beyond 40 miles we add $3 per extra mile. Wyoming, Idaho and
-                Nevada are quoted the same way, based on distance.
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-xs font-semibold text-[rgb(var(--muted))]">Special requests</dt>
-              <dd className="mt-1 text-sm font-medium">Contact us to discuss</dd>
-            </div>
-
-            <div>
-              <dt className="text-xs font-semibold text-[rgb(var(--muted))]">Removal service</dt>
-              <dd className="mt-1 text-sm font-medium">Old furniture removal available</dd>
-            </div>
-          </dl>
-        </div>
-
-        {/* CTA Section */}
-        <div className="mt-12 rounded-3xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] p-8 md:p-10">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              Ready to order?
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
-              Browse our collection and place your order. We’ll handle the rest and get your
-              furniture delivered to your Utah home.
+        {/* Speed options */}
+        <FadeIn>
+          <div className="mt-14 text-center">
+            <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
+              DELIVERY OPTIONS
             </p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight md:text-4xl">
+              Choose your <span className="italic">speed</span>
+            </h2>
+          </div>
+        </FadeIn>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href="/products"
-                className="inline-flex items-center justify-center rounded-full bg-[rgb(var(--fg))] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0"
-              >
-                Browse products
-              </Link>
-
-              <a
-                href={phoneHref}
-                className="inline-flex items-center justify-center rounded-full border border-[rgb(var(--border))] bg-white px-6 py-3 text-sm font-semibold text-[rgb(var(--fg))] transition hover:-translate-y-[1px] hover:bg-neutral-50 hover:shadow-sm active:translate-y-0"
-              >
-                Call us
-              </a>
+        <StaggerGrid className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
+          <StaggerItem>
+            <div className="flex h-full flex-col rounded-3xl border border-[rgb(var(--border))] bg-white p-7 transition hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]">
+              <span className="font-display text-3xl italic text-[rgb(var(--accent))]">
+                3–5
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(var(--muted))]">
+                business days
+              </span>
+              <h3 className="mt-4 text-base font-semibold">Fast delivery</h3>
+              <p className="mt-1.5 text-sm leading-6 text-[rgb(var(--muted))]">
+                Available for select in-stock items — perfect when you need your
+                furniture quickly.
+              </p>
             </div>
+          </StaggerItem>
+          <StaggerItem>
+            <div className="flex h-full flex-col rounded-3xl border border-[rgb(var(--border))] bg-white p-7 transition hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]">
+              <span className="font-display text-3xl italic text-[rgb(var(--sage-ink))]">
+                7–14
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(var(--muted))]">
+                business days
+              </span>
+              <h3 className="mt-4 text-base font-semibold">Scheduled delivery</h3>
+              <p className="mt-1.5 text-sm leading-6 text-[rgb(var(--muted))]">
+                Standard option for every item — we&apos;ll agree on a window
+                that works for you after purchase.
+              </p>
+            </div>
+          </StaggerItem>
+        </StaggerGrid>
 
-            <div className="mt-6 text-xs text-[rgb(var(--muted))]">
+        {/* Process timeline */}
+        <FadeIn>
+          <div className="mt-14 text-center">
+            <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
+              HOW IT WORKS
+            </p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight md:text-4xl">
+              Four steps, <span className="italic">zero stress</span>
+            </h2>
+          </div>
+        </FadeIn>
+
+        <StaggerGrid className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {PROCESS_STEPS.map((step, index) => (
+            <StaggerItem key={step.title}>
+              <div className="relative flex h-full flex-col rounded-3xl border border-[rgb(var(--border))] bg-white p-6 transition hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]">
+                <div className="flex items-center justify-between">
+                  <span className="flex size-11 items-center justify-center rounded-full bg-[rgb(var(--sage-soft))] text-[rgb(var(--sage-ink))]">
+                    <step.icon aria-hidden="true" className="size-5" />
+                  </span>
+                  <span className="font-display text-3xl italic text-[rgb(var(--border-strong))]">
+                    0{index + 1}
+                  </span>
+                </div>
+                <h3 className="mt-5 text-sm font-semibold">{step.title}</h3>
+                <p className="mt-1.5 text-xs leading-relaxed text-[rgb(var(--muted))]">
+                  {step.description}
+                </p>
+              </div>
+            </StaggerItem>
+          ))}
+        </StaggerGrid>
+      </Container>
+
+      {/* CTA */}
+      <FadeIn>
+        <section className="border-t border-[rgb(var(--border))] bg-[rgb(var(--sage-soft))]">
+          <Container size="narrow" className="py-16 text-center md:py-20">
+            <h2 className="font-display text-4xl leading-tight tracking-tight text-[rgb(var(--sage-ink))] md:text-5xl">
+              Ready to <span className="italic">order</span>?
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[rgb(var(--sage-ink))]">
+              Browse our collection and place your order — we&apos;ll handle the
+              rest and bring it to your door.
+            </p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <ButtonLink href="/products" variant="primary" size="lg">
+                Browse products
+              </ButtonLink>
+              <ButtonLink href={phoneHref} variant="secondary" size="lg">
+                Call (801) 854-6060
+              </ButtonLink>
+            </div>
+            <p className="mt-6 text-xs text-[rgb(var(--sage-ink))]/80">
               Questions about delivery?{' '}
-              <a
-                href={phoneHref}
-                className="font-semibold text-[rgb(var(--accent))] hover:opacity-80"
-              >
-                Give us a call
-              </a>
-              {' '}or{' '}
-              <Link
-                href="/contact"
-                className="font-semibold text-[rgb(var(--accent))] hover:opacity-80"
-              >
-                contact us
+              <Link href="/contact" className="font-semibold underline underline-offset-4">
+                Send us a message
               </Link>
               .
-            </div>
-          </div>
-        </div>
-      </section>
+            </p>
+          </Container>
+        </section>
+      </FadeIn>
     </main>
   );
 }
