@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { env } from '../../src/config/env';
+import { MODE_LABEL, SHOWROOM_HOURS } from '../../src/lib/content/hours';
 import type { NavigationLink } from '../../src/lib/navigation/types';
 import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { CartProvider } from '../components/cart/cart-provider';
@@ -45,7 +46,7 @@ function AnnouncementBar() {
   return (
     <div className="bg-[rgb(var(--sage-ink))] text-white">
       <Container className="flex min-h-9 items-center justify-center py-2 text-center text-xs font-semibold tracking-wide">
-        Utah delivery available · Showroom visits by appointment
+        Utah delivery available · Showroom open weekends for walk-ins
       </Container>
     </div>
   );
@@ -195,18 +196,21 @@ function SiteFooter() {
 
           <div className="rounded-3xl bg-[rgb(var(--sage-soft))] p-6">
             <h2 className="text-sm font-bold text-[rgb(var(--sage-ink))]">
-              Visit by appointment
+              Visit our showroom
             </h2>
             <p className="mt-3 text-sm leading-6 text-[rgb(var(--sage-ink))]">
               2251 South 400 East
               <br />
               South Salt Lake, UT 84115
             </p>
-            <p className="mt-3 text-sm leading-6 text-[rgb(var(--sage-ink))]">
-              Mon – Sat: 10 AM – 8 PM (by appointment)
-              <br />
-              Sunday: 12 PM – 6 PM (walk-ins welcome)
-            </p>
+            <div className="mt-3 text-sm leading-6 text-[rgb(var(--sage-ink))]">
+              {SHOWROOM_HOURS.map((entry) => (
+                <p key={entry.days}>
+                  {entry.days}: {entry.time} (
+                  {MODE_LABEL[entry.mode].toLowerCase()})
+                </p>
+              ))}
+            </div>
             <div className="mt-4 space-y-2 text-sm font-semibold">
               <a className="block hover:underline" href="tel:+18018546060">
                 Call or text: (801) 854-6060

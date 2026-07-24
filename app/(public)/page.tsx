@@ -5,6 +5,7 @@ import HeroVideo from '../components/herovideo';
 import { CatalogProductCard } from '../components/catalog-product-card';
 import { ReviewsSection } from '../components/reviews-section';
 import { env } from '../../src/config/env';
+import { MODE_LABEL, SHOWROOM_HOURS } from '../../src/lib/content/hours';
 import { getProducts } from '../../src/lib/shopify';
 import { adaptProductCard } from '../../src/lib/shopify/adapters/products';
 import { FadeIn, FadeMount, StaggerGrid, StaggerItem } from '../components/motion';
@@ -236,7 +237,7 @@ export default async function HomePage() {
               <div className="flex flex-col justify-center p-8 md:p-12">
                 <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[rgb(var(--sage-soft))] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[rgb(var(--sage-ink))]">
                   <CalendarDays aria-hidden="true" className="size-4" />
-                  By appointment only
+                  Open weekends · weekdays by appointment
                 </span>
                 <h2 className="mt-5 font-display text-3xl tracking-tight md:text-4xl">
                   Visit our <span className="italic">showroom</span>
@@ -246,7 +247,7 @@ export default async function HomePage() {
                   the right fit for your home.
                 </p>
                 <div className="mt-6">
-                  <ButtonLink href="/showroom" variant="sage" size="lg">
+                  <ButtonLink href="/showroom#plan-your-visit" variant="sage" size="lg">
                     Schedule a visit
                   </ButtonLink>
                 </div>
@@ -270,17 +271,19 @@ export default async function HomePage() {
                     aria-hidden="true"
                     className="mt-0.5 size-5 shrink-0 text-[rgb(var(--sage-ink))]"
                   />
-                  <p className="text-sm leading-6">
-                    <span className="font-semibold">Hours</span>
-                    <br />
-                    Mon – Sat: 10 AM – 8 PM · by appointment
-                    <br />
-                    Sunday: 12 PM – 6 PM · walk-ins welcome
-                  </p>
+                  <div className="text-sm leading-6">
+                    <p className="font-semibold">Hours</p>
+                    {SHOWROOM_HOURS.map((entry) => (
+                      <p key={entry.days}>
+                        {entry.days}: {entry.time} ·{' '}
+                        {MODE_LABEL[entry.mode].toLowerCase()}
+                      </p>
+                    ))}
+                  </div>
                 </div>
                 <p className="text-xs leading-relaxed text-[rgb(var(--muted))]">
-                  Appointments are confirmed by text message or phone call
-                  before your visit.
+                  Weekday appointments are confirmed by text message or phone
+                  call before your visit.
                 </p>
               </div>
             </div>
@@ -353,7 +356,7 @@ function TrustStrip() {
               },
               {
                 label: 'Showroom visits',
-                sub: 'Available by appointment',
+                sub: 'Walk in on weekends',
                 icon: (
                   <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

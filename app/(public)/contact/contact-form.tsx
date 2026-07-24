@@ -101,8 +101,9 @@ export default function ContactForm() {
           />
         </svg>
       ),
-      title: 'Business hours',
-      description: 'Mon – Sat 10 AM – 8 PM · Sun 12 PM – 6 PM',
+      title: 'Showroom hours',
+      description:
+        'Mon – Fri 10 AM – 8 PM (appointment) · Sat 10 AM – 8 PM · Sun 12 PM – 6 PM',
       action: null,
       href: null,
       value: 'Mountain Time',

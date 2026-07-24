@@ -106,7 +106,7 @@ export function MobileNav({
               Call 801 Outlet
             </a>
             <p className="mt-4 text-center text-xs leading-relaxed text-[rgb(var(--muted))]">
-              Showroom visits are available by appointment only.
+              Walk in on weekends · weekdays by appointment.
             </p>
           </div>
         </nav>

@@ -4,7 +4,7 @@ import { env } from '../../../src/config/env';
 export const metadata = {
   title: 'Delivery Information — 801 Outlet',
   description:
-    'Fast and reliable furniture delivery across Utah. Learn about our delivery process, coverage areas, and scheduling options.',
+    'Fast and reliable furniture delivery across Utah, Wyoming, Idaho and Nevada. Learn about our delivery process, coverage areas, fees and scheduling options.',
 };
 
 export default function DeliveryPage() {
@@ -22,8 +22,10 @@ export default function DeliveryPage() {
             Utah delivery service
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[rgb(var(--muted))]">
-            We deliver premium furniture directly to your home across Utah. Fast delivery available
-            for select items, or scheduled delivery at your convenience.
+            We deliver premium furniture directly to your home across Utah — and
+            to Wyoming, Idaho and Nevada for an additional charge. Fast delivery
+            available for select items, or scheduled delivery at your
+            convenience.
           </p>
         </div>
 
@@ -52,13 +54,26 @@ export default function DeliveryPage() {
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Utah-only delivery</h2>
+              <h2 className="text-lg font-semibold">Where we deliver</h2>
               <p className="mt-2 text-sm leading-relaxed text-[rgb(var(--muted))]">
-                We currently serve the entire state of Utah. Delivery is available to residential
-                addresses including homes, apartments, and condominiums. After you complete your
-                purchase, we’ll contact you within 24-48 hours to confirm your address and schedule
-                a delivery window that works for you.
+                We serve the entire state of Utah, and we also deliver to
+                Wyoming, Idaho and Nevada for an additional charge based on
+                distance. Delivery is available to residential addresses
+                including homes, apartments, and condominiums. After you
+                complete your purchase, we’ll contact you within 24-48 hours to
+                confirm your address and schedule a delivery window that works
+                for you.
               </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['Utah', 'Wyoming', 'Idaho', 'Nevada'].map((state) => (
+                  <span
+                    key={state}
+                    className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1 text-[11px] font-semibold"
+                  >
+                    {state}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -176,29 +191,22 @@ export default function DeliveryPage() {
           <h2 className="text-lg font-semibold">Important information</h2>
 
           <dl className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
+            <div className="sm:col-span-2">
               <dt className="text-xs font-semibold text-[rgb(var(--muted))]">Delivery fee</dt>
-              <dd className="mt-1 text-sm font-medium">Included in Utah</dd>
-            </div>
-
-            <div>
-              <dt className="text-xs font-semibold text-[rgb(var(--muted))]">Delivery hours</dt>
-              <dd className="mt-1 text-sm font-medium">Monday - Friday, 9 AM - 6 PM</dd>
-            </div>
-
-            <div>
-              <dt className="text-xs font-semibold text-[rgb(var(--muted))]">Setup included</dt>
-              <dd className="mt-1 text-sm font-medium">Basic placement and unpacking</dd>
+              <dd className="mt-1 text-sm font-medium">
+                Salt Lake City area, up to 40 miles:{' '}
+                <span className="font-semibold">$60 curbside</span> or{' '}
+                <span className="font-semibold">$120 inside home setup</span>.
+              </dd>
+              <dd className="mt-1 text-sm text-[rgb(var(--muted))]">
+                Beyond 40 miles we add $3 per extra mile. Wyoming, Idaho and
+                Nevada are quoted the same way, based on distance.
+              </dd>
             </div>
 
             <div>
               <dt className="text-xs font-semibold text-[rgb(var(--muted))]">Special requests</dt>
               <dd className="mt-1 text-sm font-medium">Contact us to discuss</dd>
-            </div>
-
-            <div>
-              <dt className="text-xs font-semibold text-[rgb(var(--muted))]">Stairs/elevators</dt>
-              <dd className="mt-1 text-sm font-medium">Up to 2 flights included</dd>
             </div>
 
             <div>
