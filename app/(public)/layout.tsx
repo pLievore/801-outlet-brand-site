@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Instagram } from 'lucide-react';
 
 import { env } from '../../src/config/env';
 import {
@@ -8,6 +9,11 @@ import {
   SHOWROOM_HOURS,
   SHOWROOM_HOURS_SCHEMA,
 } from '../../src/lib/content/hours';
+import {
+  INSTAGRAM_HANDLE,
+  INSTAGRAM_URL,
+  SOCIAL_PROFILES,
+} from '../../src/lib/content/social';
 import type { NavigationLink } from '../../src/lib/navigation/types';
 import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { CartProvider } from '../components/cart/cart-provider';
@@ -52,6 +58,7 @@ export default async function PublicLayout({
       ...entry,
     })),
     areaServed: ['Utah', 'Wyoming', 'Idaho', 'Nevada'],
+    sameAs: SOCIAL_PROFILES,
   };
 
   return (
@@ -203,6 +210,15 @@ function SiteFooter() {
               Quality furniture at outlet pricing, with delivery throughout Utah and
               personal service from our South Salt Lake showroom.
             </p>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-[rgb(var(--border-strong))] px-4 py-2 text-sm font-semibold transition hover:border-[rgb(var(--fg))]"
+            >
+              <Instagram aria-hidden="true" className="size-4" />
+              {INSTAGRAM_HANDLE}
+            </a>
           </div>
 
           <div>

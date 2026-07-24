@@ -37,9 +37,15 @@ export default function ShowroomPage() {
             Sunday — no appointment needed.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            {/* Anchors to the booking form further down (scroll-mt keeps the
+                heading clear of the sticky header). */}
+            <ButtonLink href="#plan-your-visit" variant="sage" size="lg">
+              <CalendarDays aria-hidden="true" className="size-4" />
+              Book online
+            </ButtonLink>
             <ButtonLink
               href="sms:+18018546060?&body=Hi%20801%20Outlet%2C%20I%27d%20like%20to%20schedule%20a%20showroom%20appointment."
-              variant="sage"
+              variant="secondary"
               size="lg"
             >
               <MessageCircle aria-hidden="true" className="size-4" />

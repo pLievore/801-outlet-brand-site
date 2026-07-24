@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { env } from '../../../src/config/env';
+import {
+  INSTAGRAM_HANDLE,
+  INSTAGRAM_URL,
+} from '../../../src/lib/content/social';
 import { sendContactMessageAction } from '../../actions/contact';
 
 export default function ContactForm() {
@@ -107,6 +111,28 @@ export default function ContactForm() {
       action: null,
       href: null,
       value: 'Mountain Time',
+    },
+    {
+      icon: (
+        <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <rect
+            x="3"
+            y="3"
+            width="18"
+            height="18"
+            rx="5"
+            strokeWidth={2}
+            strokeLinejoin="round"
+          />
+          <circle cx="12" cy="12" r="4" strokeWidth={2} />
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+      title: 'Follow us',
+      description: 'New arrivals and showroom finds',
+      action: 'Open Instagram',
+      href: INSTAGRAM_URL,
+      value: INSTAGRAM_HANDLE,
     },
   ];
 
