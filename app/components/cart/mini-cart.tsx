@@ -19,7 +19,7 @@ export function CartButton() {
       variant="ghost"
       size="icon"
       onClick={openCart}
-      className="relative"
+      className="relative shrink-0"
       aria-label={
         quantity > 0 ? `Open cart, ${quantity} items` : 'Open cart, empty'
       }

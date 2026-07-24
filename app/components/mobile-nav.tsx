@@ -29,7 +29,7 @@ export function MobileNav({
         variant="ghost"
         size="icon"
         onClick={() => setOpen(true)}
-        className="lg:hidden"
+        className="shrink-0 lg:hidden"
         aria-label="Open menu"
         aria-expanded={open}
       >

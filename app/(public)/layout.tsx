@@ -94,22 +94,26 @@ function SiteHeader({
           ))}
         </nav>
 
-        <PredictiveSearch className="ml-auto hidden w-full max-w-xs md:block" />
+        {/* Everything from here sits flush right — the search is hidden on
+            small screens, so the auto margin has to live on the group. */}
+        <div className="ml-auto flex items-center gap-3 md:w-full md:max-w-xs md:flex-1 xl:max-w-sm">
+          <PredictiveSearch className="hidden w-full md:block" />
 
-        <CartButton />
+          <CartButton />
 
-        <a
-          href={phoneHref}
-          className={buttonStyles({
-            variant: 'sage',
-            size: 'md',
-            className: 'hidden xl:inline-flex',
-          })}
-        >
-          Call now
-        </a>
+          <a
+            href={phoneHref}
+            className={buttonStyles({
+              variant: 'sage',
+              size: 'md',
+              className: 'hidden shrink-0 xl:inline-flex',
+            })}
+          >
+            Call now
+          </a>
 
-        <MobileNav phoneHref={phoneHref} links={navigation} />
+          <MobileNav phoneHref={phoneHref} links={navigation} />
+        </div>
       </Container>
     </header>
   );
