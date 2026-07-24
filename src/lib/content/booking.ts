@@ -1,4 +1,4 @@
-import { APPOINTMENT_HOURS, formatAppointmentHour } from './hours';
+import { APPOINTMENT_SLOT_MINUTES, formatAppointmentTime } from './hours';
 
 export const STORE_TIME_ZONE = 'America/Denver';
 /** How far ahead visitors may book. */
@@ -85,12 +85,14 @@ export function getBookingDays(now: Date = new Date()): BookingDay[] {
     const isWeekday = parts.weekday >= 1 && parts.weekday <= 5;
     if (!isWeekday) continue;
 
-    const slots = APPOINTMENT_HOURS.filter((hour) => {
+    const slots = APPOINTMENT_SLOT_MINUTES.filter((minutes) => {
       if (offset > 0) return true;
-      return hour * 60 >= minutesNow + MIN_LEAD_TIME_MINUTES;
-    }).map((hour) => ({
-      value: `${String(hour).padStart(2, '0')}:00`,
-      label: formatAppointmentHour(hour),
+      return minutes >= minutesNow + MIN_LEAD_TIME_MINUTES;
+    }).map((minutes) => ({
+      value: `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(
+        minutes % 60
+      ).padStart(2, '0')}`,
+      label: formatAppointmentTime(minutes),
     }));
 
     if (slots.length === 0) continue;
@@ -125,7 +127,7 @@ export function isSlotAvailable(
 
 export function formatSlotForHumans(date: string, time: string): string {
   const [year, month, day] = date.split('-').map(Number);
-  const hour = Number(time.split(':')[0]);
+  const [hour, minute] = time.split(':').map(Number);
   // Noon UTC keeps the calendar date stable across US timezones.
   const instant = new Date(Date.UTC(year, month - 1, day, 12));
   const dayLabel = new Intl.DateTimeFormat('en-US', {
@@ -134,5 +136,5 @@ export function formatSlotForHumans(date: string, time: string): string {
     month: 'long',
     day: 'numeric',
   }).format(instant);
-  return `${dayLabel} at ${formatAppointmentHour(hour)} (Mountain Time)`;
+  return `${dayLabel} at ${formatAppointmentTime(hour * 60 + minute)} (Mountain Time)`;
 }

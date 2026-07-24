@@ -25,12 +25,23 @@ export const HOURS_SUMMARY =
 
 /**
  * Appointment slots (weekdays only — Sat/Sun are walk-in, see SHOWROOM_HOURS).
- * Hourly starts from opening to one hour before close.
+ * Every half hour from opening (10 AM) to one hour before close (7 PM),
+ * expressed as minutes from midnight in store time.
  */
-export const APPOINTMENT_HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+const FIRST_SLOT_MINUTES = 10 * 60;
+const LAST_SLOT_MINUTES = 19 * 60;
+const SLOT_STEP_MINUTES = 30;
 
-export function formatAppointmentHour(hour24: number): string {
+export const APPOINTMENT_SLOT_MINUTES: number[] = Array.from(
+  { length: (LAST_SLOT_MINUTES - FIRST_SLOT_MINUTES) / SLOT_STEP_MINUTES + 1 },
+  (_, index) => FIRST_SLOT_MINUTES + index * SLOT_STEP_MINUTES
+);
+
+/** "10:30 AM" from minutes since midnight. */
+export function formatAppointmentTime(minutesFromMidnight: number): string {
+  const hour24 = Math.floor(minutesFromMidnight / 60);
+  const minute = minutesFromMidnight % 60;
   const period = hour24 >= 12 ? 'PM' : 'AM';
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
-  return `${hour12}:00 ${period}`;
+  return `${hour12}:${String(minute).padStart(2, '0')} ${period}`;
 }

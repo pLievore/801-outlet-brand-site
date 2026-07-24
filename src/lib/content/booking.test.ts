@@ -31,9 +31,9 @@ test('drops slots inside the minimum lead time on the current day', () => {
   const days = getBookingDays(MONDAY_NOON);
   const today = days.find((day) => day.date === '2026-07-20');
   assert.ok(today);
-  // Noon + 2h lead time: 10, 11, 12 and 13 are gone; 14:00 is the first.
+  // Noon + 2h lead time: everything up to 13:30 is gone; 14:00 is the first.
   assert.equal(today.slots[0].value, '14:00');
-  assert.ok(!today.slots.some((slot) => slot.value === '13:00'));
+  assert.ok(!today.slots.some((slot) => slot.value === '13:30'));
 });
 
 test('keeps the full day available for future dates', () => {
@@ -41,7 +41,11 @@ test('keeps the full day available for future dates', () => {
   const tuesday = days.find((day) => day.date === '2026-07-21');
   assert.ok(tuesday);
   assert.equal(tuesday.slots[0].value, '10:00');
+  assert.equal(tuesday.slots[1].value, '10:30');
   assert.equal(tuesday.slots.at(-1)?.value, '19:00');
+  // Half-hourly from 10:00 through 19:00.
+  assert.equal(tuesday.slots.length, 19);
+  assert.equal(tuesday.slots[1].label, '10:30 AM');
 });
 
 test('hides the current day entirely once it is too late to book', () => {
@@ -64,5 +68,9 @@ test('formats the slot without shifting the calendar day', () => {
   assert.equal(
     formatSlotForHumans('2026-07-21', '14:00'),
     'Tuesday, July 21 at 2:00 PM (Mountain Time)'
+  );
+  assert.equal(
+    formatSlotForHumans('2026-07-21', '14:30'),
+    'Tuesday, July 21 at 2:30 PM (Mountain Time)'
   );
 });
