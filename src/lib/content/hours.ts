@@ -14,6 +14,23 @@ export const SHOWROOM_HOURS: ShowroomHours[] = [
   { days: 'Sunday', time: '12 PM – 6 PM', mode: 'walk-in' },
 ];
 
+/** Same hours in schema.org shape, for the storefront's structured data. */
+export const SHOWROOM_HOURS_SCHEMA = [
+  {
+    dayOfWeek: [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ],
+    opens: '10:00',
+    closes: '20:00',
+  },
+  { dayOfWeek: ['Sunday'], opens: '12:00', closes: '18:00' },
+];
+
 export const MODE_LABEL: Record<ShowroomHours['mode'], string> = {
   appointment: 'By appointment',
   'walk-in': 'Walk-ins welcome',

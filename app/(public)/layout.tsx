@@ -3,7 +3,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { env } from '../../src/config/env';
-import { MODE_LABEL, SHOWROOM_HOURS } from '../../src/lib/content/hours';
+import {
+  MODE_LABEL,
+  SHOWROOM_HOURS,
+  SHOWROOM_HOURS_SCHEMA,
+} from '../../src/lib/content/hours';
 import type { NavigationLink } from '../../src/lib/navigation/types';
 import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { CartProvider } from '../components/cart/cart-provider';
@@ -21,9 +25,43 @@ export default async function PublicLayout({
   const navigation = await getMainNavigation();
   const phoneHref = env.getPhoneHref();
 
+  // Identity for search engines: name, logo and storefront details. Google
+  // uses this (plus the favicon) to render the brand in results.
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FurnitureStore',
+    '@id': `${env.siteUrl}/#store`,
+    name: '801 Outlet',
+    description:
+      'Furniture outlet in South Salt Lake — sofas, sectionals, recliners and more, with delivery across Utah.',
+    url: env.siteUrl,
+    logo: `${env.siteUrl}/icon.png`,
+    image: `${env.siteUrl}/opengraph-image.png`,
+    telephone: env.phoneE164,
+    priceRange: '$$',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: '2251 South 400 East',
+      addressLocality: 'South Salt Lake',
+      addressRegion: 'UT',
+      postalCode: '84115',
+      addressCountry: 'US',
+    },
+    openingHoursSpecification: SHOWROOM_HOURS_SCHEMA.map((entry) => ({
+      '@type': 'OpeningHoursSpecification',
+      ...entry,
+    })),
+    areaServed: ['Utah', 'Wyoming', 'Idaho', 'Nevada'],
+  };
+
   return (
     <CartProvider>
       <div className="min-h-dvh">
+        <script
+          type="application/ld+json"
+          // Serialized server-side from constants above — no user input.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
         <a
           href="#main-content"
           className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-full bg-[rgb(var(--fg))] px-5 py-3 text-sm font-semibold text-white transition focus:translate-y-0"
