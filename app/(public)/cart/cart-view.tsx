@@ -6,6 +6,7 @@ import { ShoppingBag } from 'lucide-react';
 import { formatMoney } from '../../../src/lib/format';
 import { CartLineItem } from '../../components/cart/cart-line-item';
 import { useCart } from '../../components/cart/cart-provider';
+import { trackFunnelStep } from '../../components/track-event';
 import { buttonStyles } from '../../components/ui/button';
 import { Container } from '../../components/ui/container';
 
@@ -101,6 +102,7 @@ export function CartView() {
                 </p>
                 <a
                   href={cart.checkoutUrl}
+                  onClick={() => trackFunnelStep('checkout_start')}
                   className={buttonStyles({
                     variant: 'primary',
                     size: 'lg',

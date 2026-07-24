@@ -9,6 +9,7 @@ import type {
 } from '../../../src/lib/catalog/types';
 import { formatMoney } from '../../../src/lib/format';
 import { cn } from '../../../src/lib/cn';
+import { trackFunnelStep } from '../track-event';
 import { useCart } from './cart-provider';
 
 type PurchasePanelProps = {
@@ -85,7 +86,10 @@ export function PurchasePanel({ options, variants }: PurchasePanelProps) {
     setFeedback(null);
     const ok = await addLine(selectedVariant.id, boundedQuantity);
     setFeedback(ok ? null : 'We could not add this item. Please try again.');
-    if (ok) setQuantity(1);
+    if (ok) {
+      setQuantity(1);
+      trackFunnelStep('add_to_cart');
+    }
   };
 
   return (

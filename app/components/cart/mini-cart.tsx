@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
+import { trackFunnelStep } from '../track-event';
 import { Button, buttonStyles } from '../ui/button';
 import { Drawer } from '../ui/dialog';
 import { CartLineItem } from './cart-line-item';
@@ -109,6 +110,7 @@ export function MiniCart() {
                   </p>
                   <a
                     href={cart.checkoutUrl}
+                    onClick={() => trackFunnelStep('checkout_start')}
                     className={buttonStyles({
                       variant: 'primary',
                       size: 'lg',

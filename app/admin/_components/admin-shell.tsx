@@ -9,6 +9,7 @@ import {
   ChevronRight,
   ExternalLink,
   FileUp,
+  Filter,
   LayoutDashboard,
   LineChart,
   LogOut,
@@ -29,6 +30,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: '/admin', label: 'Overview', icon: LayoutDashboard },
       { href: '/admin/sales', label: 'Sales', icon: LineChart },
+      { href: '/admin/funnel', label: 'Funnel', icon: Filter },
     ],
   },
   {
