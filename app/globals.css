@@ -118,7 +118,42 @@ a:focus-visible {
   animation: premium-shimmer 1.6s linear infinite;
 }
 
+/* Reviews marquee: the track holds two identical sets and slides exactly one
+   set width, so the loop is seamless. Spacing lives on each card (not a flex
+   gap) — a gap would leave the seam half a gap short. */
+@keyframes reviews-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.reviews-marquee {
+  overflow: hidden;
+}
+.reviews-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: reviews-marquee var(--marquee-duration, 60s) linear infinite;
+}
+.reviews-marquee:hover .reviews-marquee-track,
+.reviews-marquee:focus-within .reviews-marquee-track {
+  animation-play-state: paused;
+}
+
 /* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  /* Fall back to a plain scrollable row: the global rule below collapses
+     animation duration, which would otherwise freeze the track mid-slide. */
+  .reviews-marquee {
+    overflow-x: auto;
+  }
+  .reviews-marquee-track {
+    animation-name: none !important;
+    width: auto;
+  }
+  .reviews-marquee-duplicate {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *,

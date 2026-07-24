@@ -1,112 +1,97 @@
 /**
  * Customer reviews shown on the home page.
  *
- * Source audit (July 2026): the live Shopify theme renders these as static
- * screenshot images of Facebook Marketplace reviews (shop files 1.png–12.png).
- * The text below is a verbatim transcription of those screenshots so they can
- * be re-presented in the premium design without shipping heavy images.
- * Reviews truncated by "See more" in the source screenshot are transcribed up
- * to the visible text only. Every source screenshot shows a 5-star rating.
+ * Source (July 2026): the store's Google Business Profile, transcribed at the
+ * operator's request and superseding the earlier Facebook Marketplace
+ * screenshots (docs D-012 → D-016). Only customer text is reproduced — the
+ * store's own replies are intentionally left out.
  *
- * Do not add aggregate rating markup (JSON-LD) for these: there is no
- * verifiable structured source, per docs/04 and docs/06.
+ * Google shows relative times ("2 days ago"); those were converted to posting
+ * dates so the copy does not go stale. Reviews truncated by Google's "More"
+ * link are transcribed up to the visible text and flagged.
+ *
+ * Do not add aggregate rating markup (JSON-LD) for these: Google's structured
+ * data policy excludes reviews collected on third-party platforms.
  */
 
 export type CustomerReview = {
   id: string;
   author: string;
-  /** Display date exactly as shown in the source screenshot. */
+  /** Posting date, formatted for display. */
   date: string;
+  /** Star rating shown on the source review. */
+  rating: number;
   quote: string;
-  /** True when the source screenshot truncated the review with "See more". */
+  /** True when the source truncated the review with a "More" link. */
   truncated?: boolean;
 };
 
-export const REVIEWS_SOURCE_LABEL = 'Reviews from Facebook Marketplace customers';
+export const REVIEWS_SOURCE_LABEL = 'Reviews from Google';
 
 export const customerReviews: CustomerReview[] = [
   {
-    id: 'skip-2026-01-24',
-    author: 'Skip',
-    date: 'Jan 24, 2026',
+    id: 'sam-adams-2026-07-23',
+    author: 'Sam Adams',
+    date: 'Jul 23, 2026',
+    rating: 5,
     quote:
-      'Very nice and helpful person. He took the time to show and explain all his items for sale. Quality is great and prices were great.',
+      'I hardly ever leave reviews for anything, but I had to give a 5-star review here! My new couch is amazing, we got it for an incredible price, and the service we had was fantastic. For anyone looking to get a new piece of furniture, this should legitimately be your very first stop.',
+  },
+  {
+    id: 'ludmila-graniso-2026-07-23',
+    author: 'Ludmila Graniso',
+    date: 'Jul 23, 2026',
+    rating: 5,
+    quote:
+      'Excellent experience! We were treated exceptionally well from the very beginning, and everyone was incredibly attentive. We purchased a sofa, and the quality exceeded our expectations. Everything was perfect! I highly recommend them to everyone!',
+  },
+  {
+    id: 'reese-adams-2026-07-23',
+    author: 'Reese Adams',
+    date: 'Jul 23, 2026',
+    rating: 5,
+    quote:
+      'Alex and Jessica were so sweet! Their selection was perfect and had our dream couch! Delivery was very smooth and fast! Definitely recommend!',
+  },
+  {
+    id: 'alessandro-aberle-2026-07-22',
+    author: 'Alessandro Aberle',
+    date: 'Jul 22, 2026',
+    rating: 5,
+    quote:
+      'We had such a great experience with 801 Outlet! From the moment we walked in, everyone was friendly, patient, and genuinely interested in helping us find the right furniture. The quality exceeded our expectations, the prices were fantastic,',
     truncated: true,
   },
   {
-    id: 'jessie-2026-01-17',
-    author: 'Jessie',
-    date: 'Jan 17, 2026',
+    id: 'robin-hose-2026-07-22',
+    author: 'Robin Hose',
+    date: 'Jul 22, 2026',
+    rating: 5,
     quote:
-      'My purchase was exactly as described. Messages were answered promptly, and everything was made convenient on my end. Great seller to work with!!',
+      'Just delivered my new couch! It is beautiful and I love it!! They took my old couch and chair out to garage and brought new one in and set up. Very comfortable and their customer service was awesome! Very honest and fair, give them a try. I will go back for anything I need!!',
   },
   {
-    id: 'preston-2026-01-10',
-    author: 'Preston',
-    date: 'Jan 10, 2026',
+    id: 'lucas-saccomanno-2026-07-22',
+    author: 'Lucas Saccomanno',
+    date: 'Jul 22, 2026',
+    rating: 5,
     quote:
-      'Good and easy to work with and they have a good variety of discounted furniture!',
+      'Great customer service! They answered all my questions and helped me find the perfect fit for my home. The furniture is high quality, the prices are great, and the delivery was incredibly fast. Thank you!',
   },
   {
-    id: 'abbey-2026-01-02',
-    author: 'Abbey',
-    date: 'Jan 2, 2026',
+    id: 'rafael-rena-2026-07-22',
+    author: 'Rafael Rena',
+    date: 'Jul 22, 2026',
+    rating: 5,
     quote:
-      'Excellent seller. Prompt communication, reasonable price, and they delivered to our home.',
+      "The sofa exceeded my expectations! It's very comfortable, well-made, and offers great value for the price. The delivery was completed on the same day, and it was fast and efficient, which made the whole shopping experience even better. I highly recommend both the product and the service!",
   },
   {
-    id: 'kylee-2026-01-02',
-    author: 'Kylee',
-    date: 'Jan 2, 2026',
+    id: 'isabel-lach-2026-07-22',
+    author: 'Isabel Lach',
+    date: 'Jul 22, 2026',
+    rating: 5,
     quote:
-      'Getting a couch from Alex was so easy! We love the sofa we purchased from him and we were so grateful that he has a delivery service because we do not have a vehicle that fits couches. He gave us a great price for our couch and overall we are very happy with our purchase. Highly recommend!',
-  },
-  {
-    id: 'tom-2025-12-31',
-    author: 'Tom',
-    date: 'Dec 31, 2025',
-    quote:
-      'Great communication and the product was exactly as described. Very pleased with the purchase and the overall interaction.',
-  },
-  {
-    id: 'maddie-2025-12-30',
-    author: 'Maddie',
-    date: 'Dec 30, 2025',
-    quote: 'Great service and so kind!!',
-  },
-  {
-    id: 'gargee-2025-12-30',
-    author: 'Gargee',
-    date: 'Dec 30, 2025',
-    quote:
-      'Sells great products, is very helpful and communicates well. Highly recommend!',
-  },
-  {
-    id: 'angeline-2025-12-27',
-    author: 'Angeline',
-    date: 'Dec 27, 2025',
-    quote:
-      'Such a nice guy, very accommodating and drove up to Logan to drop off the couch! I would purchase from him again in the future.',
-  },
-  {
-    id: 'fabiola-2025-12-26',
-    author: 'Fabiola',
-    date: 'Dec 26, 2025',
-    quote:
-      'We love our new couches and how above and beyond he went to deliver them today.',
-  },
-  {
-    id: 'timothy-2025-12-21',
-    author: 'Timothy',
-    date: 'Dec 21, 2025',
-    quote:
-      "Alex went above and beyond to help us get what we needed the same day! Also helped us move around all our furniture. Great people, great deals, can't go wrong!",
-  },
-  {
-    id: 'rhoda-2025-12-21',
-    author: 'Rhoda',
-    date: 'Dec 21, 2025',
-    quote:
-      'Yuka provided a truly 5-star couch-buying experience from start to finish. They were incredibly patient as we took time to decide, never rushed us, and made the entire process easy and enjoyable. The delivery was smooth and professional, and we felt we received a great price as well. Overall, it was a super experience—highly recommend!',
+      'Had a super easy time picking out a couch with a lot of great options. The owners were very helpful and made it easy to find the right one. Great prices and an incredibly easy delivery process. Could not be happier with the service and would recommend 801 to anyone!',
   },
 ];
