@@ -14,6 +14,21 @@ const pageHandleOverrides: Record<string, string> = {
   'test-showroom-booking': '/showroom',
 };
 
+/**
+ * Hosts whose links belong to this store and must resolve to storefront
+ * routes. Shopify builds menu URLs from the shop's primary domain, which
+ * after the cutover is `shop.801outlet.com` (kept only to host checkout),
+ * so those links have to be rewritten instead of opening the legacy theme.
+ */
+function isStoreHost(hostname: string): boolean {
+  return (
+    hostname === '801outlet.com' ||
+    hostname === 'www.801outlet.com' ||
+    hostname === 'shop.801outlet.com' ||
+    hostname.endsWith('.myshopify.com')
+  );
+}
+
 export function normalizeShopifyMenuUrl(
   url: string | null | undefined,
   type: ShopifyMenuItem['type']
@@ -28,7 +43,7 @@ export function normalizeShopifyMenuUrl(
     return { href: '/', external: false };
   }
 
-  if (!['801outlet.com', 'www.801outlet.com'].includes(parsed.hostname)) {
+  if (!isStoreHost(parsed.hostname)) {
     return { href: parsed.toString(), external: true };
   }
 

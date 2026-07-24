@@ -6,6 +6,7 @@ import { Container } from '../../components/ui/container';
 import { MODE_LABEL, SHOWROOM_HOURS } from '../../../src/lib/content/hours';
 import { getBookingDays } from '../../../src/lib/content/booking';
 import { AppointmentForm } from './appointment-form';
+import { ShowroomVideo } from './showroom-video';
 
 export const metadata: Metadata = {
   title: 'Showroom | 801 Outlet',
@@ -64,6 +65,21 @@ export default function ShowroomPage() {
           </p>
         </Container>
       </section>
+
+      <Container size="narrow" className="pt-14 md:pt-20">
+        <div className="text-center">
+          <h2 className="font-display text-3xl tracking-tight md:text-4xl">
+            Take a look <span className="italic">inside</span>
+          </h2>
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[rgb(var(--muted))]">
+            A quick tour of what you&apos;ll find at our South Salt Lake
+            showroom.
+          </p>
+        </div>
+        <div className="mt-7">
+          <ShowroomVideo />
+        </div>
+      </Container>
 
       <Container size="narrow" className="py-14 md:py-20">
         <div className="grid gap-5 sm:grid-cols-2">
