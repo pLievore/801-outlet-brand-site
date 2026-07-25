@@ -3,7 +3,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   AlertTriangle,
-  ArrowUpRight,
   Download,
   FileUp,
   Filter,
@@ -11,8 +10,6 @@ import {
   Plus,
   ReceiptText,
   Store,
-  TrendingDown,
-  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -39,10 +36,11 @@ import {
   financialStatusLabel,
   formatMoney,
   formatPercent,
+  formatShortDay,
   STATUS_COLORS,
 } from './_components/format';
-import { Panel, PageHeader } from './_components/ui';
-import { AreaTrend, Donut, HBar, Sparkline } from './_components/charts';
+import { BiHero, DeltaChip, KpiCard, Panel, PageHeader } from './_components/ui';
+import { AreaTrend, Donut, HBar } from './_components/charts';
 
 export const metadata: Metadata = { title: 'Overview — 801 Outlet Panel' };
 export const dynamic = 'force-dynamic';
@@ -60,84 +58,6 @@ const SHORTCUTS: Array<{
   { href: '/admin/funnel', label: 'Funnel', icon: Filter },
   { href: 'https://801outlet.com', label: 'View store', icon: Store, external: true },
 ];
-
-function DeltaChip({ value, dark }: { value: number | null; dark?: boolean }) {
-  if (typeof value !== 'number') return null;
-  const up = value >= 0;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-        dark
-          ? up
-            ? 'bg-white/15 text-[#c9dbb2]'
-            : 'bg-white/15 text-red-300'
-          : up
-            ? 'bg-[rgb(var(--sage-soft))] text-[rgb(var(--sage-ink))]'
-            : 'bg-red-50 text-red-700'
-      }`}
-    >
-      {up ? (
-        <TrendingUp aria-hidden="true" className="size-3" />
-      ) : (
-        <TrendingDown aria-hidden="true" className="size-3" />
-      )}
-      {formatPercent(Math.abs(value))} vs previous 30d
-    </span>
-  );
-}
-
-function KpiCard({
-  title,
-  value,
-  sub,
-  spark,
-  href,
-}: {
-  title: string;
-  value: string;
-  sub?: string;
-  spark?: number[];
-  href?: string;
-}) {
-  const body = (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(var(--muted))]">
-            {title}
-          </p>
-          <p className="mt-2 text-2xl font-bold tracking-tight tabular-nums">
-            {value}
-          </p>
-          {sub ? (
-            <p className="mt-1 text-xs text-[rgb(var(--muted))]">{sub}</p>
-          ) : null}
-        </div>
-        {href ? (
-          <ArrowUpRight
-            aria-hidden="true"
-            className="size-4 shrink-0 text-[rgb(var(--muted))] transition group-hover:text-[rgb(var(--fg))]"
-          />
-        ) : null}
-      </div>
-      {spark && spark.some((v) => v > 0) ? (
-        <div className="mt-3">
-          <Sparkline values={spark} />
-        </div>
-      ) : null}
-    </>
-  );
-  const className =
-    'group flex flex-col justify-between rounded-2xl border border-[rgb(var(--border))] bg-white p-4 transition' +
-    (href ? ' hover:-translate-y-0.5 hover:shadow-md' : '');
-  return href ? (
-    <Link href={href} className={className}>
-      {body}
-    </Link>
-  ) : (
-    <div className={className}>{body}</div>
-  );
-}
 
 export default async function AdminOverviewPage() {
   const funnelConfigured = isFunnelStorageConfigured();
@@ -188,42 +108,38 @@ export default async function AdminOverviewPage() {
       />
 
       {/* Revenue hero — the one number that matters, with its trend inside. */}
-      <section className="relative overflow-hidden rounded-3xl bg-[#171c17] p-6 text-white md:p-8">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-[#a9bd95]/15 blur-3xl"
-        />
-        <div className="relative flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/50">
-              Revenue · last 30 days
-            </p>
-            <p className="mt-2 font-display text-5xl tracking-tight md:text-6xl">
-              {formatMoney(summary.totalRevenue, summary.currencyCode)}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <DeltaChip value={summary.revenueDelta} dark />
+      <BiHero
+        eyebrow="Revenue · last 30 days"
+        value={formatMoney(summary.totalRevenue, summary.currencyCode)}
+        side={
+          <>
+            <DeltaChip value={summary.revenueDelta} suffix="vs previous 30d" dark />
             <p className="text-xs text-white/50">
               {summary.orderCount} orders · {summary.unitsSold} units
             </p>
-          </div>
-        </div>
-        <div className="relative mt-6">
-          {summary.totalRevenue === 0 ? (
-            <p className="text-sm text-white/60">
-              No sales recorded in the last 30 days.
-            </p>
-          ) : (
-            <AreaTrend
-              data={summary.daily}
-              currency={summary.currencyCode}
-              tone="dark"
-              height={150}
-            />
-          )}
-        </div>
-      </section>
+          </>
+        }
+      >
+        {summary.totalRevenue === 0 ? (
+          <p className="text-sm text-white/60">
+            No sales recorded in the last 30 days.
+          </p>
+        ) : (
+          <AreaTrend
+            data={summary.daily.map((d) => ({
+              date: d.date,
+              value: d.revenue,
+              hint: `${formatShortDay(d.date)} — ${formatMoney(d.revenue, summary.currencyCode)} · ${d.orders} order${d.orders === 1 ? '' : 's'}`,
+            }))}
+            maxLabel={formatMoney(
+              Math.max(...summary.daily.map((d) => d.revenue)),
+              summary.currencyCode
+            )}
+            tone="dark"
+            height={150}
+          />
+        )}
+      </BiHero>
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <KpiCard

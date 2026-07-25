@@ -10,10 +10,11 @@ import {
   CHART_PALETTE,
   financialStatusLabel,
   formatMoney,
+  formatShortDay,
   STATUS_COLORS,
 } from '../_components/format';
-import { Panel, PageHeader, StatCard } from '../_components/ui';
-import { Donut, RevenueBarChart } from '../_components/charts';
+import { BiHero, DeltaChip, KpiCard, Panel, PageHeader } from '../_components/ui';
+import { AreaTrend, Donut } from '../_components/charts';
 
 export const metadata: Metadata = { title: 'Sales — 801 Outlet Panel' };
 
@@ -62,40 +63,82 @@ export default async function SalesPage({
         }
       />
 
+      <BiHero
+        eyebrow={`Revenue · last ${days} days`}
+        value={formatMoney(summary.totalRevenue, summary.currencyCode)}
+        side={
+          <>
+            <DeltaChip
+              value={summary.revenueDelta}
+              suffix={`vs previous ${days}d`}
+              dark
+            />
+            <p className="text-xs text-white/50">
+              {summary.orderCount} orders · {summary.unitsSold} units
+            </p>
+          </>
+        }
+      >
+        {summary.totalRevenue === 0 ? (
+          <p className="text-sm text-white/60">
+            No sales recorded in this period.
+          </p>
+        ) : (
+          <AreaTrend
+            data={summary.daily.map((d) => ({
+              date: d.date,
+              value: d.revenue,
+              hint: `${formatShortDay(d.date)} — ${formatMoney(d.revenue, summary.currencyCode)} · ${d.orders} order${d.orders === 1 ? '' : 's'}`,
+            }))}
+            maxLabel={formatMoney(
+              Math.max(...summary.daily.map((d) => d.revenue)),
+              summary.currencyCode
+            )}
+            tone="dark"
+            height={150}
+          />
+        )}
+      </BiHero>
+
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard
-          title="Revenue"
-          value={formatMoney(summary.totalRevenue, summary.currencyCode)}
-          trend={summary.revenueDelta}
-          sub={summary.revenueDelta === null ? undefined : `vs previous ${days}d`}
-          accent
-        />
-        <StatCard
+        <KpiCard
           title="Orders"
           value={String(summary.orderCount)}
-          trend={summary.ordersDelta}
-          sub={summary.ordersDelta === null ? undefined : `vs previous ${days}d`}
+          sub={
+            summary.ordersDelta === null ? undefined : `vs previous ${days}d`
+          }
+          spark={summary.daily.map((d) => d.orders)}
+          href="/admin/orders"
         />
-        <StatCard
+        <KpiCard
           title="Average order"
           value={formatMoney(summary.averageOrderValue, summary.currencyCode)}
+          sub={`last ${days} days`}
         />
-        <StatCard title="Units sold" value={String(summary.unitsSold)} />
+        <KpiCard title="Units sold" value={String(summary.unitsSold)} />
+        <KpiCard
+          title="Peak day"
+          value={
+            summary.totalRevenue === 0
+              ? '—'
+              : formatMoney(
+                  Math.max(...summary.daily.map((d) => d.revenue)),
+                  summary.currencyCode
+                )
+          }
+          sub={
+            summary.totalRevenue === 0
+              ? undefined
+              : formatShortDay(
+                  summary.daily.reduce((best, d) =>
+                    d.revenue > best.revenue ? d : best
+                  ).date
+                )
+          }
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Panel title="Revenue by day" className="xl:col-span-2">
-          {summary.totalRevenue === 0 ? (
-            <p className="text-sm text-[rgb(var(--muted))]">
-              No sales recorded in this period.
-            </p>
-          ) : (
-            <RevenueBarChart
-              data={summary.daily}
-              currency={summary.currencyCode}
-            />
-          )}
-        </Panel>
         <Panel title="Orders by payment status">
           <Donut
             segments={summary.byStatus.map((entry, index) => ({
@@ -107,12 +150,10 @@ export default async function SalesPage({
               hint: formatMoney(entry.revenue, summary.currencyCode),
             }))}
             centerLabel={{ value: String(summary.orderCount), label: 'orders' }}
+            size={120}
           />
         </Panel>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Panel title="Best sellers">
+        <Panel title="Best sellers" className="xl:col-span-2">
           {summary.bestSellers.length === 0 ? (
             <p className="text-sm text-[rgb(var(--muted))]">
               Nothing sold in this period.
@@ -153,7 +194,7 @@ export default async function SalesPage({
           )}
         </Panel>
 
-        <Panel title="Recent orders">
+        <Panel title="Recent orders" className="xl:col-span-3">
           {summary.recentOrders.length === 0 ? (
             <p className="text-sm text-[rgb(var(--muted))]">
               No orders in this period.

@@ -6,27 +6,36 @@ import { motion } from 'framer-motion';
 
 import { formatMoney, formatShortDay } from './format';
 
+export type TrendPoint = {
+  date: string;
+  value: number;
+  /** Prebuilt tooltip text (server formats money/labels). */
+  hint: string;
+};
+
 /**
  * Smooth area trend with gradient fill and gridlines — the "Power BI card"
  * look. Renders in a normalized 100×44 viewBox; labels live outside the SVG
- * so they never distort.
+ * so they never distort. Value formatting happens on the server via
+ * `hint`/`maxLabel`, so the same chart plots revenue or counts.
  */
 export function AreaTrend({
   data,
-  currency,
+  maxLabel,
   tone = 'light',
   height = 180,
 }: {
-  data: Array<{ date: string; revenue: number; orders: number }>;
-  currency: string;
+  data: TrendPoint[];
+  /** Label for the highest gridline (e.g. "$4,200" or "38"). */
+  maxLabel: string;
   tone?: 'light' | 'dark';
   height?: number;
 }) {
-  const max = Math.max(1, ...data.map((d) => d.revenue));
+  const max = Math.max(1, ...data.map((d) => d.value));
   const n = Math.max(data.length - 1, 1);
   const points = data.map((d, i) => ({
     x: (i / n) * 100,
-    y: 42 - (d.revenue / max) * 38,
+    y: 42 - (d.value / max) * 38,
   }));
   const line = points
     .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(2)},${p.y.toFixed(2)}`)
@@ -89,7 +98,7 @@ export function AreaTrend({
               height="44"
               fill="transparent"
             >
-              <title>{`${formatShortDay(d.date)} — ${formatMoney(d.revenue, currency)} · ${d.orders} order${d.orders === 1 ? '' : 's'}`}</title>
+              <title>{d.hint}</title>
             </rect>
           ))}
           {last ? (
@@ -107,7 +116,7 @@ export function AreaTrend({
         <span
           className={`pointer-events-none absolute right-0 top-0 text-[10px] font-semibold tabular-nums ${labelClass}`}
         >
-          {formatMoney(max, currency)}
+          {maxLabel}
         </span>
       </div>
       <div className={`mt-1 flex justify-between text-[10px] ${labelClass}`}>

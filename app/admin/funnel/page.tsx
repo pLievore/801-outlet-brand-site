@@ -14,8 +14,9 @@ import {
   type FunnelStep,
   type TrafficSource,
 } from '../../../src/lib/analytics/funnel';
-import { formatPercent } from '../_components/format';
-import { PageHeader, Panel, StatCard } from '../_components/ui';
+import { formatPercent, formatShortDay } from '../_components/format';
+import { BiHero, KpiCard, PageHeader, Panel } from '../_components/ui';
+import { AreaTrend } from '../_components/charts';
 
 export const metadata: Metadata = { title: 'Funnel — 801 Outlet Panel' };
 export const dynamic = 'force-dynamic';
@@ -150,11 +151,60 @@ export default async function FunnelPage({
 
       {configured ? null : <SetupNotice />}
 
+      <BiHero
+        eyebrow={`Visits · last ${days} days`}
+        value={String(totals.session)}
+        side={
+          <>
+            <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold text-[#c9dbb2]">
+              {formatPercent(overallRate)} visit → order
+            </span>
+            <p className="text-xs text-white/50">
+              {summary.orderCount} order{summary.orderCount === 1 ? '' : 's'} in
+              the period
+            </p>
+          </>
+        }
+      >
+        {!configured || totals.session === 0 ? (
+          <p className="text-sm text-white/60">
+            {configured
+              ? 'No visits recorded in this period yet.'
+              : 'Connect the event storage to start counting visits.'}
+          </p>
+        ) : (
+          <AreaTrend
+            data={rows.map((row) => ({
+              date: row.date,
+              value: row.counts.session,
+              hint: `${formatShortDay(row.date)} — ${row.counts.session} visit${row.counts.session === 1 ? '' : 's'}`,
+            }))}
+            maxLabel={String(
+              Math.max(...rows.map((row) => row.counts.session))
+            )}
+            tone="dark"
+            height={140}
+          />
+        )}
+      </BiHero>
+
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard title="Visits" value={String(totals.session)} accent />
-        <StatCard title="Product views" value={String(totals.product_view)} />
-        <StatCard title="Added to cart" value={String(totals.add_to_cart)} />
-        <StatCard
+        <KpiCard
+          title="Product views"
+          value={String(totals.product_view)}
+          spark={rows.map((row) => row.counts.product_view)}
+        />
+        <KpiCard
+          title="Added to cart"
+          value={String(totals.add_to_cart)}
+          spark={rows.map((row) => row.counts.add_to_cart)}
+        />
+        <KpiCard
+          title="Checkout started"
+          value={String(totals.checkout_start)}
+          spark={rows.map((row) => row.counts.checkout_start)}
+        />
+        <KpiCard
           title="Visit → order"
           value={formatPercent(overallRate)}
           sub={`${summary.orderCount} order${summary.orderCount === 1 ? '' : 's'}`}
