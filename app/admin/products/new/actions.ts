@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { hasValidPanelSession } from '../../../../src/lib/panel/session';
 import {
   createPanelProduct,
+  textToDescriptionHtml,
   uploadImageToShopify,
 } from '../../../../src/lib/panel/products';
 import { AdminUserErrorsError } from '../../../../src/lib/shopify-admin/client';
@@ -98,20 +99,7 @@ export async function createProductAction(input: {
     return { ok: false, error: 'Invalid image reference.' };
   }
 
-  const description = input.description.trim().slice(0, 10000);
-  const descriptionHtml = description
-    ? description
-        .split(/\n{2,}/)
-        .map(
-          (paragraph) =>
-            `<p>${paragraph
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/\n/g, '<br>')}</p>`
-        )
-        .join('')
-    : '';
+  const descriptionHtml = textToDescriptionHtml(input.description);
 
   try {
     await createPanelProduct({

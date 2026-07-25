@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { PencilLine } from 'lucide-react';
 
 import type { PanelProduct } from '../../../src/lib/panel/products';
 import { cn } from '../../../src/lib/cn';
@@ -86,6 +88,50 @@ function ProductRow({ product }: { product: PanelProduct }) {
     });
   };
 
+  // One tap when a piece sells in person: archive it and zero the stock.
+  const markAsSold = () => {
+    if (
+      !window.confirm(
+        `Mark "${product.title}" as sold? It will be archived and stock set to 0.`
+      )
+    ) {
+      return;
+    }
+    setFeedback(null);
+    startTransition(async () => {
+      const result = await saveProductAction({
+        productId: product.id,
+        status: 'ARCHIVED',
+        statusChanged: product.status !== 'ARCHIVED',
+        variants: product.variants.map((variant) => ({
+          id: variant.id,
+          inventoryItemId: variant.inventoryItemId,
+          price: variant.price,
+          compareAtPrice: variant.compareAtPrice ?? '',
+          quantity: 0,
+          pricingChanged: false,
+          quantityChanged: variant.inventoryQuantity !== 0,
+        })),
+      });
+      if (result.ok) {
+        setDraft((current) => ({
+          status: 'ARCHIVED',
+          variants: Object.fromEntries(
+            Object.entries(current.variants).map(([id, value]) => [
+              id,
+              { ...value, quantity: '0' },
+            ])
+          ),
+        }));
+      }
+      setFeedback(
+        result.ok
+          ? { ok: true, text: 'Marked as sold — archived with stock 0.' }
+          : { ok: false, text: result.error ?? 'Failed.' }
+      );
+    });
+  };
+
   const setVariant = (variantId: string, patch: Partial<VariantDraft>) =>
     setDraft((current) => ({
       ...current,
@@ -110,6 +156,21 @@ function ProductRow({ product }: { product: PanelProduct }) {
             {product.variants.length === 1 ? 'variant' : 'variants'}
           </p>
         </div>
+        <Link
+          href={`/admin/products/${product.id.split('/').pop()}`}
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-xs font-semibold transition hover:border-[rgb(var(--fg))]"
+        >
+          <PencilLine aria-hidden="true" className="size-3.5" />
+          Edit details
+        </Link>
+        <button
+          type="button"
+          onClick={markAsSold}
+          disabled={pending}
+          className="inline-flex min-h-9 items-center rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-xs font-semibold text-[rgb(var(--muted))] transition hover:border-[rgb(var(--accent))] hover:text-[rgb(var(--accent))] disabled:opacity-60"
+        >
+          Mark as sold
+        </button>
         <label className="flex items-center gap-2 text-xs font-semibold">
           Status
           <select

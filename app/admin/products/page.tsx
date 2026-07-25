@@ -61,6 +61,9 @@ export default async function PanelProductsPage({
         subtitle="Edit prices, stock and visibility inline, or update in bulk with a spreadsheet."
         actions={
           <>
+            {/* Route handler (CSV download), not a page — the [id] route makes
+                the lint rule think otherwise. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a
               href="/admin/products/export"
               className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-sm font-semibold transition hover:border-[rgb(var(--fg))]"

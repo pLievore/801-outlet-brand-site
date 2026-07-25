@@ -16,6 +16,7 @@ import {
   Menu,
   Package,
   Plus,
+  ReceiptText,
   Store,
   X,
   type LucideIcon,
@@ -30,6 +31,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: '/admin', label: 'Overview', icon: LayoutDashboard },
       { href: '/admin/sales', label: 'Sales', icon: LineChart },
+      { href: '/admin/orders', label: 'Orders', icon: ReceiptText },
       { href: '/admin/funnel', label: 'Funnel', icon: Filter },
     ],
   },

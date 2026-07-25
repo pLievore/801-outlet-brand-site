@@ -6,9 +6,13 @@ import { getSalesSummary } from '../../../src/lib/panel/analytics';
 import {
   FUNNEL_STEPS,
   FUNNEL_STEP_LABEL,
+  TRAFFIC_SOURCE_LABEL,
+  getFunnelBreakdown,
   getFunnelCounts,
   isFunnelStorageConfigured,
+  type BreakdownEntry,
   type FunnelStep,
+  type TrafficSource,
 } from '../../../src/lib/analytics/funnel';
 import { formatPercent } from '../_components/format';
 import { PageHeader, Panel, StatCard } from '../_components/ui';
@@ -46,6 +50,38 @@ function SetupNotice() {
   );
 }
 
+function BreakdownList({
+  entries,
+  emptyText,
+}: {
+  entries: BreakdownEntry[];
+  emptyText: string;
+}) {
+  if (entries.length === 0) {
+    return <p className="text-sm text-[rgb(var(--muted))]">{emptyText}</p>;
+  }
+  const max = entries[0].count;
+
+  return (
+    <ol className="space-y-2.5">
+      {entries.map((entry) => (
+        <li key={entry.label}>
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="truncate font-semibold">{entry.label}</span>
+            <span className="font-bold tabular-nums">{entry.count}</span>
+          </div>
+          <div className="mt-1 h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-muted))]">
+            <div
+              className="h-full rounded-full bg-[#6f8352]/80"
+              style={{ width: `${Math.max((entry.count / max) * 100, 3)}%` }}
+            />
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export default async function FunnelPage({
   searchParams,
 }: {
@@ -55,9 +91,15 @@ export default async function FunnelPage({
   const days = PERIODS.find((value) => String(value) === period) ?? 30;
   const configured = isFunnelStorageConfigured();
 
-  const [rows, summary] = await Promise.all([
+  const [rows, summary, sources, locations] = await Promise.all([
     configured ? getFunnelCounts(days) : Promise.resolve([]),
     getSalesSummary(days === 7 ? 7 : 30),
+    configured
+      ? getFunnelBreakdown(days, 'src')
+      : Promise.resolve([] as BreakdownEntry[]),
+    configured
+      ? getFunnelBreakdown(days, 'geo')
+      : Promise.resolve([] as BreakdownEntry[]),
   ]);
 
   const totals = FUNNEL_STEPS.reduce(
@@ -159,6 +201,26 @@ export default async function FunnelPage({
           </ol>
         )}
       </Panel>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title="Where visitors come from">
+          <BreakdownList
+            entries={sources.map((entry) => ({
+              ...entry,
+              label:
+                TRAFFIC_SOURCE_LABEL[entry.label as TrafficSource] ??
+                entry.label,
+            }))}
+            emptyText="No visits recorded in this period yet."
+          />
+        </Panel>
+        <Panel title="Top visitor locations">
+          <BreakdownList
+            entries={locations}
+            emptyText="No location data yet — it fills in as new visits arrive."
+          />
+        </Panel>
+      </div>
 
       <Panel title="By day">
         {rows.length === 0 ? (

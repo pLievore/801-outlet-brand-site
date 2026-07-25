@@ -26,6 +26,60 @@ export const FUNNEL_STEP_LABEL: Record<FunnelStep | 'purchase', string> = {
   purchase: 'Orders placed',
 };
 
+export const TRAFFIC_SOURCES = [
+  'instagram',
+  'facebook',
+  'google',
+  'tiktok',
+  'direct',
+  'other',
+] as const;
+
+export type TrafficSource = (typeof TRAFFIC_SOURCES)[number];
+
+export const TRAFFIC_SOURCE_LABEL: Record<TrafficSource, string> = {
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  google: 'Google',
+  tiktok: 'TikTok',
+  direct: 'Direct',
+  other: 'Other',
+};
+
+/**
+ * Buckets a referrer/UTM pair into a fixed set of sources. Only the bucket
+ * name is ever stored — the raw referrer is discarded.
+ */
+export function classifyTrafficSource(
+  referrer: string,
+  utmSource: string
+): TrafficSource {
+  let host = '';
+  try {
+    host = new URL(referrer).hostname.toLowerCase();
+  } catch {
+    // No or invalid referrer.
+  }
+  const utm = utmSource.trim().toLowerCase();
+  const haystack = `${utm} ${host}`;
+
+  if (haystack.includes('instagram') || utm === 'ig') return 'instagram';
+  if (
+    haystack.includes('facebook') ||
+    /(^|\.)fb\.com$/.test(host) ||
+    utm === 'fb'
+  ) {
+    return 'facebook';
+  }
+  if (haystack.includes('tiktok')) return 'tiktok';
+  if (haystack.includes('google')) return 'google';
+
+  // Internal navigation opening in a new tab still counts as direct.
+  if (host.endsWith('801outlet.com')) return 'direct';
+  if (!host && !utm) return 'direct';
+  return 'other';
+}
+
 /** Counters expire after ~13 months so the store never grows unbounded. */
 const COUNTER_TTL_SECONDS = 400 * 24 * 60 * 60;
 
@@ -113,6 +167,67 @@ export async function recordFunnelStep(step: FunnelStep): Promise<void> {
     ['INCR', key],
     ['EXPIRE', key, String(COUNTER_TTL_SECONDS)],
   ]);
+}
+
+/**
+ * Per-session aggregate dimensions: traffic source bucket and coarse visitor
+ * location (city/region from Vercel's edge headers). Stored as daily hash
+ * counters — still no cookies, identifiers or per-visitor records.
+ */
+export async function recordSessionContext(context: {
+  source: TrafficSource;
+  location: string | null;
+}): Promise<void> {
+  const date = funnelDateKey();
+  const sourceKey = `funnel:src:${date}`;
+  const commands: string[][] = [
+    ['HINCRBY', sourceKey, context.source, '1'],
+    ['EXPIRE', sourceKey, String(COUNTER_TTL_SECONDS)],
+  ];
+  if (context.location) {
+    const geoKey = `funnel:geo:${date}`;
+    commands.push(
+      ['HINCRBY', geoKey, context.location, '1'],
+      ['EXPIRE', geoKey, String(COUNTER_TTL_SECONDS)]
+    );
+  }
+  await redisPipeline(commands);
+}
+
+export type BreakdownEntry = { label: string; count: number };
+
+/**
+ * Merged hash counters (sources or locations) for the last N days, sorted by
+ * count. Upstash returns HGETALL as a flat [field, value, ...] array.
+ */
+export async function getFunnelBreakdown(
+  days: number,
+  kind: 'src' | 'geo',
+  limit = 8
+): Promise<BreakdownEntry[]> {
+  const dates = Array.from({ length: days }, (_, index) =>
+    funnelDateKey(new Date(Date.now() - (days - 1 - index) * 86400000))
+  );
+  const results = await redisPipeline<string[] | null>(
+    dates.map((date) => ['HGETALL', `funnel:${kind}:${date}`])
+  );
+  if (!results) return [];
+
+  const totals = new Map<string, number>();
+  for (const flat of results) {
+    if (!Array.isArray(flat)) continue;
+    for (let index = 0; index + 1 < flat.length; index += 2) {
+      const label = flat[index];
+      const count = Number(flat[index + 1]);
+      if (!label || !Number.isFinite(count)) continue;
+      totals.set(label, (totals.get(label) ?? 0) + count);
+    }
+  }
+
+  return [...totals.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
 }
 
 export type FunnelDailyRow = {

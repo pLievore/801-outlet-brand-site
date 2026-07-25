@@ -171,6 +171,227 @@ export function computeCatalogStats(products: PanelProduct[]): CatalogStats {
   return stats;
 }
 
+export type PanelProductMedia = {
+  /** MediaImage gid — also a File id, accepted by fileDelete. */
+  id: string;
+  imageUrl: string | null;
+  alt: string | null;
+};
+
+export type PanelProductDetail = PanelProduct & {
+  handle: string;
+  /** Plain-text description (Shopify strips the HTML). */
+  descriptionText: string;
+  media: PanelProductMedia[];
+};
+
+export async function getPanelProductDetail(
+  numericId: string
+): Promise<PanelProductDetail | null> {
+  if (!/^\d+$/.test(numericId)) return null;
+
+  const data = await adminGraphql<{
+    product: {
+      id: string;
+      title: string;
+      handle: string;
+      status: PanelProduct['status'];
+      description: string;
+      featuredImage: { url: string } | null;
+      media: {
+        nodes: Array<{
+          id: string;
+          alt: string | null;
+          image?: { url: string } | null;
+        }>;
+      };
+      variants: ProductsResponse['products']['nodes'][number]['variants'];
+    } | null;
+  }>(
+    `#graphql
+    query PanelProductDetail($id: ID!) {
+      product(id: $id) {
+        id
+        title
+        handle
+        status
+        description
+        featuredImage { url }
+        media(first: 24) {
+          nodes {
+            id
+            alt
+            ... on MediaImage { image { url } }
+          }
+        }
+        variants(first: 50) {
+          nodes {
+            id
+            title
+            sku
+            price
+            compareAtPrice
+            inventoryQuantity
+            inventoryItem { id }
+          }
+        }
+      }
+    }
+  `,
+    { id: `gid://shopify/Product/${numericId}` }
+  );
+
+  const product = data.product;
+  if (!product) return null;
+
+  return {
+    id: product.id,
+    title: product.title,
+    handle: product.handle,
+    status: product.status,
+    descriptionText: product.description,
+    imageUrl: product.featuredImage?.url ?? null,
+    media: product.media.nodes.map((node) => ({
+      id: node.id,
+      imageUrl: node.image?.url ?? null,
+      alt: node.alt,
+    })),
+    variants: product.variants.nodes.map((variant) => ({
+      id: variant.id,
+      title: variant.title,
+      sku: variant.sku,
+      price: variant.price,
+      compareAtPrice: variant.compareAtPrice,
+      inventoryQuantity: variant.inventoryQuantity ?? 0,
+      inventoryItemId: variant.inventoryItem.id,
+    })),
+  };
+}
+
+export async function updatePanelProductDetails(input: {
+  productId: string;
+  title: string;
+  descriptionHtml: string;
+}) {
+  const data = await adminGraphql<{
+    productUpdate: {
+      product: { id: string } | null;
+      userErrors: Array<{ field?: string[] | null; message: string }>;
+    };
+  }>(
+    `#graphql
+    mutation PanelProductDetails($product: ProductUpdateInput!) {
+      productUpdate(product: $product) {
+        product { id }
+        userErrors { field message }
+      }
+    }
+  `,
+    {
+      product: {
+        id: input.productId,
+        title: input.title,
+        descriptionHtml: input.descriptionHtml,
+      },
+    }
+  );
+  assertNoUserErrors('productUpdate', data.productUpdate.userErrors);
+}
+
+export async function appendProductMedia(
+  productId: string,
+  resourceUrls: string[]
+) {
+  const data = await adminGraphql<{
+    productUpdate: {
+      product: { id: string } | null;
+      userErrors: Array<{ field?: string[] | null; message: string }>;
+    };
+  }>(
+    `#graphql
+    mutation PanelProductAppendMedia($product: ProductUpdateInput!, $media: [CreateMediaInput!]) {
+      productUpdate(product: $product, media: $media) {
+        product { id }
+        userErrors { field message }
+      }
+    }
+  `,
+    {
+      product: { id: productId },
+      media: resourceUrls.map((resourceUrl) => ({
+        originalSource: resourceUrl,
+        mediaContentType: 'IMAGE',
+      })),
+    }
+  );
+  assertNoUserErrors('productUpdate', data.productUpdate.userErrors);
+}
+
+export async function deleteProductMedia(mediaIds: string[]) {
+  const data = await adminGraphql<{
+    fileDelete: {
+      userErrors: Array<{ field?: string[] | null; message: string }>;
+    };
+  }>(
+    `#graphql
+    mutation PanelProductDeleteMedia($fileIds: [ID!]!) {
+      fileDelete(fileIds: $fileIds) {
+        userErrors { field message }
+      }
+    }
+  `,
+    { fileIds: mediaIds }
+  );
+  assertNoUserErrors('fileDelete', data.fileDelete.userErrors);
+}
+
+export async function reorderProductMedia(
+  productId: string,
+  orderedMediaIds: string[]
+) {
+  const data = await adminGraphql<{
+    productReorderMedia: {
+      userErrors: Array<{ field?: string[] | null; message: string }>;
+    };
+  }>(
+    `#graphql
+    mutation PanelProductReorderMedia($id: ID!, $moves: [MoveInput!]!) {
+      productReorderMedia(id: $id, moves: $moves) {
+        userErrors { field message }
+      }
+    }
+  `,
+    {
+      id: productId,
+      moves: orderedMediaIds.map((mediaId, index) => ({
+        id: mediaId,
+        newPosition: String(index),
+      })),
+    }
+  );
+  assertNoUserErrors(
+    'productReorderMedia',
+    data.productReorderMedia.userErrors
+  );
+}
+
+/** Converts operator-typed plain text into safe paragraph HTML. */
+export function textToDescriptionHtml(text: string): string {
+  const trimmed = text.trim().slice(0, 10000);
+  if (!trimmed) return '';
+  return trimmed
+    .split(/\n{2,}/)
+    .map(
+      (paragraph) =>
+        `<p>${paragraph
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n/g, '<br>')}</p>`
+    )
+    .join('');
+}
+
 let cachedLocationId: string | null = null;
 
 export async function getPrimaryLocationId(): Promise<string> {
