@@ -7,6 +7,7 @@ import {
   formatSlotForHumans,
   isSlotAvailable,
 } from '../../src/lib/content/booking';
+import { buildAppointmentInvite } from '../../src/lib/content/ics';
 
 export type AppointmentResult = {
   ok: boolean;
@@ -40,7 +41,9 @@ function sanitizeLine(value: string, maxLength: number): string {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_PATTERN = /^\d{2}:00$/;
+// Slots run every 30 minutes ("10:30"), so accept any valid minute pair —
+// isSlotAvailable still enforces the exact offered schedule.
+const TIME_PATTERN = /^\d{2}:[0-5]\d$/;
 
 export async function requestAppointmentAction(
   input: unknown
@@ -99,6 +102,23 @@ export async function requestAppointmentAction(
 
   const slotLabel = formatSlotForHumans(date, time);
 
+  // Same UID in both copies: store and customer hold the same calendar
+  // event, and a re-send updates instead of duplicating.
+  const invite = buildAppointmentInvite({
+    date,
+    time,
+    customerName: name,
+    customerEmail: email,
+    storeEmail: BOOKING_RECIPIENT,
+    organizerEmail: from.replace(/^.*<|>$/g, ''),
+    uid: `showroom-${date}-${time.replace(':', '')}-${crypto.randomUUID()}@801outlet.com`,
+  });
+  const inviteAttachment = {
+    filename: 'showroom-visit.ics',
+    content: Buffer.from(invite, 'utf8'),
+    contentType: 'text/calendar; method=REQUEST; charset=utf-8',
+  };
+
   try {
     const resend = new Resend(apiKey);
 
@@ -107,6 +127,7 @@ export async function requestAppointmentAction(
       to: BOOKING_RECIPIENT,
       replyTo: email,
       subject: `[Showroom appointment] ${slotLabel} — ${name}`,
+      attachments: [inviteAttachment],
       text: [
         'New showroom appointment request',
         '',
@@ -134,6 +155,7 @@ export async function requestAppointmentAction(
       to: email,
       replyTo: BOOKING_RECIPIENT,
       subject: `Your showroom visit — ${slotLabel}`,
+      attachments: [inviteAttachment],
       text: [
         `Hi ${name},`,
         '',
@@ -141,6 +163,9 @@ export async function requestAppointmentAction(
         '',
         `When:  ${slotLabel}`,
         'Where: 2251 South 400 East, South Salt Lake, UT 84115',
+        '',
+        'The attached invite adds the visit to your calendar with a reminder',
+        'one hour before.',
         '',
         'Our team will confirm by text message or phone call. Need to change',
         'or cancel? Just reply to this email or text (801) 854-6060.',

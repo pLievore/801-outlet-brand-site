@@ -16,7 +16,7 @@
     "test": "npm run test:shopify && npm run test:design",
     "test:shopify": "tsx --test src/lib/format.test.ts src/lib/catalog/filters.test.ts src/lib/shopify/config-schema.test.ts src/lib/shopify/errors.test.ts src/lib/shopify/adapters/menu.test.ts src/lib/shopify/adapters/products.test.ts src/lib/shopify/revalidation.test.ts src/lib/shopify/adapters/cart.test.ts src/lib/shopify/customer/pkce.test.ts",
     "db:seed": "tsx --env-file=.env.local db/seed.ts",
-    "test:design": "tsx --test src/lib/design/contrast.test.ts src/lib/content/booking.test.ts",
+    "test:design": "tsx --test src/lib/design/contrast.test.ts src/lib/content/booking.test.ts src/lib/content/ics.test.ts",
     "panel:token": "tsx --env-file=.env.local scripts/get-panel-token.ts"
   },
   "dependencies": {

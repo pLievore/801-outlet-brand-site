@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PencilLine } from 'lucide-react';
+import { BadgeCheck, PencilLine } from 'lucide-react';
 
 import type { PanelProduct } from '../../../src/lib/panel/products';
 import { cn } from '../../../src/lib/cn';
@@ -141,134 +141,288 @@ function ProductRow({ product }: { product: PanelProduct }) {
       },
     }));
 
+  const numericId = product.id.split('/').pop();
+  const single = product.variants.length === 1;
+  const fieldClass =
+    'w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white py-2 text-sm tabular-nums outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15';
+
   return (
-    <div className="rounded-3xl border border-[rgb(var(--border))] bg-white p-5">
-      <div className="flex flex-wrap items-center gap-4">
-        <span className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--surface-muted))]">
+    <div
+      className={cn(
+        'rounded-3xl border bg-white p-5 transition',
+        dirty
+          ? 'border-[rgb(var(--accent))]/40 shadow-[0_4px_20px_rgba(0,0,0,0.05)]'
+          : 'border-[rgb(var(--border))]'
+      )}
+    >
+      {/* Identity + actions */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <span className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface-muted))]">
           {product.imageUrl ? (
-            <Image src={product.imageUrl} alt="" fill sizes="56px" className="object-cover" />
+            <Image src={product.imageUrl} alt="" fill sizes="64px" className="object-cover" />
           ) : null}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{product.title}</p>
-          <p className="mt-0.5 text-xs text-[rgb(var(--muted))]">
-            {product.variants.length}{' '}
-            {product.variants.length === 1 ? 'variant' : 'variants'}
+          <p className="truncate text-[15px] font-bold tracking-tight">
+            {product.title}
           </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide',
+                draft.status === 'ACTIVE' &&
+                  'bg-[rgb(var(--sage-soft))] text-[rgb(var(--sage-ink))]',
+                draft.status === 'DRAFT' && 'bg-amber-50 text-amber-700',
+                draft.status === 'ARCHIVED' &&
+                  'bg-[rgb(var(--surface-muted))] text-[rgb(var(--muted))]'
+              )}
+            >
+              <span
+                className={cn(
+                  'size-1.5 rounded-full',
+                  draft.status === 'ACTIVE' && 'bg-[rgb(var(--sage-ink))]',
+                  draft.status === 'DRAFT' && 'bg-amber-500',
+                  draft.status === 'ARCHIVED' && 'bg-[rgb(var(--muted))]'
+                )}
+              />
+              {STATUS_LABEL[draft.status]}
+            </span>
+            {!single ? (
+              <span className="text-xs text-[rgb(var(--muted))]">
+                {product.variants.length} variants
+              </span>
+            ) : null}
+            {single && product.variants[0].sku ? (
+              <span className="text-xs text-[rgb(var(--muted))]">
+                SKU {product.variants[0].sku}
+              </span>
+            ) : null}
+          </div>
         </div>
-        <Link
-          href={`/admin/products/${product.id.split('/').pop()}`}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-xs font-semibold transition hover:border-[rgb(var(--fg))]"
-        >
-          <PencilLine aria-hidden="true" className="size-3.5" />
-          Edit details
-        </Link>
-        <button
-          type="button"
-          onClick={markAsSold}
-          disabled={pending}
-          className="inline-flex min-h-9 items-center rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-xs font-semibold text-[rgb(var(--muted))] transition hover:border-[rgb(var(--accent))] hover:text-[rgb(var(--accent))] disabled:opacity-60"
-        >
-          Mark as sold
-        </button>
-        <label className="flex items-center gap-2 text-xs font-semibold">
-          Status
-          <select
-            value={draft.status}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                status: event.target.value as PanelProduct['status'],
-              }))
-            }
-            className="min-h-9 rounded-full border border-[rgb(var(--border-strong))] bg-white px-3 text-xs font-semibold"
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/admin/products/${numericId}`}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-xs font-semibold transition hover:border-[rgb(var(--fg))]"
           >
-            {Object.entries(STATUS_LABEL).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          onClick={save}
-          disabled={!dirty || pending}
-          className={cn(
-            'min-h-9 rounded-full px-5 text-xs font-semibold transition',
-            dirty
-              ? 'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg))]/90'
-              : 'border border-[rgb(var(--border))] text-[rgb(var(--muted))]',
-            pending && 'opacity-60'
-          )}
-        >
-          {pending ? 'Saving…' : 'Save'}
-        </button>
+            <PencilLine aria-hidden="true" className="size-3.5" />
+            Edit details
+          </Link>
+          <button
+            type="button"
+            onClick={markAsSold}
+            disabled={pending}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-xs font-semibold text-[rgb(var(--muted))] transition hover:border-[rgb(var(--accent))] hover:text-[rgb(var(--accent))] disabled:opacity-60"
+          >
+            <BadgeCheck aria-hidden="true" className="size-3.5" />
+            Sold
+          </button>
+        </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[34rem] text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-[rgb(var(--muted))]">
-              <th className="py-2 pr-4 font-semibold">Variant</th>
-              <th className="py-2 pr-4 font-semibold">SKU</th>
-              <th className="py-2 pr-4 font-semibold">Price (USD)</th>
-              <th className="py-2 pr-4 font-semibold">Compare-at</th>
-              <th className="py-2 font-semibold">Stock</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[rgb(var(--border))]">
-            {product.variants.map((variant) => {
+      {/* Inline pricing/stock editor */}
+      <div className="mt-4 rounded-2xl bg-[rgb(var(--surface-muted))]/60 p-4">
+        {single ? (
+          <div className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[1fr_1fr_1fr_auto_auto]">
+            {(() => {
+              const variant = product.variants[0];
               const value = draft.variants[variant.id];
               return (
-                <tr key={variant.id}>
-                  <td className="py-2.5 pr-4">
-                    {variant.title === 'Default Title' ? '—' : variant.title}
-                  </td>
-                  <td className="py-2.5 pr-4 text-[rgb(var(--muted))]">
-                    {variant.sku || '—'}
-                  </td>
-                  <td className="py-2.5 pr-4">
-                    <input
-                      value={value.price}
-                      onChange={(event) =>
-                        setVariant(variant.id, { price: event.target.value })
-                      }
-                      inputMode="decimal"
-                      aria-label={`Price for ${product.title} ${variant.title}`}
-                      className="w-24 rounded-lg border border-[rgb(var(--border-strong))] px-2 py-1.5 text-sm tabular-nums"
-                    />
-                  </td>
-                  <td className="py-2.5 pr-4">
-                    <input
-                      value={value.compareAtPrice}
-                      onChange={(event) =>
-                        setVariant(variant.id, {
-                          compareAtPrice: event.target.value,
-                        })
-                      }
-                      inputMode="decimal"
-                      placeholder="—"
-                      aria-label={`Compare-at price for ${product.title} ${variant.title}`}
-                      className="w-24 rounded-lg border border-[rgb(var(--border-strong))] px-2 py-1.5 text-sm tabular-nums"
-                    />
-                  </td>
-                  <td className="py-2.5">
+                <>
+                  <label className="block text-[11px] font-bold uppercase tracking-wide text-[rgb(var(--muted))]">
+                    Price
+                    <div className="relative mt-1.5">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[rgb(var(--muted))]">
+                        $
+                      </span>
+                      <input
+                        value={value.price}
+                        onChange={(event) =>
+                          setVariant(variant.id, { price: event.target.value })
+                        }
+                        inputMode="decimal"
+                        aria-label={`Price for ${product.title}`}
+                        className={cn(fieldClass, 'pl-7 pr-3 font-semibold')}
+                      />
+                    </div>
+                  </label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wide text-[rgb(var(--muted))]">
+                    Compare-at
+                    <div className="relative mt-1.5">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[rgb(var(--muted))]">
+                        $
+                      </span>
+                      <input
+                        value={value.compareAtPrice}
+                        onChange={(event) =>
+                          setVariant(variant.id, {
+                            compareAtPrice: event.target.value,
+                          })
+                        }
+                        inputMode="decimal"
+                        placeholder="—"
+                        aria-label={`Compare-at price for ${product.title}`}
+                        className={cn(fieldClass, 'pl-7 pr-3')}
+                      />
+                    </div>
+                  </label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wide text-[rgb(var(--muted))]">
+                    Stock
                     <input
                       value={value.quantity}
                       onChange={(event) =>
                         setVariant(variant.id, { quantity: event.target.value })
                       }
                       inputMode="numeric"
-                      aria-label={`Stock for ${product.title} ${variant.title}`}
-                      className="w-20 rounded-lg border border-[rgb(var(--border-strong))] px-2 py-1.5 text-sm tabular-nums"
+                      aria-label={`Stock for ${product.title}`}
+                      className={cn(fieldClass, 'mt-1.5 px-3')}
                     />
-                  </td>
-                </tr>
+                  </label>
+                </>
               );
-            })}
-          </tbody>
-        </table>
+            })()}
+            <label className="block text-[11px] font-bold uppercase tracking-wide text-[rgb(var(--muted))]">
+              Status
+              <select
+                value={draft.status}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    status: event.target.value as PanelProduct['status'],
+                  }))
+                }
+                className={cn(fieldClass, 'mt-1.5 px-3 font-semibold')}
+              >
+                {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={save}
+              disabled={!dirty || pending}
+              className={cn(
+                'col-span-2 min-h-10 rounded-full px-6 text-xs font-bold transition sm:col-span-1',
+                dirty
+                  ? 'bg-[rgb(var(--fg))] text-white shadow-sm hover:bg-[rgb(var(--fg))]/90'
+                  : 'cursor-default border border-[rgb(var(--border))] bg-white text-[rgb(var(--muted))]/60',
+                pending && 'opacity-60'
+              )}
+            >
+              {pending ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[rgb(var(--muted))]">
+                Status
+                <select
+                  value={draft.status}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      status: event.target.value as PanelProduct['status'],
+                    }))
+                  }
+                  className="min-h-9 rounded-full border border-[rgb(var(--border-strong))] bg-white px-3 text-xs font-semibold normal-case tracking-normal"
+                >
+                  {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={save}
+                disabled={!dirty || pending}
+                className={cn(
+                  'min-h-9 rounded-full px-5 text-xs font-bold transition',
+                  dirty
+                    ? 'bg-[rgb(var(--fg))] text-white shadow-sm hover:bg-[rgb(var(--fg))]/90'
+                    : 'cursor-default border border-[rgb(var(--border))] bg-white text-[rgb(var(--muted))]/60',
+                  pending && 'opacity-60'
+                )}
+              >
+                {pending ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
+              </button>
+            </div>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full min-w-[34rem] text-sm">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase tracking-wide text-[rgb(var(--muted))]">
+                    <th className="py-2 pr-4 font-bold">Variant</th>
+                    <th className="py-2 pr-4 font-bold">SKU</th>
+                    <th className="py-2 pr-4 font-bold">Price (USD)</th>
+                    <th className="py-2 pr-4 font-bold">Compare-at</th>
+                    <th className="py-2 font-bold">Stock</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[rgb(var(--border))]">
+                  {product.variants.map((variant) => {
+                    const value = draft.variants[variant.id];
+                    return (
+                      <tr key={variant.id}>
+                        <td className="py-2.5 pr-4 font-medium">
+                          {variant.title === 'Default Title'
+                            ? '—'
+                            : variant.title}
+                        </td>
+                        <td className="py-2.5 pr-4 text-[rgb(var(--muted))]">
+                          {variant.sku || '—'}
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <input
+                            value={value.price}
+                            onChange={(event) =>
+                              setVariant(variant.id, {
+                                price: event.target.value,
+                              })
+                            }
+                            inputMode="decimal"
+                            aria-label={`Price for ${product.title} ${variant.title}`}
+                            className={cn(fieldClass, 'w-24 px-2.5')}
+                          />
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <input
+                            value={value.compareAtPrice}
+                            onChange={(event) =>
+                              setVariant(variant.id, {
+                                compareAtPrice: event.target.value,
+                              })
+                            }
+                            inputMode="decimal"
+                            placeholder="—"
+                            aria-label={`Compare-at price for ${product.title} ${variant.title}`}
+                            className={cn(fieldClass, 'w-24 px-2.5')}
+                          />
+                        </td>
+                        <td className="py-2.5">
+                          <input
+                            value={value.quantity}
+                            onChange={(event) =>
+                              setVariant(variant.id, {
+                                quantity: event.target.value,
+                              })
+                            }
+                            inputMode="numeric"
+                            aria-label={`Stock for ${product.title} ${variant.title}`}
+                            className={cn(fieldClass, 'w-20 px-2.5')}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {feedback ? (

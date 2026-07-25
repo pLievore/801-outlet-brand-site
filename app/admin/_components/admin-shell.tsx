@@ -47,7 +47,7 @@ const NAV: NavGroup[] = [
 
 const ALL_ITEMS = NAV.flatMap((group) => group.items);
 
-const STOREFRONT_URL = 'https://801outlet.vercel.app';
+const STOREFRONT_URL = 'https://801outlet.com';
 const SHOPIFY_ADMIN_URL = 'https://admin.shopify.com/store/xwn9c1-m8';
 
 function bestMatch(pathname: string): string | null {

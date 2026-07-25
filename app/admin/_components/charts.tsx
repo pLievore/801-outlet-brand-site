@@ -1,9 +1,174 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 import { formatMoney, formatShortDay } from './format';
+
+/**
+ * Smooth area trend with gradient fill and gridlines — the "Power BI card"
+ * look. Renders in a normalized 100×44 viewBox; labels live outside the SVG
+ * so they never distort.
+ */
+export function AreaTrend({
+  data,
+  currency,
+  tone = 'light',
+  height = 180,
+}: {
+  data: Array<{ date: string; revenue: number; orders: number }>;
+  currency: string;
+  tone?: 'light' | 'dark';
+  height?: number;
+}) {
+  const max = Math.max(1, ...data.map((d) => d.revenue));
+  const n = Math.max(data.length - 1, 1);
+  const points = data.map((d, i) => ({
+    x: (i / n) * 100,
+    y: 42 - (d.revenue / max) * 38,
+  }));
+  const line = points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+    .join(' ');
+  const area = `${line} L100,44 L0,44 Z`;
+  const last = points[points.length - 1];
+  const gradientId = `area-${tone}`;
+  const stroke = tone === 'dark' ? '#c9dbb2' : '#6f8352';
+  const grid = tone === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const labelClass =
+    tone === 'dark' ? 'text-white/50' : 'text-[rgb(var(--muted))]';
+  const labelEvery = Math.ceil(data.length / 6);
+
+  return (
+    <div>
+      <div className="relative">
+        <svg
+          viewBox="0 0 100 44"
+          preserveAspectRatio="none"
+          className="w-full"
+          style={{ height }}
+          role="img"
+          aria-label="Area chart of daily revenue"
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={stroke} stopOpacity="0.45" />
+              <stop offset="100%" stopColor={stroke} stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+          {[11, 22, 33].map((y) => (
+            <line key={y} x1="0" x2="100" y1={y} y2={y} stroke={grid} strokeWidth="0.3" />
+          ))}
+          <motion.path
+            d={area}
+            fill={`url(#${gradientId})`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+          />
+          <motion.path
+            d={line}
+            fill="none"
+            stroke={stroke}
+            strokeWidth="0.9"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.9, ease: 'easeOut' }}
+            style={{ strokeWidth: 2 }}
+          />
+          {data.map((d, i) => (
+            <rect
+              key={d.date}
+              x={(i / Math.max(data.length, 1)) * 100}
+              y="0"
+              width={100 / Math.max(data.length, 1)}
+              height="44"
+              fill="transparent"
+            >
+              <title>{`${formatShortDay(d.date)} — ${formatMoney(d.revenue, currency)} · ${d.orders} order${d.orders === 1 ? '' : 's'}`}</title>
+            </rect>
+          ))}
+          {last ? (
+            <motion.circle
+              cx={last.x}
+              cy={last.y}
+              r="1.1"
+              fill={stroke}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+            />
+          ) : null}
+        </svg>
+        <span
+          className={`pointer-events-none absolute right-0 top-0 text-[10px] font-semibold tabular-nums ${labelClass}`}
+        >
+          {formatMoney(max, currency)}
+        </span>
+      </div>
+      <div className={`mt-1 flex justify-between text-[10px] ${labelClass}`}>
+        {data
+          .filter((_, index) => index % labelEvery === 0)
+          .map((day) => (
+            <span key={day.date}>{formatShortDay(day.date)}</span>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+/** Tiny inline trend for KPI cards. */
+export function Sparkline({
+  values,
+  height = 36,
+  color = '#6f8352',
+}: {
+  values: number[];
+  height?: number;
+  color?: string;
+}) {
+  const max = Math.max(1, ...values);
+  const n = Math.max(values.length - 1, 1);
+  const line = values
+    .map(
+      (value, index) =>
+        `${index === 0 ? 'M' : 'L'}${((index / n) * 100).toFixed(2)},${(
+          30 -
+          (value / max) * 26
+        ).toFixed(2)}`
+    )
+    .join(' ');
+
+  return (
+    <svg
+      viewBox="0 0 100 32"
+      preserveAspectRatio="none"
+      className="w-full"
+      style={{ height }}
+      aria-hidden="true"
+    >
+      <path
+        d={`${line} L100,32 L0,32 Z`}
+        fill={color}
+        opacity="0.12"
+      />
+      <path
+        d={line}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+        style={{ strokeWidth: 1.8 }}
+      />
+    </svg>
+  );
+}
 
 export function RevenueBarChart({
   data,
@@ -173,6 +338,19 @@ export function HBar({
       {rows.map((row, index) => {
         const content = (
           <>
+            {row.imageUrl !== undefined ? (
+              <span className="relative size-9 shrink-0 overflow-hidden rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--surface-muted))]">
+                {row.imageUrl ? (
+                  <Image
+                    src={row.imageUrl}
+                    alt=""
+                    fill
+                    sizes="36px"
+                    className="object-cover"
+                  />
+                ) : null}
+              </span>
+            ) : null}
             <span
               className="w-28 shrink-0 truncate text-xs sm:w-40 sm:text-sm"
               title={row.label}
