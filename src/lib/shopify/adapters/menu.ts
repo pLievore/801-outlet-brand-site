@@ -75,3 +75,31 @@ export function adaptMenuItem(item: ShopifyMenuItem): NavigationLink {
     children: (item.items ?? []).map(adaptMenuItem),
   };
 }
+
+/**
+ * The Delivery page exists only on the headless storefront, so the Shopify
+ * menu cannot link to it. Insert it after Contact (falling back to just
+ * before the showroom link, then to the end) unless the menu already has it.
+ */
+export function withDeliveryLink(links: NavigationLink[]): NavigationLink[] {
+  if (links.some((link) => link.href === '/delivery')) return links;
+
+  const deliveryLink: NavigationLink = {
+    id: 'storefront-delivery',
+    label: 'Delivery',
+    href: '/delivery',
+    external: false,
+    children: [],
+  };
+
+  const contactIndex = links.findIndex((link) => link.href === '/contact');
+  const showroomIndex = links.findIndex((link) => link.href === '/showroom');
+  const insertAt =
+    contactIndex >= 0
+      ? contactIndex + 1
+      : showroomIndex >= 0
+        ? showroomIndex
+        : links.length;
+
+  return [...links.slice(0, insertAt), deliveryLink, ...links.slice(insertAt)];
+}

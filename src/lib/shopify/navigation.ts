@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { NavigationLink } from '../navigation/types';
-import { adaptMenuItem } from './adapters/menu';
+import { adaptMenuItem, withDeliveryLink } from './adapters/menu';
 import { getMenu } from './queries/menus';
 
 const fallbackNavigation: NavigationLink[] = [
@@ -40,7 +40,7 @@ export async function getMainNavigation() {
     const menu = await getMenu('main-menu');
     if (!menu || menu.items.length === 0) return fallbackNavigation;
 
-    return menu.items.map(adaptMenuItem);
+    return withDeliveryLink(menu.items.map(adaptMenuItem));
   } catch (error) {
     console.warn('[shopify-menu]', {
       event: 'fallback_navigation',
