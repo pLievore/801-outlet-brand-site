@@ -19,6 +19,15 @@ Este projeto utiliza variáveis de ambiente para integrações (Supabase, Square
 | `NEXT_PUBLIC_SITE_URL` | sim | URL canônica do site | `https://801outlet.com` |
 | `NEXT_PUBLIC_PHONE_E164` | sim | Telefone em E.164 | `+13852016328` |
 
+### Manutenção
+
+| Variável | Pública? | Descrição | Padrão |
+|---|---|---|---|
+| `MAINTENANCE_MODE` | não | `1`/`true`/`on` bloqueia todas as rotas públicas com HTTP 503 e a página de manutenção. Qualquer outro valor (ou ausente) mantém o site no ar | desligado |
+| `MAINTENANCE_BYPASS_TOKEN` | não | Segredo aleatório que libera o site normal via `?preview=<token>` enquanto o bloqueio está ligado. Sem ele, não há bypass | — |
+
+O bloqueio é lido em build time e inlined no bundle do edge: **ligar ou desligar exige redeploy** (mudar a env no Vercel e redeploy, ~1 min). `/admin`, `/api/webhooks/*`, `/api/internal/*`, `robots.txt` e `sitemap.xml` continuam acessíveis durante a manutenção.
+
 ### Shopify Headless
 
 | Variável | Pública? | Descrição |
