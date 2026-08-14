@@ -11,7 +11,7 @@ import { buttonStyles } from '../components/ui/button';
 export const metadata: Metadata = {
   title: 'Under maintenance — 801 Outlet',
   description:
-    'Our site is temporarily under maintenance. Reach us on Instagram or WhatsApp.',
+    'Our site is temporarily under maintenance. Reach us on Instagram.',
 };
 
 export default function MaintenancePage() {
