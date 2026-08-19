@@ -240,7 +240,15 @@ export default async function ProductDetailPage({ params }: PageProps) {
                     </div>
                   ))}
                 {PRODUCT_ATTRIBUTES.filter(
-                  (spec) => spec.key !== 'features' && product.attributes[spec.key]
+                  (spec) =>
+                    spec.key !== 'features' &&
+                    product.attributes[spec.key] &&
+                    // Some products carry colour as a variant option, which is
+                    // already listed above — don't say it twice.
+                    !primaryVariant?.selectedOptions.some(
+                      (option) =>
+                        option.name.toLowerCase() === spec.label.toLowerCase()
+                    )
                 ).map((spec) => (
                   <div key={spec.key}>
                     <dt className="text-xs text-[rgb(var(--muted))]">
