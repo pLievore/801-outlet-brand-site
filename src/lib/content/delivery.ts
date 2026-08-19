@@ -62,7 +62,8 @@ export const EXPRESS_DELIVERY = {
   surchargeCents: 6000,
   /** Delivered within this many hours of the order being confirmed. */
   windowHours: 24,
-  name: 'Express delivery (24h)',
+  /** Suffix on the Shopify rate name — kept short, it shows at checkout. */
+  name: 'Express 24h',
 } as const;
 
 /**
