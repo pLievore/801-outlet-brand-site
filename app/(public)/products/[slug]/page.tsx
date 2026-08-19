@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { env } from '../../../../src/config/env';
+import { getAvailability } from '../../../../src/lib/catalog/availability';
 import { formatMoney } from '../../../../src/lib/format';
 import { safeJsonLd } from '../../../../src/lib/seo';
 import {
@@ -80,14 +81,17 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const compareAtPrice =
     primaryVariant?.compareAtPrice ?? product.compareAtPrice;
   const inStock = Boolean(primaryVariant?.availableForSale);
+  // Sold out vs Coming soon: the operator marks the difference with a tag in
+  // Shopify instead of deleting the product. See `catalog/availability`.
+  const availability = getAvailability({ availableForSale: inStock, tags: product.tags });
   const quantity = primaryVariant?.quantityAvailable ?? null;
   const showLowStock = inStock && quantity !== null && quantity <= 3;
   const related = (await getRelatedProducts(product.id, 4)).map(
     adaptProductCard
   );
-  const whatsappHref = `https://wa.me/${env.phoneE164.replace(/\D/g, '')}?text=${encodeURIComponent(
+  const smsHref = env.getSmsHref(
     `Hi 801 Outlet, I would like more information about ${product.title}: ${env.siteUrl}/products/${product.handle}`
-  )}`;
+  );
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -179,7 +183,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                     : 'border-[rgb(var(--border))] bg-white text-[rgb(var(--muted))]')
                 }
               >
-                {inStock ? '✓ In stock' : 'Out of stock'}
+                {inStock ? `✓ ${availability.label}` : availability.label}
               </span>
               {showLowStock ? (
                 <span className="rounded-full border border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/10 px-3 py-1 font-semibold text-[rgb(var(--accent))]">
@@ -195,14 +199,13 @@ export default async function ProductDetailPage({ params }: PageProps) {
               <PurchasePanel
                 options={product.options}
                 variants={product.variants}
+                unavailableLabel={availability.label}
               />
               <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noreferrer"
+                href={smsHref}
                 className="mt-4 flex w-full items-center justify-center rounded-full border border-[rgb(var(--border))] px-6 py-3 text-sm font-semibold transition hover:bg-neutral-50"
               >
-                Ask about this piece on WhatsApp
+                Text us about this piece
               </a>
             </div>
 

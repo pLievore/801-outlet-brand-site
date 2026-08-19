@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 
 import type { CatalogProductCard as CatalogProductCardData } from '../../src/lib/catalog/types';
 import { formatMoney } from '../../src/lib/format';
+import { getAvailability } from '../../src/lib/catalog/availability';
 import { Badge } from './ui/badge';
 import { Price } from './ui/price';
 
@@ -35,6 +36,7 @@ export function CatalogProductCard({
   const primary = product.images[0];
   const secondary = product.images[1];
   const savings = savingsFor(product);
+  const availability = getAvailability(product);
 
   return (
     <motion.div
@@ -91,11 +93,9 @@ export function CatalogProductCard({
             </Badge>
           ) : null}
 
-          {!product.availableForSale ? (
+          {!availability.purchasable ? (
             <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/60 backdrop-blur-[2px]">
-              <Badge className="bg-white shadow-sm">
-                Out of stock
-              </Badge>
+              <Badge className="bg-white shadow-sm">{availability.label}</Badge>
             </div>
           ) : null}
         </div>
@@ -122,13 +122,14 @@ export function CatalogProductCard({
             </div>
           </div>
 
-          {product.availableForSale ? (
-            <div className="mt-2">
-              <Badge tone="sage" className="px-2.5 py-0.5 text-[10px]">
-                In stock
-              </Badge>
-            </div>
-          ) : null}
+          <div className="mt-2">
+            <Badge
+              tone={availability.state === 'in-stock' ? 'sage' : undefined}
+              className="px-2.5 py-0.5 text-[10px]"
+            >
+              {availability.label}
+            </Badge>
+          </div>
 
           <div className="mt-auto pt-3 text-xs font-semibold text-[rgb(var(--accent))] transition group-hover:translate-x-0.5">
             View details →

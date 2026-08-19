@@ -81,6 +81,7 @@ export const COLLECTION_BY_HANDLE_QUERY = `#graphql
           title
           productType
           vendor
+          tags
           availableForSale
           featuredImage {
             url

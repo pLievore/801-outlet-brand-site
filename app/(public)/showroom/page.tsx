@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { CalendarDays, Clock, MapPin, MessageCircle, Phone } from 'lucide-react';
 
+import { env } from '../../../src/config/env';
 import { ButtonLink } from '../../components/ui/button';
 import { Container } from '../../components/ui/container';
 import { MODE_LABEL, SHOWROOM_HOURS } from '../../../src/lib/content/hours';
@@ -58,12 +59,12 @@ export default function ShowroomPage() {
           </div>
           <p className="mt-4 text-sm text-[rgb(var(--muted))]">
             Weekday appointments are confirmed by text message or phone call.
-            Prefer WhatsApp? We&apos;re on it too:{' '}
+            Prefer to text? Send us a message at{' '}
             <a
               className="font-semibold text-[rgb(var(--sage-ink))] hover:underline"
-              href="https://wa.me/18018546060?text=Hi%20801%20Outlet%2C%20I%27d%20like%20to%20schedule%20a%20showroom%20appointment."
-              target="_blank"
-              rel="noreferrer"
+              href={env.getSmsHref(
+                "Hi 801 Outlet, I'd like to schedule a showroom appointment."
+              )}
             >
               (801) 854-6060
             </a>

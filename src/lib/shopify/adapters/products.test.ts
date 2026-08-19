@@ -42,6 +42,7 @@ test('adapts a Shopify collection product without leaking GraphQL types', () => 
     title: 'Linen Sofa',
     description: null,
     availableForSale: true,
+    tags: [],
     price: { amount: '699.00', currencyCode: 'USD' },
     compareAtPrice: { amount: '899.00', currencyCode: 'USD' },
     images: [

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { env } from '../../../src/config/env';
+import { formatPolicyDate } from '../../../src/lib/content/policies';
 
 export const metadata = {
   title: 'Privacy Policy — 801 Outlet',
@@ -26,7 +27,7 @@ export default function PrivacyPage() {
             your personal information when you visit our website and use our services.
           </p>
           <div className="mt-4 text-xs text-[rgb(var(--muted))]">
-            Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            Last updated: {formatPolicyDate()}
           </div>
         </div>
 

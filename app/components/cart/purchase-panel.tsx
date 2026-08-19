@@ -15,6 +15,11 @@ import { useCart } from './cart-provider';
 type PurchasePanelProps = {
   options: CatalogProductDetail['options'];
   variants: CatalogProductVariant[];
+  /**
+   * What the button says when nothing can be added — "Sold out" or
+   * "Coming soon", decided by the page from the product's availability.
+   */
+  unavailableLabel?: string;
 };
 
 function isDefaultOnly(
@@ -30,7 +35,11 @@ function isDefaultOnly(
   );
 }
 
-export function PurchasePanel({ options, variants }: PurchasePanelProps) {
+export function PurchasePanel({
+  options,
+  variants,
+  unavailableLabel = 'Currently unavailable',
+}: PurchasePanelProps) {
   const { addLine, pending } = useCart();
   const defaultOnly = isDefaultOnly(options, variants);
 
@@ -190,7 +199,7 @@ export function PurchasePanel({ options, variants }: PurchasePanelProps) {
           {!selectedVariant
             ? 'Select options'
             : !inStock
-              ? 'Currently unavailable'
+              ? unavailableLabel
               : pending
                 ? 'Adding…'
                 : 'Add to cart'}

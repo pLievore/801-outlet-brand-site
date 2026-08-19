@@ -16,6 +16,8 @@ export type CatalogProductCard = {
   title: string;
   description: string | null;
   availableForSale: boolean;
+  /** Drives the Coming soon / Sold out label; see `catalog/availability`. */
+  tags: string[];
   price: CatalogMoney;
   compareAtPrice: CatalogMoney | null;
   images: CatalogImage[];

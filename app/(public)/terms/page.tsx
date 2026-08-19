@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { env } from '../../../src/config/env';
+import { DELIVERY_SCHEDULE } from '../../../src/lib/content/delivery';
+import { formatPolicyDate } from '../../../src/lib/content/policies';
 
 export const metadata = {
   title: 'Terms of Service — 801 Outlet',
@@ -26,12 +28,7 @@ export default function TermsPage() {
             site, you agree to be bound by these terms.
           </p>
           <div className="mt-4 text-xs text-[rgb(var(--muted))]">
-            Last updated:{' '}
-            {new Date().toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+            Last updated: {formatPolicyDate()}
           </div>
         </div>
 
@@ -134,18 +131,45 @@ export default function TermsPage() {
 
         {/* Delivery */}
         <div className="mt-12 rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
-          <h2 className="text-lg font-semibold">Delivery</h2>
+          <h2 className="text-lg font-semibold">Delivery and pickup</h2>
           <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
-            Delivery is available within Utah only. After purchase, we’ll contact you to confirm
-            address details and schedule a delivery window. Estimated timelines are approximate and
-            not guaranteed.{' '}
+            We deliver across Utah, and to Wyoming, Idaho and Nevada for an additional
+            distance-based charge. Standard deliveries run {DELIVERY_SCHEDULE.days.toLowerCase()} of{' '}
+            {DELIVERY_SCHEDULE.window}; after purchase we’ll contact you to confirm address details
+            and your window. Estimated timelines are approximate and not guaranteed. You may also
+            collect your order at our showroom.{' '}
             <Link
               href="/delivery"
               className="font-semibold text-[rgb(var(--accent))] hover:opacity-80"
             >
               See full delivery details
+            </Link>{' '}
+            or read our{' '}
+            <Link
+              href="/pickup"
+              className="font-semibold text-[rgb(var(--accent))] hover:opacity-80"
+            >
+              pickup policy
             </Link>
             .
+          </p>
+        </div>
+
+        {/* Returns */}
+        <div className="mt-8 rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
+          <h2 className="text-lg font-semibold">Returns and exchanges</h2>
+          <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--muted))]">
+            All sales are final. We do not accept returns or exchanges and do not issue refunds
+            once a purchase is complete, whether the item is delivered or collected at our
+            showroom. Please inspect your furniture at handover and review the dimensions and
+            condition notes before ordering. The full terms are in our{' '}
+            <Link
+              href="/returns"
+              className="font-semibold text-[rgb(var(--accent))] hover:opacity-80"
+            >
+              return policy
+            </Link>
+            , which forms part of these terms.
           </p>
         </div>
 

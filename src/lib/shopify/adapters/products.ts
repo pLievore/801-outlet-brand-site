@@ -86,6 +86,7 @@ export function adaptProductCard(product: ProductSummary): CatalogProductCard {
     title: product.title,
     description: summaryDescription(product),
     availableForSale: product.availableForSale,
+    tags: 'tags' in product ? product.tags : [],
     price,
     compareAtPrice: validCompareAtPrice(
       price,

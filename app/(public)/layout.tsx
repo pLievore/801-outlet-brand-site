@@ -277,9 +277,9 @@ function SiteFooter() {
               </a>
               <a
                 className="block hover:underline"
-                href="https://wa.me/18018546060"
+                href={env.getSmsHref()}
               >
-                WhatsApp: (801) 854-6060
+                Text us: (801) 854-6060
               </a>
               <a
                 className="block break-all hover:underline"
@@ -293,7 +293,16 @@ function SiteFooter() {
 
         <div className="mt-12 flex flex-col gap-5 border-t border-[rgb(var(--border))] pt-8 text-xs text-[rgb(var(--muted))] sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} 801 Outlet. All rights reserved.</p>
-          <div className="flex gap-5">
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            <Link className="hover:text-[rgb(var(--fg))]" href="/delivery">
+              Delivery
+            </Link>
+            <Link className="hover:text-[rgb(var(--fg))]" href="/pickup">
+              Pickup
+            </Link>
+            <Link className="hover:text-[rgb(var(--fg))]" href="/returns">
+              Returns
+            </Link>
             <Link className="hover:text-[rgb(var(--fg))]" href="/privacy">
               Privacy
             </Link>

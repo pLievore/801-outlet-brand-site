@@ -38,10 +38,12 @@ const nextConfig: NextConfig = {
       ['cookies-policy', '/privacy'],
       ['data-sharing-opt-out', '/privacy'],
       ['terms-of-service', '/terms'],
-      ['refund-policy', '/terms'],
-      ['returns-refunds', '/terms'],
-      ['warranty-policy', '/terms'],
+      ['refund-policy', '/returns'],
+      ['returns-refunds', '/returns'],
+      ['warranty-policy', '/returns'],
       ['payment-policy', '/terms'],
+      ['pickup', '/pickup'],
+      ['store-pickup', '/pickup'],
       ['faqs', '/contact'],
     ].map(([handle, destination]) => ({
       source: `/pages/${handle}`,
@@ -54,7 +56,7 @@ const nextConfig: NextConfig = {
       // Shopify's canonical policy URLs.
       { source: '/policies/privacy-policy', destination: '/privacy', permanent },
       { source: '/policies/terms-of-service', destination: '/terms', permanent },
-      { source: '/policies/refund-policy', destination: '/terms', permanent },
+      { source: '/policies/refund-policy', destination: '/returns', permanent },
       { source: '/policies/shipping-policy', destination: '/delivery', permanent },
       // Theme search → catalog search (keeps the q parameter).
       { source: '/search', destination: '/products', permanent },
