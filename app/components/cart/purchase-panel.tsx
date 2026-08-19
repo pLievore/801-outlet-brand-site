@@ -20,6 +20,8 @@ type PurchasePanelProps = {
    * "Coming soon", decided by the page from the product's availability.
    */
   unavailableLabel?: string;
+  /** Attributes the add-to-cart event to this product in the funnel. */
+  productHandle?: string;
 };
 
 function isDefaultOnly(
@@ -39,6 +41,7 @@ export function PurchasePanel({
   options,
   variants,
   unavailableLabel = 'Currently unavailable',
+  productHandle,
 }: PurchasePanelProps) {
   const { addLine, pending } = useCart();
   const defaultOnly = isDefaultOnly(options, variants);
@@ -97,7 +100,10 @@ export function PurchasePanel({
     setFeedback(ok ? null : 'We could not add this item. Please try again.');
     if (ok) {
       setQuantity(1);
-      trackFunnelStep('add_to_cart');
+      trackFunnelStep(
+        'add_to_cart',
+        productHandle ? { handles: [productHandle] } : undefined
+      );
     }
   };
 

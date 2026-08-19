@@ -110,7 +110,13 @@ export function MiniCart() {
                   </p>
                   <a
                     href={cart.checkoutUrl}
-                    onClick={() => trackFunnelStep('checkout_start')}
+                    onClick={() =>
+                      trackFunnelStep('checkout_start', {
+                        handles: cart.lines.map(
+                          (line) => line.merchandise.productHandle
+                        ),
+                      })
+                    }
                     className={buttonStyles({
                       variant: 'primary',
                       size: 'lg',

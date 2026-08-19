@@ -4,8 +4,11 @@ import {
   FUNNEL_STEPS,
   classifyTrafficSource,
   isFunnelStorageConfigured,
+  isProductFunnelStep,
   recordFunnelStep,
+  recordProductStep,
   recordSessionContext,
+  sanitizeHandles,
   type FunnelStep,
 } from '../../../src/lib/analytics/funnel';
 
@@ -59,12 +62,19 @@ export async function POST(request: Request) {
       step?: unknown;
       ref?: unknown;
       utm?: unknown;
+      handles?: unknown;
     };
     if (typeof body.step !== 'string' || !ALLOWED.has(body.step)) {
       return new NextResponse(null, { status: 204 });
     }
     const step = body.step as FunnelStep;
     await recordFunnelStep(step);
+
+    // The same step also counts per product, when the beacon says which.
+    if (isProductFunnelStep(step)) {
+      const handles = sanitizeHandles(body.handles);
+      if (handles.length > 0) await recordProductStep(step, handles);
+    }
 
     if (step === 'session') {
       const referrer =

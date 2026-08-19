@@ -9,9 +9,11 @@ import {
   TRAFFIC_SOURCE_LABEL,
   getFunnelBreakdown,
   getFunnelCounts,
+  getProductFunnel,
   isFunnelStorageConfigured,
   type BreakdownEntry,
   type FunnelStep,
+  type ProductFunnelRow,
   type TrafficSource,
 } from '../../../src/lib/analytics/funnel';
 import { formatPercent, formatShortDay } from '../_components/format';
@@ -83,6 +85,76 @@ function BreakdownList({
   );
 }
 
+/**
+ * Which products hold attention and which lose it. Drop-off is the number the
+ * operator buys stock on: a sofa that gets viewed a lot and added rarely is a
+ * different problem from one that gets added and abandoned at checkout.
+ */
+function ProductFunnelTable({ rows }: { rows: ProductFunnelRow[] }) {
+  if (rows.length === 0) {
+    return (
+      <p className="text-sm text-[rgb(var(--muted))]">
+        Nothing recorded yet — this fills in as visitors browse products.
+      </p>
+    );
+  }
+
+  return (
+    <div className="-mx-2 overflow-x-auto">
+      <table className="w-full min-w-[34rem] text-sm">
+        <thead>
+          <tr className="text-left text-xs uppercase tracking-wide text-[rgb(var(--muted))]">
+            <th scope="col" className="px-2 pb-2 font-semibold">
+              Product
+            </th>
+            <th scope="col" className="px-2 pb-2 text-right font-semibold">
+              Views
+            </th>
+            <th scope="col" className="px-2 pb-2 text-right font-semibold">
+              Added
+            </th>
+            <th scope="col" className="px-2 pb-2 text-right font-semibold">
+              Checkout
+            </th>
+            <th scope="col" className="px-2 pb-2 text-right font-semibold">
+              View → cart
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[rgb(var(--border))]">
+          {rows.map((row) => {
+            const views = row.counts.product_view;
+            const added = row.counts.add_to_cart;
+            const rate = views > 0 ? added / views : null;
+
+            return (
+              <tr key={row.handle}>
+                <td className="px-2 py-2.5">
+                  <Link
+                    href={`/products/${row.handle}`}
+                    className="font-semibold hover:underline"
+                    target="_blank"
+                  >
+                    {row.handle}
+                  </Link>
+                </td>
+                <td className="px-2 py-2.5 text-right tabular-nums">{views}</td>
+                <td className="px-2 py-2.5 text-right tabular-nums">{added}</td>
+                <td className="px-2 py-2.5 text-right tabular-nums">
+                  {row.counts.checkout_start}
+                </td>
+                <td className="px-2 py-2.5 text-right tabular-nums font-semibold">
+                  {rate === null ? '—' : formatPercent(rate)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default async function FunnelPage({
   searchParams,
 }: {
@@ -92,7 +164,7 @@ export default async function FunnelPage({
   const days = PERIODS.find((value) => String(value) === period) ?? 30;
   const configured = isFunnelStorageConfigured();
 
-  const [rows, summary, sources, locations] = await Promise.all([
+  const [rows, summary, sources, locations, products] = await Promise.all([
     configured ? getFunnelCounts(days) : Promise.resolve([]),
     getSalesSummary(days === 7 ? 7 : 30),
     configured
@@ -101,6 +173,9 @@ export default async function FunnelPage({
     configured
       ? getFunnelBreakdown(days, 'geo')
       : Promise.resolve([] as BreakdownEntry[]),
+    configured
+      ? getProductFunnel(days, 25)
+      : Promise.resolve([] as ProductFunnelRow[]),
   ]);
 
   const totals = FUNNEL_STEPS.reduce(
@@ -271,6 +346,10 @@ export default async function FunnelPage({
           />
         </Panel>
       </div>
+
+      <Panel title="By product">
+        <ProductFunnelTable rows={products} />
+      </Panel>
 
       <Panel title="By day">
         {rows.length === 0 ? (

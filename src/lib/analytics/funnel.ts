@@ -1,84 +1,42 @@
 import 'server-only';
 
 /**
- * Site funnel counters (D-017).
+ * Site funnel storage (D-017).
  *
- * Storage is a Redis instance provisioned through Vercel (Upstash). Only
+ * Backed by a Redis instance provisioned through Vercel (Upstash). Only
  * aggregate counts are kept — one integer per day per step, never an
  * identifier, IP or anything tied to a person, so the storefront needs no
  * tracking cookie and no consent banner.
+ *
+ * The classification rules live in `funnel-rules`, which is pure and testable;
+ * they are re-exported here so callers have a single import.
  */
 
-export const FUNNEL_STEPS = [
-  'session',
-  'product_view',
-  'add_to_cart',
-  'checkout_start',
-] as const;
+import {
+  FUNNEL_STEPS,
+  PRODUCT_FUNNEL_STEPS,
+  funnelDateKey,
+  type FunnelStep,
+  type ProductFunnelStep,
+  type TrafficSource,
+} from './funnel-rules';
 
-export type FunnelStep = (typeof FUNNEL_STEPS)[number];
-
-export const FUNNEL_STEP_LABEL: Record<FunnelStep | 'purchase', string> = {
-  session: 'Visits',
-  product_view: 'Product views',
-  add_to_cart: 'Added to cart',
-  checkout_start: 'Checkout started',
-  purchase: 'Orders placed',
-};
-
-export const TRAFFIC_SOURCES = [
-  'instagram',
-  'facebook',
-  'google',
-  'tiktok',
-  'direct',
-  'other',
-] as const;
-
-export type TrafficSource = (typeof TRAFFIC_SOURCES)[number];
-
-export const TRAFFIC_SOURCE_LABEL: Record<TrafficSource, string> = {
-  instagram: 'Instagram',
-  facebook: 'Facebook',
-  google: 'Google',
-  tiktok: 'TikTok',
-  direct: 'Direct',
-  other: 'Other',
-};
-
-/**
- * Buckets a referrer/UTM pair into a fixed set of sources. Only the bucket
- * name is ever stored — the raw referrer is discarded.
- */
-export function classifyTrafficSource(
-  referrer: string,
-  utmSource: string
-): TrafficSource {
-  let host = '';
-  try {
-    host = new URL(referrer).hostname.toLowerCase();
-  } catch {
-    // No or invalid referrer.
-  }
-  const utm = utmSource.trim().toLowerCase();
-  const haystack = `${utm} ${host}`;
-
-  if (haystack.includes('instagram') || utm === 'ig') return 'instagram';
-  if (
-    haystack.includes('facebook') ||
-    /(^|\.)fb\.com$/.test(host) ||
-    utm === 'fb'
-  ) {
-    return 'facebook';
-  }
-  if (haystack.includes('tiktok')) return 'tiktok';
-  if (haystack.includes('google')) return 'google';
-
-  // Internal navigation opening in a new tab still counts as direct.
-  if (host.endsWith('801outlet.com')) return 'direct';
-  if (!host && !utm) return 'direct';
-  return 'other';
-}
+export {
+  FUNNEL_STEPS,
+  FUNNEL_STEP_LABEL,
+  PRODUCT_FUNNEL_STEPS,
+  TRAFFIC_SOURCES,
+  TRAFFIC_SOURCE_LABEL,
+  classifyTrafficSource,
+  funnelDateKey,
+  isProductFunnelStep,
+  sanitizeHandles,
+} from './funnel-rules';
+export type {
+  FunnelStep,
+  ProductFunnelStep,
+  TrafficSource,
+} from './funnel-rules';
 
 /** Counters expire after ~13 months so the store never grows unbounded. */
 const COUNTER_TTL_SECONDS = 400 * 24 * 60 * 60;
@@ -144,19 +102,6 @@ async function redisPipeline<T>(commands: string[][]): Promise<T[] | null> {
   return payload.map((entry) => entry.result);
 }
 
-/** YYYY-MM-DD in the store's timezone, matching the sales dashboards. */
-export function funnelDateKey(
-  instant: Date = new Date(),
-  timeZone = 'America/Denver'
-): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(instant);
-}
-
 function counterKey(step: FunnelStep, date: string): string {
   return `funnel:${date}:${step}`;
 }
@@ -192,6 +137,78 @@ export async function recordSessionContext(context: {
     );
   }
   await redisPipeline(commands);
+}
+
+/**
+ * Per-product step counters, as daily hashes keyed by handle. Same posture as
+ * the rest of the funnel: counts only, nothing tied to a visitor.
+ */
+export async function recordProductStep(
+  step: ProductFunnelStep,
+  handles: string[]
+): Promise<void> {
+  if (handles.length === 0) return;
+
+  const key = `funnel:prod:${step}:${funnelDateKey()}`;
+  const commands: string[][] = handles.map((handle) => [
+    'HINCRBY',
+    key,
+    handle,
+    '1',
+  ]);
+  commands.push(['EXPIRE', key, String(COUNTER_TTL_SECONDS)]);
+  await redisPipeline(commands);
+}
+
+export type ProductFunnelRow = {
+  handle: string;
+  counts: Record<ProductFunnelStep, number>;
+};
+
+/**
+ * Per-product funnel for the last N days, busiest first. Answers the question
+ * the operator actually asks: which sofas get looked at, which get added, and
+ * which lose people on the way to checkout.
+ */
+export async function getProductFunnel(
+  days: number,
+  limit = 50
+): Promise<ProductFunnelRow[]> {
+  const dates = Array.from({ length: days }, (_, index) =>
+    funnelDateKey(new Date(Date.now() - (days - 1 - index) * 86400000))
+  );
+
+  const commands = PRODUCT_FUNNEL_STEPS.flatMap((step) =>
+    dates.map((date) => ['HGETALL', `funnel:prod:${step}:${date}`])
+  );
+  const results = await redisPipeline<string[] | null>(commands);
+  if (!results) return [];
+
+  const rows = new Map<string, ProductFunnelRow>();
+
+  results.forEach((flat, index) => {
+    if (!Array.isArray(flat)) return;
+    const step = PRODUCT_FUNNEL_STEPS[Math.floor(index / dates.length)];
+
+    for (let cursor = 0; cursor + 1 < flat.length; cursor += 2) {
+      const handle = flat[cursor];
+      const count = Number(flat[cursor + 1]);
+      if (!handle || !Number.isFinite(count)) continue;
+
+      const row =
+        rows.get(handle) ??
+        ({
+          handle,
+          counts: { product_view: 0, add_to_cart: 0, checkout_start: 0 },
+        } satisfies ProductFunnelRow);
+      row.counts[step] += count;
+      rows.set(handle, row);
+    }
+  });
+
+  return [...rows.values()]
+    .sort((a, b) => b.counts.product_view - a.counts.product_view)
+    .slice(0, limit);
 }
 
 export type BreakdownEntry = { label: string; count: number };

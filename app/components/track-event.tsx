@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import type { FunnelStep } from '../../src/lib/analytics/funnel';
+import type { FunnelStep } from '../../src/lib/analytics/funnel-rules';
 
 /**
  * Fire-and-forget funnel beacon. Sends only the step name — no identifiers,
@@ -10,7 +10,7 @@ import type { FunnelStep } from '../../src/lib/analytics/funnel';
  */
 export function trackFunnelStep(
   step: FunnelStep,
-  extra?: { ref?: string; utm?: string }
+  extra?: { ref?: string; utm?: string; handles?: string[] }
 ): void {
   if (typeof window === 'undefined') return;
 
@@ -41,7 +41,14 @@ const SESSION_FLAG = 'ff_session';
  * Counts one visit per browser session, plus an optional step for the page
  * it is mounted on.
  */
-export function TrackEvent({ step }: { step?: FunnelStep }) {
+export function TrackEvent({
+  step,
+  handle,
+}: {
+  step?: FunnelStep;
+  /** Product this page is about, so the step counts per product too. */
+  handle?: string;
+}) {
   useEffect(() => {
     try {
       if (!window.sessionStorage.getItem(SESSION_FLAG)) {
@@ -61,8 +68,8 @@ export function TrackEvent({ step }: { step?: FunnelStep }) {
       // than counting every page view as a new visit.
     }
 
-    if (step) trackFunnelStep(step);
-  }, [step]);
+    if (step) trackFunnelStep(step, handle ? { handles: [handle] } : undefined);
+  }, [step, handle]);
 
   return null;
 }

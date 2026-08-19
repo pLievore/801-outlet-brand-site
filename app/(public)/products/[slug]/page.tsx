@@ -121,7 +121,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 md:py-14">
-      <TrackEvent step="product_view" />
+      <TrackEvent step="product_view" handle={product.handle} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
@@ -204,6 +204,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 options={product.options}
                 variants={product.variants}
                 unavailableLabel={availability.label}
+                productHandle={product.handle}
               />
               <a
                 href={smsHref}
