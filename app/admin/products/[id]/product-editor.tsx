@@ -13,6 +13,10 @@ import {
 } from 'lucide-react';
 
 import type { PanelProductDetail } from '../../../../src/lib/panel/products';
+import {
+  COMING_SOON_TAG_VALUE,
+  hasComingSoonTag,
+} from '../../../../src/lib/catalog/availability';
 import { cn } from '../../../../src/lib/cn';
 import { uploadProductImageAction } from '../new/actions';
 import { resizeImage } from '../image-resize';
@@ -31,6 +35,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
 
   const [title, setTitle] = useState(product.title);
   const [description, setDescription] = useState(product.descriptionText);
+  const [tags, setTags] = useState(product.tags.join(', '));
   const [mediaOrder, setMediaOrder] = useState(product.media);
   const [detailsFeedback, setDetailsFeedback] = useState<Feedback>(null);
   const [mediaFeedback, setMediaFeedback] = useState<Feedback>(null);
@@ -39,8 +44,27 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
   const [savingDetails, startDetails] = useTransition();
   const [mutatingMedia, startMedia] = useTransition();
 
+  const tagList = tags
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+  const comingSoon = hasComingSoonTag(tagList);
+
   const detailsDirty =
-    title !== product.title || description !== product.descriptionText;
+    title !== product.title ||
+    description !== product.descriptionText ||
+    tags !== product.tags.join(', ');
+
+  /**
+   * The one tag the storefront reads, offered as a switch so nobody has to
+   * remember how to spell it. Off simply removes every spelling of it.
+   */
+  const toggleComingSoon = () => {
+    const without = tagList.filter((tag) => !hasComingSoonTag([tag]));
+    setTags(
+      (comingSoon ? without : [...without, COMING_SOON_TAG_VALUE]).join(', ')
+    );
+  };
 
   const saveDetails = () => {
     setDetailsFeedback(null);
@@ -49,6 +73,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
         productId: product.id,
         title,
         description,
+        tags: tagList,
       });
       setDetailsFeedback(
         result.ok
@@ -211,6 +236,37 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
               className={cn(inputClass, 'mt-1.5 leading-6')}
             />
           </label>
+
+          <div>
+            <label className="block text-xs font-semibold">
+              Tags
+              <input
+                value={tags}
+                onChange={(event) => setTags(event.target.value)}
+                placeholder="sectional, clearance"
+                className={cn(inputClass, 'mt-1.5')}
+              />
+            </label>
+            <p className="mt-1.5 text-[11px] text-[rgb(var(--muted))]">
+              Separate with commas.
+            </p>
+
+            <label className="mt-3 flex items-start gap-2.5 rounded-xl bg-[rgb(var(--surface-muted))] px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={comingSoon}
+                onChange={toggleComingSoon}
+                className="mt-0.5 size-4"
+              />
+              <span className="text-xs">
+                <span className="font-semibold">Coming soon</span>
+                <span className="block text-[11px] leading-relaxed text-[rgb(var(--muted))]">
+                  Shown instead of &ldquo;Sold out&rdquo; while the product is
+                  out of stock. With stock available it sells as normal.
+                </span>
+              </span>
+            </label>
+          </div>
         </div>
 
         {detailsFeedback ? (

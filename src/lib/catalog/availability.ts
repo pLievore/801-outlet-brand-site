@@ -16,6 +16,9 @@ export type AvailabilityState = 'in-stock' | 'sold-out' | 'coming-soon';
  */
 const COMING_SOON_TAG = 'coming soon';
 
+/** The spelling the panel writes when the operator ticks "Coming soon". */
+export const COMING_SOON_TAG_VALUE = 'coming-soon';
+
 export type AvailabilityInput = {
   availableForSale: boolean;
   tags?: string[];
@@ -39,7 +42,7 @@ const AVAILABILITY: Record<AvailabilityState, Availability> = {
   },
 };
 
-function hasComingSoonTag(tags: string[] | undefined): boolean {
+export function hasComingSoonTag(tags: string[] | undefined): boolean {
   if (!tags?.length) return false;
   return tags.some(
     (tag) => tag.trim().toLowerCase().replace(/[-_]/g, ' ') === COMING_SOON_TAG

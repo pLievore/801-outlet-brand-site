@@ -31,6 +31,8 @@ export type PanelProduct = {
   description: string;
   status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
   imageUrl: string | null;
+  /** Free-form Shopify tags; `coming-soon` drives the storefront label. */
+  tags: string[];
   attributes: ProductAttributes;
   variants: PanelVariant[];
 };
@@ -44,6 +46,7 @@ type ProductsResponse = {
       title: string;
       description: string | null;
       status: PanelProduct['status'];
+      tags: string[];
       featuredImage: { url: string } | null;
       metafields: { nodes: Array<{ key: string; value: string }> };
       variants: {
@@ -71,6 +74,7 @@ const PRODUCTS_PAGE_QUERY = `#graphql
         title
         description
         status
+        tags
         featuredImage { url }
         metafields(first: 10, namespace: "${ATTRIBUTE_NAMESPACE}") {
           nodes { key value }
@@ -104,6 +108,7 @@ function adaptProduct(node: ProductsResponse['products']['nodes'][number]): Pane
     title: node.title,
     description: node.description ?? '',
     status: node.status,
+    tags: node.tags ?? [],
     imageUrl: node.featuredImage?.url ?? null,
     attributes,
     variants: node.variants.nodes.map((variant) => ({
@@ -225,6 +230,7 @@ export async function getPanelProductDetail(
       handle: string;
       status: PanelProduct['status'];
       description: string;
+      tags: string[];
       featuredImage: { url: string } | null;
       metafields: { nodes: Array<{ key: string; value: string }> };
       media: {
@@ -245,6 +251,7 @@ export async function getPanelProductDetail(
         handle
         status
         description
+        tags
         featuredImage { url }
         metafields(first: 10, namespace: "${ATTRIBUTE_NAMESPACE}") {
           nodes { key value }
@@ -289,6 +296,7 @@ export async function getPanelProductDetail(
     status: product.status,
     description: product.description,
     descriptionText: product.description,
+    tags: product.tags ?? [],
     attributes,
     imageUrl: product.featuredImage?.url ?? null,
     media: product.media.nodes.map((node) => ({
@@ -312,6 +320,8 @@ export async function updatePanelProductDetails(input: {
   productId: string;
   title: string;
   descriptionHtml: string;
+  /** Replaces the whole tag list when provided; omit to leave tags alone. */
+  tags?: string[];
 }) {
   const data = await adminGraphql<{
     productUpdate: {
@@ -332,6 +342,7 @@ export async function updatePanelProductDetails(input: {
         id: input.productId,
         title: input.title,
         descriptionHtml: input.descriptionHtml,
+        ...(input.tags ? { tags: input.tags } : {}),
       },
     }
   );

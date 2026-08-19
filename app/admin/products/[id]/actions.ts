@@ -32,10 +32,31 @@ function revalidateProduct(productId: string) {
   revalidatePath(`/admin/products/${productId.split('/').pop()}`);
 }
 
+/**
+ * Tags are free text typed by hand, so they are trimmed, de-duplicated
+ * case-insensitively and capped. Shopify itself allows 250 per product.
+ */
+function normalizeTags(input: string[] | undefined): string[] | undefined {
+  if (!input) return undefined;
+
+  const seen = new Map<string, string>();
+  for (const raw of input) {
+    if (typeof raw !== 'string') continue;
+    const tag = raw.trim().replace(/,/g, ' ').replace(/\s+/g, ' ').slice(0, 60);
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (!seen.has(key)) seen.set(key, tag);
+    if (seen.size >= 60) break;
+  }
+
+  return [...seen.values()];
+}
+
 export async function saveDetailsAction(input: {
   productId: string;
   title: string;
   description: string;
+  tags?: string[];
 }): Promise<ActionResult> {
   if (!(await hasValidPanelSession())) {
     return { ok: false, error: 'Session expired. Sign in again.' };
@@ -49,10 +70,12 @@ export async function saveDetailsAction(input: {
   }
 
   try {
+    const tags = normalizeTags(input.tags);
     await updatePanelProductDetails({
       productId: input.productId,
       title,
       descriptionHtml: textToDescriptionHtml(input.description),
+      ...(tags ? { tags } : {}),
     });
     revalidateProduct(input.productId);
     return { ok: true };
