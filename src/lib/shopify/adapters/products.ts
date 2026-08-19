@@ -5,11 +5,13 @@ import type {
   RelatedProductsQuery,
   SearchProductsQuery,
 } from '../types/storefront.generated';
+import { PRODUCT_ATTRIBUTES } from '../../catalog/attributes';
 import type {
   CatalogImage,
   CatalogMoney,
   CatalogProductCard,
   CatalogProductDetail,
+  ProductAttributeValues,
 } from '../../catalog/types';
 
 type CollectionProduct = NonNullable<
@@ -114,6 +116,22 @@ function productImages(product: ProductDetail): CatalogImage[] {
   return [...unique.values()];
 }
 
+/**
+ * Metafields come back as a sparse list — one entry per requested identifier,
+ * null where the product has no value — so unknown keys are simply skipped.
+ */
+function adaptAttributes(product: ProductDetail): ProductAttributeValues {
+  const attributes: ProductAttributeValues = {};
+
+  for (const metafield of product.metafields ?? []) {
+    if (!metafield?.value) continue;
+    const known = PRODUCT_ATTRIBUTES.find((spec) => spec.key === metafield.key);
+    if (known) attributes[known.key] = metafield.value;
+  }
+
+  return attributes;
+}
+
 export function adaptProductDetail(
   product: ProductDetail
 ): CatalogProductDetail {
@@ -126,6 +144,7 @@ export function adaptProductDetail(
     vendor: product.vendor,
     productType: product.productType,
     tags: product.tags,
+    attributes: adaptAttributes(product),
     seo: {
       title: product.seo.title || null,
       description: product.seo.description || null,

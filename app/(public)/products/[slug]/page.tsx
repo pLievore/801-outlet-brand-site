@@ -3,6 +3,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { env } from '../../../../src/config/env';
+import {
+  PRODUCT_ATTRIBUTES,
+  parseFeatures,
+} from '../../../../src/lib/catalog/attributes';
 import { getAvailability } from '../../../../src/lib/catalog/availability';
 import { formatMoney } from '../../../../src/lib/format';
 import { safeJsonLd } from '../../../../src/lib/seo';
@@ -234,7 +238,34 @@ export default async function ProductDetailPage({ params }: PageProps) {
                       <dd className="font-medium">{option.value}</dd>
                     </div>
                   ))}
+                {PRODUCT_ATTRIBUTES.filter(
+                  (spec) => spec.key !== 'features' && product.attributes[spec.key]
+                ).map((spec) => (
+                  <div key={spec.key}>
+                    <dt className="text-xs text-[rgb(var(--muted))]">
+                      {spec.label}
+                    </dt>
+                    <dd className="font-medium">{product.attributes[spec.key]}</dd>
+                  </div>
+                ))}
               </dl>
+
+              {product.attributes.features ? (
+                <div className="mt-5 border-t border-[rgb(var(--border))] pt-4">
+                  <div className="text-xs text-[rgb(var(--muted))]">Features</div>
+                  <ul className="mt-2 space-y-1.5 text-sm">
+                    {parseFeatures(product.attributes.features).map((feature) => (
+                      <li key={feature} className="flex gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[rgb(var(--accent))]"
+                        />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               <p className="mt-4 text-xs leading-relaxed text-[rgb(var(--muted))]">
                 Delivery and pickup availability are confirmed during Shopify
                 checkout.

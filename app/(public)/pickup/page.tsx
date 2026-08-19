@@ -79,9 +79,9 @@ export default function PickupPage() {
             buyer or to someone the buyer authorised.
           </PolicyCard>
           <PolicyCard title="A vehicle that fits the piece">
-            Every product page lists the dimensions. Measure your vehicle before
-            you come: a sofa that does not fit means a second trip. When in
-            doubt, call us and we will talk it through.
+            Measure your vehicle before you come: a sofa that does not fit means
+            a second trip. Dimensions are on the product page, and if they are
+            not there yet, call us and we will measure the piece for you.
           </PolicyCard>
           <PolicyCard title="Straps and blankets">
             Our team helps you load, but we cannot secure the load for you.

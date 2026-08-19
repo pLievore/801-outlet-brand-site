@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from 'react';
 
+import { PRODUCT_ATTRIBUTES } from '../../../../src/lib/catalog/attributes';
 import { cn } from '../../../../src/lib/cn';
+import type { ProductAttributes } from '../../../../src/lib/panel/products';
 import {
   applyImportAction,
   previewImportAction,
@@ -51,37 +53,80 @@ function parseCsv(text: string): string[][] {
 function toImportRows(csv: string[][]): { rows?: ImportRow[]; error?: string } {
   if (csv.length < 2) return { error: 'The file has no data rows.' };
 
-  const header = csv[0].map((cell) => cell.trim().toLowerCase());
-  const variantIndex = header.indexOf('variant_id');
-  if (variantIndex === -1) {
-    return { error: 'Missing required column: variant_id.' };
+  // Excel writes a UTF-8 BOM into the first header cell; strip it or the
+  // first column never matches.
+  const header = csv[0].map((cell) =>
+    cell.replace(/^﻿/, '').trim().toLowerCase()
+  );
+  const columnOf = (name: string) => header.indexOf(name);
+
+  const variantIndex = columnOf('variant_id');
+  const skuIndex = columnOf('sku');
+  if (variantIndex === -1 && skuIndex === -1) {
+    return { error: 'The file needs a variant_id or an sku column.' };
   }
-  const priceIndex = header.indexOf('price');
-  const compareIndex = header.indexOf('compare_at_price');
-  const quantityIndex = header.indexOf('quantity');
-  if (priceIndex === -1 && compareIndex === -1 && quantityIndex === -1) {
+
+  const titleIndex = columnOf('product_title');
+  const descriptionIndex = columnOf('description');
+  const priceIndex = columnOf('price');
+  const compareIndex = columnOf('compare_at_price');
+  const quantityIndex = columnOf('quantity');
+  const attributeIndexes = PRODUCT_ATTRIBUTES.map((attribute) => ({
+    key: attribute.key,
+    index: columnOf(attribute.key),
+  }));
+
+  const editable = [
+    titleIndex,
+    descriptionIndex,
+    priceIndex,
+    compareIndex,
+    quantityIndex,
+    ...attributeIndexes.map((attribute) => attribute.index),
+  ].some((index) => index !== -1);
+  if (!editable) {
     return {
       error:
-        'Include at least one of: price, compare_at_price, quantity.',
+        'Nothing to import: include at least one of product_title, description, price, compare_at_price, quantity, or an attribute column.',
     };
   }
 
+  const cellAt = (line: string[], index: number) =>
+    index === -1 ? undefined : (line[index] ?? '').trim();
+
   const rows: ImportRow[] = [];
   for (const line of csv.slice(1)) {
-    const variantId = line[variantIndex]?.trim();
-    if (!variantId) continue;
+    const variantId = cellAt(line, variantIndex) ?? '';
+    const sku = cellAt(line, skuIndex);
+    const title = cellAt(line, titleIndex);
+
+    // A row with no key and no title carries nothing we can act on.
+    if (!variantId && !sku && !title) continue;
+
     const row: ImportRow = { variantId };
-    if (priceIndex !== -1 && line[priceIndex]?.trim() !== '') {
-      row.price = line[priceIndex].trim();
+    if (sku !== undefined) row.sku = sku;
+    if (title !== undefined) row.title = title;
+    if (descriptionIndex !== -1) {
+      row.description = line[descriptionIndex] ?? '';
     }
-    if (compareIndex !== -1) {
-      row.compareAtPrice = line[compareIndex]?.trim() ?? '';
+    if (priceIndex !== -1 && cellAt(line, priceIndex) !== '') {
+      row.price = cellAt(line, priceIndex);
     }
-    if (quantityIndex !== -1 && line[quantityIndex]?.trim() !== '') {
-      row.quantity = Number(line[quantityIndex].trim());
+    if (compareIndex !== -1) row.compareAtPrice = cellAt(line, compareIndex);
+    if (quantityIndex !== -1 && cellAt(line, quantityIndex) !== '') {
+      row.quantity = Number(cellAt(line, quantityIndex));
     }
+
+    const attributes: ProductAttributes = {};
+    for (const attribute of attributeIndexes) {
+      if (attribute.index === -1) continue;
+      attributes[attribute.key] = line[attribute.index] ?? '';
+    }
+    if (Object.keys(attributes).length > 0) row.attributes = attributes;
+
     rows.push(row);
   }
+
   return { rows };
 }
 
@@ -134,7 +179,9 @@ export function ImportManager() {
     });
   };
 
-  const changed = preview?.filter((row) => row.valid && row.changes.length > 0) ?? [];
+  const created = preview?.filter((row) => row.valid && row.action === 'create') ?? [];
+  const updated = preview?.filter((row) => row.valid && row.action === 'update') ?? [];
+  const changed = [...created, ...updated];
   const invalid = preview?.filter((row) => !row.valid) ?? [];
   const unchanged = (preview?.length ?? 0) - changed.length - invalid.length;
 
@@ -177,14 +224,21 @@ export function ImportManager() {
         <div className="rounded-3xl border border-[rgb(var(--border))] bg-white p-5">
           <h2 className="text-sm font-bold">Review before applying</h2>
           <p className="mt-1 text-xs text-[rgb(var(--muted))]">
-            {changed.length} with changes · {unchanged} unchanged ·{' '}
-            {invalid.length} invalid
+            {created.length} new · {updated.length} updated · {unchanged}{' '}
+            unchanged · {invalid.length} invalid
           </p>
+
+          {created.length > 0 ? (
+            <p className="mt-3 rounded-xl bg-[rgb(var(--sage-soft))] px-4 py-2.5 text-xs text-[rgb(var(--sage-ink))]">
+              New products are created as <strong>drafts</strong>. Add their
+              photos and publish them from the products list when they are ready.
+            </p>
+          ) : null}
 
           {invalid.length > 0 ? (
             <ul className="mt-4 space-y-1 text-xs text-[rgb(var(--accent))]">
               {invalid.map((row) => (
-                <li key={row.variantId}>
+                <li key={row.key}>
                   <strong>{row.label}</strong>: {row.error}
                 </li>
               ))}
@@ -194,8 +248,15 @@ export function ImportManager() {
           {changed.length > 0 ? (
             <ul className="mt-4 divide-y divide-[rgb(var(--border))] text-sm">
               {changed.map((row) => (
-                <li key={row.variantId} className="py-2.5">
-                  <p className="font-semibold">{row.label}</p>
+                <li key={row.key} className="py-2.5">
+                  <p className="font-semibold">
+                    {row.action === 'create' ? (
+                      <span className="mr-2 rounded-full bg-[rgb(var(--sage-ink))] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                        New
+                      </span>
+                    ) : null}
+                    {row.label}
+                  </p>
                   <p className="text-xs text-[rgb(var(--muted))]">
                     {row.changes.join(' · ')}
                   </p>

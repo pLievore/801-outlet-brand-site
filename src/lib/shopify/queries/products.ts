@@ -195,6 +195,19 @@ export const PRODUCT_BY_HANDLE_QUERY = `#graphql
       tags
       availableForSale
       updatedAt
+      # Hand-maintained attributes (see src/lib/catalog/attributes). They are
+      # only readable here because their definitions grant storefront access.
+      metafields(
+        identifiers: [
+          { namespace: "custom", key: "dimensions" }
+          { namespace: "custom", key: "color" }
+          { namespace: "custom", key: "material" }
+          { namespace: "custom", key: "features" }
+        ]
+      ) {
+        key
+        value
+      }
       seo {
         title
         description

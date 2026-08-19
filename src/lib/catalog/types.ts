@@ -1,3 +1,7 @@
+import type { ProductAttributeKey } from './attributes';
+
+export type ProductAttributeValues = Partial<Record<ProductAttributeKey, string>>;
+
 export type CatalogMoney = {
   amount: string;
   currencyCode: string;
@@ -51,6 +55,8 @@ export type CatalogProductDetail = CatalogProductCard & {
   vendor: string;
   productType: string;
   tags: string[];
+  /** Hand-maintained attributes from Shopify metafields. */
+  attributes: ProductAttributeValues;
   seo: {
     title: string | null;
     description: string | null;

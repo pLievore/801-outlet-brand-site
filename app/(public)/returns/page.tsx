@@ -20,7 +20,7 @@ const BEFORE_YOU_BUY = [
   {
     title: 'Measure your space',
     description:
-      'Every product page lists full dimensions. Check your doorways, stairwells and the wall the piece is going against.',
+      'Check your doorways, stairwells and the wall the piece is going against. Dimensions are on the product page, and we will confirm them for you if you ask.',
   },
   {
     title: 'See it in person',

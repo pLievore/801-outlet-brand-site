@@ -1,9 +1,17 @@
 import 'server-only';
 
 import {
+  ATTRIBUTE_NAMESPACE,
+  PRODUCT_ATTRIBUTES,
+  type ProductAttributeKey,
+} from '../catalog/attributes';
+import {
   adminGraphql,
   assertNoUserErrors,
 } from '../shopify-admin/client';
+
+/** Hand-maintained attributes, keyed as in `catalog/attributes`. */
+export type ProductAttributes = Partial<Record<ProductAttributeKey, string>>;
 
 export type PanelVariant = {
   id: string;
@@ -17,9 +25,13 @@ export type PanelVariant = {
 
 export type PanelProduct = {
   id: string;
+  handle: string;
   title: string;
+  /** Plain text, as Shopify stores alongside the HTML body. */
+  description: string;
   status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
   imageUrl: string | null;
+  attributes: ProductAttributes;
   variants: PanelVariant[];
 };
 
@@ -28,9 +40,12 @@ type ProductsResponse = {
     pageInfo: { hasNextPage: boolean; endCursor: string | null };
     nodes: Array<{
       id: string;
+      handle: string;
       title: string;
+      description: string | null;
       status: PanelProduct['status'];
       featuredImage: { url: string } | null;
+      metafields: { nodes: Array<{ key: string; value: string }> };
       variants: {
         nodes: Array<{
           id: string;
@@ -52,9 +67,14 @@ const PRODUCTS_PAGE_QUERY = `#graphql
       pageInfo { hasNextPage endCursor }
       nodes {
         id
+        handle
         title
+        description
         status
         featuredImage { url }
+        metafields(first: 10, namespace: "${ATTRIBUTE_NAMESPACE}") {
+          nodes { key value }
+        }
         variants(first: 50) {
           nodes {
             id
@@ -72,11 +92,20 @@ const PRODUCTS_PAGE_QUERY = `#graphql
 `;
 
 function adaptProduct(node: ProductsResponse['products']['nodes'][number]): PanelProduct {
+  const attributes: ProductAttributes = {};
+  for (const metafield of node.metafields?.nodes ?? []) {
+    const known = PRODUCT_ATTRIBUTES.find((spec) => spec.key === metafield.key);
+    if (known) attributes[known.key] = metafield.value;
+  }
+
   return {
     id: node.id,
+    handle: node.handle,
     title: node.title,
+    description: node.description ?? '',
     status: node.status,
     imageUrl: node.featuredImage?.url ?? null,
+    attributes,
     variants: node.variants.nodes.map((variant) => ({
       id: variant.id,
       title: variant.title,
@@ -179,7 +208,6 @@ export type PanelProductMedia = {
 };
 
 export type PanelProductDetail = PanelProduct & {
-  handle: string;
   /** Plain-text description (Shopify strips the HTML). */
   descriptionText: string;
   media: PanelProductMedia[];
@@ -198,6 +226,7 @@ export async function getPanelProductDetail(
       status: PanelProduct['status'];
       description: string;
       featuredImage: { url: string } | null;
+      metafields: { nodes: Array<{ key: string; value: string }> };
       media: {
         nodes: Array<{
           id: string;
@@ -217,6 +246,9 @@ export async function getPanelProductDetail(
         status
         description
         featuredImage { url }
+        metafields(first: 10, namespace: "${ATTRIBUTE_NAMESPACE}") {
+          nodes { key value }
+        }
         media(first: 24) {
           nodes {
             id
@@ -244,12 +276,20 @@ export async function getPanelProductDetail(
   const product = data.product;
   if (!product) return null;
 
+  const attributes: ProductAttributes = {};
+  for (const metafield of product.metafields?.nodes ?? []) {
+    const known = PRODUCT_ATTRIBUTES.find((spec) => spec.key === metafield.key);
+    if (known) attributes[known.key] = metafield.value;
+  }
+
   return {
     id: product.id,
     title: product.title,
     handle: product.handle,
     status: product.status,
+    description: product.description,
     descriptionText: product.description,
+    attributes,
     imageUrl: product.featuredImage?.url ?? null,
     media: product.media.nodes.map((node) => ({
       id: node.id,
@@ -296,6 +336,83 @@ export async function updatePanelProductDetails(input: {
     }
   );
   assertNoUserErrors('productUpdate', data.productUpdate.userErrors);
+}
+
+/**
+ * Writes the hand-maintained attributes. An empty string deletes the metafield
+ * rather than storing a blank, so a cleared spreadsheet cell clears the value
+ * on the product page too.
+ */
+export async function setProductAttributes(
+  productId: string,
+  attributes: ProductAttributes
+) {
+  const toSet: Array<{
+    ownerId: string;
+    namespace: string;
+    key: string;
+    type: string;
+    value: string;
+  }> = [];
+  const toDelete: Array<{ ownerId: string; namespace: string; key: string }> =
+    [];
+
+  for (const spec of PRODUCT_ATTRIBUTES) {
+    const value = attributes[spec.key];
+    if (value === undefined) continue;
+
+    if (value.trim() === '') {
+      toDelete.push({
+        ownerId: productId,
+        namespace: ATTRIBUTE_NAMESPACE,
+        key: spec.key,
+      });
+    } else {
+      toSet.push({
+        ownerId: productId,
+        namespace: ATTRIBUTE_NAMESPACE,
+        key: spec.key,
+        type: spec.type,
+        value,
+      });
+    }
+  }
+
+  if (toSet.length > 0) {
+    const data = await adminGraphql<{
+      metafieldsSet: {
+        userErrors: Array<{ field?: string[] | null; message: string }>;
+      };
+    }>(
+      `#graphql
+      mutation PanelSetAttributes($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          userErrors { field message }
+        }
+      }
+    `,
+      { metafields: toSet }
+    );
+    assertNoUserErrors('metafieldsSet', data.metafieldsSet.userErrors);
+  }
+
+  if (toDelete.length > 0) {
+    const data = await adminGraphql<{
+      metafieldsDelete: {
+        userErrors: Array<{ field?: string[] | null; message: string }>;
+      };
+    }>(
+      `#graphql
+      mutation PanelDeleteAttributes($metafields: [MetafieldIdentifierInput!]!) {
+        metafieldsDelete(metafields: $metafields) {
+          userErrors { field message }
+        }
+      }
+    `,
+      { metafields: toDelete }
+    );
+    assertNoUserErrors('metafieldsDelete', data.metafieldsDelete.userErrors);
+  }
 }
 
 export async function appendProductMedia(
