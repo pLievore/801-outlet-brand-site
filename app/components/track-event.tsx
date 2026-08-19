@@ -2,6 +2,10 @@
 
 import { useEffect } from 'react';
 
+import {
+  readAttribution,
+  type Attribution,
+} from '../../src/lib/analytics/attribution';
 import type { FunnelStep } from '../../src/lib/analytics/funnel-rules';
 
 /**
@@ -36,6 +40,38 @@ export function trackFunnelStep(
 }
 
 const SESSION_FLAG = 'ff_session';
+const ATTRIBUTION_KEY = 'ff_attribution';
+
+/**
+ * Remembers the campaign the visit arrived on, so a purchase made three
+ * clicks later can still be credited to it. Kept in sessionStorage: it dies
+ * with the tab, and never becomes a cross-site identifier.
+ */
+function rememberAttribution(): void {
+  try {
+    if (window.sessionStorage.getItem(ATTRIBUTION_KEY)) return;
+
+    const attribution = readAttribution(
+      window.location.search,
+      document.referrer
+    );
+    if (!attribution) return;
+
+    window.sessionStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(attribution));
+  } catch {
+    // Private mode: attribution is a nice-to-have, never a blocker.
+  }
+}
+
+/** The campaign remembered for this session, if any. */
+export function currentAttribution(): Attribution | null {
+  try {
+    const raw = window.sessionStorage.getItem(ATTRIBUTION_KEY);
+    return raw ? (JSON.parse(raw) as Attribution) : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Counts one visit per browser session, plus an optional step for the page
@@ -50,6 +86,8 @@ export function TrackEvent({
   handle?: string;
 }) {
   useEffect(() => {
+    rememberAttribution();
+
     try {
       if (!window.sessionStorage.getItem(SESSION_FLAG)) {
         window.sessionStorage.setItem(SESSION_FLAG, '1');

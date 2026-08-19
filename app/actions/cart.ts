@@ -2,6 +2,10 @@
 
 import { cookies, headers } from 'next/headers';
 
+import {
+  toCartAttributes,
+  type Attribution,
+} from '../../src/lib/analytics/attribution';
 import type { CartActionResult } from '../../src/lib/catalog/cart-view';
 import { adaptCart } from '../../src/lib/shopify/adapters/cart';
 import {
@@ -84,7 +88,9 @@ export async function getCartAction(): Promise<CartActionResult> {
 
 export async function addCartLineAction(
   variantId: string,
-  quantity: number
+  quantity: number,
+  /** Campaign the visit arrived on; recorded only when the cart is created. */
+  attribution?: Attribution | null
 ): Promise<CartActionResult> {
   if (!VARIANT_GID_PATTERN.test(variantId)) {
     return { cart: null, errors: [GENERIC_ERROR] };
@@ -99,7 +105,7 @@ export async function addCartLineAction(
 
     let cart = existingCart
       ? await addCartLines(existingCart.id, [line], buyerIp)
-      : await createCart([line], buyerIp);
+      : await createCart([line], buyerIp, toCartAttributes(attribution ?? null));
 
     if (cart && cart.id !== cartId) {
       await persistCartId(cart.id);

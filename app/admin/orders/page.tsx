@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { ExternalLink, Info } from 'lucide-react';
+import { ExternalLink, Info, Megaphone } from 'lucide-react';
 
+import { formatAttribution } from '../../../src/lib/analytics/attribution';
 import { listRecentPanelOrders } from '../../../src/lib/panel/orders';
 import { PageHeader, Panel } from '../_components/ui';
 
@@ -107,6 +108,13 @@ export default async function PanelOrdersPage() {
                     <ExternalLink aria-hidden="true" className="size-3.5" />
                   </a>
                 </div>
+
+                {order.attribution ? (
+                  <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[rgb(var(--sage-soft))] px-3 py-1 text-[11px] font-semibold text-[rgb(var(--sage-ink))]">
+                    <Megaphone aria-hidden="true" className="size-3.5" />
+                    {formatAttribution(order.attribution)}
+                  </p>
+                ) : null}
 
                 <ul className="mt-4 space-y-2">
                   {order.lines.map((line, index) => (

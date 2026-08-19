@@ -94,8 +94,8 @@ export const CART_QUERY = `#graphql
 ` as const;
 
 export const CART_CREATE_MUTATION = `#graphql
-  mutation CartCreate($lines: [CartLineInput!]) {
-    cartCreate(input: { lines: $lines }) {
+  mutation CartCreate($lines: [CartLineInput!], $attributes: [AttributeInput!]) {
+    cartCreate(input: { lines: $lines, attributes: $attributes }) {
       cart {
         ...CartFields
       }
@@ -211,16 +211,22 @@ export async function fetchCart(cartId: string, buyerIp?: string) {
   return result.data.cart ?? null;
 }
 
+/**
+ * Campaign attributes are set here, at creation, and never touched again:
+ * the campaign that opened the cart is the one that earns the sale, and
+ * Shopify carries these through to the order's custom attributes.
+ */
 export async function createCart(
   lines: Array<{ merchandiseId: string; quantity: number }>,
-  buyerIp?: string
+  buyerIp?: string,
+  attributes?: Array<{ key: string; value: string }>
 ) {
   const result = await shopifyStorefrontRequest<
     CartCreateMutation,
     CartCreateMutationVariables
   >(CART_CREATE_MUTATION, {
     operationName: 'CartCreate',
-    variables: { lines },
+    variables: { lines, attributes: attributes?.length ? attributes : null },
     cache: 'no-store',
     retries: 0,
     buyerIp,

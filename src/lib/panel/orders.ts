@@ -1,5 +1,9 @@
 import 'server-only';
 
+import {
+  fromOrderAttributes,
+  type Attribution,
+} from '../analytics/attribution';
 import { adminGraphql } from '../shopify-admin/client';
 
 // Customer name and address are Shopify protected customer data: reading
@@ -21,6 +25,8 @@ export type PanelOrder = {
   fulfillmentStatus: string | null;
   totalAmount: number;
   currencyCode: string;
+  /** Campaign the cart was opened on, when the storefront recorded one. */
+  attribution: Attribution | null;
   lines: PanelOrderLine[];
 };
 
@@ -36,6 +42,7 @@ type OrdersListResponse = {
       currentTotalPriceSet: {
         shopMoney: { amount: string; currencyCode: string };
       };
+      customAttributes: Array<{ key: string; value: string | null }>;
       lineItems: {
         nodes: Array<{
           title: string;
@@ -58,6 +65,7 @@ const ORDERS_LIST_QUERY = `#graphql
         displayFinancialStatus
         displayFulfillmentStatus
         currentTotalPriceSet { shopMoney { amount currencyCode } }
+        customAttributes { key value }
         lineItems(first: 10) {
           nodes {
             title
@@ -89,6 +97,7 @@ export async function listRecentPanelOrders(): Promise<PanelOrder[]> {
     fulfillmentStatus: node.displayFulfillmentStatus,
     totalAmount: Number(node.currentTotalPriceSet.shopMoney.amount),
     currencyCode: node.currentTotalPriceSet.shopMoney.currencyCode,
+    attribution: fromOrderAttributes(node.customAttributes ?? []),
     lines: node.lineItems.nodes.map((line) => ({
       title: line.title,
       quantity: line.quantity,

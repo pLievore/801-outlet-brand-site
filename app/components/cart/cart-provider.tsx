@@ -21,6 +21,7 @@ import {
   removeCartLineAction,
   updateCartLineAction,
 } from '../../actions/cart';
+import { currentAttribution } from '../track-event';
 
 type CartContextValue = {
   cart: CartView | null;
@@ -106,7 +107,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       openCart: () => setIsOpen(true),
       closeCart: () => setIsOpen(false),
       addLine: async (variantId, quantity) => {
-        const ok = await run(addCartLineAction(variantId, quantity));
+        // Read at add-to-cart time: only then does a cart exist to tag, and
+        // the campaign is whatever opened this browser session.
+        const ok = await run(
+          addCartLineAction(variantId, quantity, currentAttribution())
+        );
         if (ok) setIsOpen(true);
         return ok;
       },
