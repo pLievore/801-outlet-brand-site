@@ -8,6 +8,7 @@ import {
   parseFeatures,
 } from '../../../../src/lib/catalog/attributes';
 import { getAvailability } from '../../../../src/lib/catalog/availability';
+import { sortAvailableFirst } from '../../../../src/lib/catalog/ordering';
 import { formatMoney } from '../../../../src/lib/format';
 import { safeJsonLd } from '../../../../src/lib/seo';
 import {
@@ -90,8 +91,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const availability = getAvailability({ availableForSale: inStock, tags: product.tags });
   const quantity = primaryVariant?.quantityAvailable ?? null;
   const showLowStock = inStock && quantity !== null && quantity <= 3;
-  const related = (await getRelatedProducts(product.id, 4)).map(
-    adaptProductCard
+  const related = sortAvailableFirst(
+    (await getRelatedProducts(product.id, 4)).map(adaptProductCard)
   );
   const smsHref = env.getSmsHref(
     `Hi 801 Outlet, I would like more information about ${product.title}: ${env.siteUrl}/products/${product.handle}`

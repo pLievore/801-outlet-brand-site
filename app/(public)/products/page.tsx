@@ -34,13 +34,13 @@ type SearchParams = {
   availability?: string;
   priceMin?: string;
   priceMax?: string;
-  after?: string;
-  before?: string;
+  page?: string;
 };
 
-function safeCursor(value: string | undefined) {
-  if (!value || value.length > 1_000) return undefined;
-  return /^[A-Za-z0-9+/_=-]+$/.test(value) ? value : undefined;
+/** 1-based page number from the URL; anything odd falls back to page 1. */
+function parsePage(value: string | undefined): number {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 && page <= 500 ? page : 1;
 }
 
 function buildQuery(
@@ -69,16 +69,14 @@ export default async function ProductsPage({
     parseCatalogPrice(params.priceMin),
     parseCatalogPrice(params.priceMax)
   );
-  const after = safeCursor(params.after);
-  const before = after ? undefined : safeCursor(params.before);
+  const page = parsePage(params.page);
 
   const result = await getShopifyCatalogPage({
     search,
     sort,
     availability,
     ...parsedPrices,
-    after,
-    before,
+    page,
     pageSize: 12,
   });
 
@@ -246,23 +244,26 @@ export default async function ProductsPage({
             className="mt-10 flex items-center justify-center gap-3"
             aria-label="Catalog pagination"
           >
-            {result.pageInfo.hasPreviousPage &&
-            result.pageInfo.startCursor ? (
+            {result.pageInfo.hasPreviousPage ? (
               <Link
                 href={`/products${buildQuery(baseQuery, {
-                  before: result.pageInfo.startCursor,
-                  after: undefined,
+                  page:
+                    result.pageInfo.page - 1 === 1
+                      ? undefined
+                      : String(result.pageInfo.page - 1),
                 })}`}
                 className="rounded-full border border-[rgb(var(--border))] bg-white px-5 py-2.5 text-sm font-semibold transition hover:bg-neutral-50"
               >
                 ← Previous
               </Link>
             ) : null}
-            {result.pageInfo.hasNextPage && result.pageInfo.endCursor ? (
+            <span className="text-xs text-[rgb(var(--muted))]">
+              Page {result.pageInfo.page} of {result.pageInfo.totalPages}
+            </span>
+            {result.pageInfo.hasNextPage ? (
               <Link
                 href={`/products${buildQuery(baseQuery, {
-                  after: result.pageInfo.endCursor,
-                  before: undefined,
+                  page: String(result.pageInfo.page + 1),
                 })}`}
                 className="rounded-full border border-[rgb(var(--border))] bg-white px-5 py-2.5 text-sm font-semibold transition hover:bg-neutral-50"
               >

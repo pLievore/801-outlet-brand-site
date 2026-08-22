@@ -5,6 +5,7 @@ import type {
   CatalogSort,
 } from '../catalog/filters';
 import { buildProductQuery } from '../catalog/filters';
+import { sortAvailableFirst } from '../catalog/ordering';
 import type { CatalogProductCard } from '../catalog/types';
 import { adaptProductCard, type SearchProduct } from './adapters/products';
 import { getProducts, searchProducts } from './queries/products';
@@ -12,21 +13,36 @@ import { getProducts, searchProducts } from './queries/products';
 type CatalogPageInfo = {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-  endCursor: string | null;
-  startCursor: string | null;
+  /** 1-based page the caller is on. */
+  page: number;
+  totalPages: number;
 };
 
-function normalizePageInfo(pageInfo: {
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-  endCursor?: string | null;
-  startCursor?: string | null;
-}): CatalogPageInfo {
+/**
+ * How many products are fetched before paging in memory. The catalogue is far
+ * smaller than this, and ordering has to be global: sorting only the current
+ * page would still leave sold-out pieces ahead of available ones on the next.
+ */
+const MAX_CATALOG_FETCH = 250;
+
+/** Slices the ordered catalogue into the requested page. */
+function paginate(
+  products: CatalogProductCard[],
+  requestedPage: number,
+  pageSize: number
+): { products: CatalogProductCard[]; pageInfo: CatalogPageInfo } {
+  const totalPages = Math.max(1, Math.ceil(products.length / pageSize));
+  const page = Math.min(Math.max(requestedPage, 1), totalPages);
+  const start = (page - 1) * pageSize;
+
   return {
-    hasNextPage: pageInfo.hasNextPage,
-    hasPreviousPage: pageInfo.hasPreviousPage,
-    endCursor: pageInfo.endCursor ?? null,
-    startCursor: pageInfo.startCursor ?? null,
+    products: products.slice(start, start + pageSize),
+    pageInfo: {
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      page,
+      totalPages,
+    },
   };
 }
 
@@ -42,20 +58,10 @@ export type ShopifyCatalogInput = {
   sort: CatalogSort;
   minPrice?: number;
   maxPrice?: number;
-  after?: string;
-  before?: string;
+  /** 1-based. */
+  page?: number;
   pageSize?: number;
 };
-
-function paginationVariables(input: ShopifyCatalogInput) {
-  const pageSize = Math.max(1, Math.min(input.pageSize ?? 12, 48));
-
-  if (input.before) {
-    return { last: pageSize, before: input.before };
-  }
-
-  return { first: pageSize, after: input.after };
-}
 
 function productSort(sort: CatalogSort) {
   switch (sort) {
@@ -103,35 +109,40 @@ function searchFilters(input: ShopifyCatalogInput) {
 export async function getShopifyCatalogPage(
   input: ShopifyCatalogInput
 ): Promise<ShopifyCatalogPage> {
-  const pagination = paginationVariables(input);
+  const pageSize = Math.max(1, Math.min(input.pageSize ?? 12, 48));
+  const requestedPage = Math.max(1, Math.floor(input.page ?? 1));
 
   if (input.search) {
     const result = await searchProducts({
       query: input.search,
-      ...pagination,
+      first: MAX_CATALOG_FETCH,
       ...searchSort(input.sort),
       productFilters: searchFilters(input),
     });
-    const products = result.nodes.filter(
+    const matches = result.nodes.filter(
       (node): node is SearchProduct => node.__typename === 'Product'
     );
+    const ordered = sortAvailableFirst(matches.map(adaptProductCard));
+    const paged = paginate(ordered, requestedPage, pageSize);
 
     return {
-      products: products.map(adaptProductCard),
-      totalCount: result.totalCount,
-      pageInfo: normalizePageInfo(result.pageInfo),
+      products: paged.products,
+      totalCount: result.totalCount ?? ordered.length,
+      pageInfo: paged.pageInfo,
     };
   }
 
   const result = await getProducts({
-    ...pagination,
+    first: MAX_CATALOG_FETCH,
     ...productSort(input.sort),
     query: buildProductQuery(input),
   });
+  const ordered = sortAvailableFirst(result.nodes.map(adaptProductCard));
+  const paged = paginate(ordered, requestedPage, pageSize);
 
   return {
-    products: result.nodes.map(adaptProductCard),
-    totalCount: null,
-    pageInfo: normalizePageInfo(result.pageInfo),
+    products: paged.products,
+    totalCount: ordered.length,
+    pageInfo: paged.pageInfo,
   };
 }

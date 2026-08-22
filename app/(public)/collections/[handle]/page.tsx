@@ -9,6 +9,7 @@ import {
   getCollectionByHandle,
   getCollections,
 } from '../../../../src/lib/shopify';
+import { sortAvailableFirst } from '../../../../src/lib/catalog/ordering';
 import { adaptProductCard } from '../../../../src/lib/shopify/adapters/products';
 import { CatalogProductCard } from '../../../components/catalog-product-card';
 import {
@@ -57,7 +58,10 @@ export default async function CollectionPage({ params }: PageProps) {
 
   if (!collection) notFound();
 
-  const products = collection.products.nodes.map(adaptProductCard);
+  // Sellable pieces lead the grid here too, not just on /products.
+  const products = sortAvailableFirst(
+    collection.products.nodes.map(adaptProductCard)
+  );
 
   const jsonLd = {
     '@context': 'https://schema.org',
