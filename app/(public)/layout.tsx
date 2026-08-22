@@ -272,14 +272,11 @@ function SiteFooter() {
               ))}
             </div>
             <div className="mt-4 space-y-2 text-sm font-semibold">
-              <a className="block hover:underline" href="tel:+18018546060">
-                Call or text: (801) 854-6060
+              <a className="block hover:underline" href={env.getPhoneHref()}>
+                Call: (801) 854-6060
               </a>
-              <a
-                className="block hover:underline"
-                href={env.getSmsHref()}
-              >
-                Text us: (801) 854-6060
+              <a className="block hover:underline" href={env.getSmsHref()}>
+                Text: (801) 854-6060
               </a>
               <a
                 className="block break-all hover:underline"
