@@ -10,7 +10,7 @@ import {
   textToDescriptionHtml,
   updatePanelProductDetails,
 } from '../../../../src/lib/panel/products';
-import { AdminUserErrorsError } from '../../../../src/lib/shopify-admin/client';
+import { AdminUserErrorsError, ShopifyAdminError } from '../../../../src/lib/shopify-admin/client';
 
 const PRODUCT_GID = /^gid:\/\/shopify\/Product\/\d+$/;
 const MEDIA_GID = /^gid:\/\/shopify\/MediaImage\/\d+$/;
@@ -23,6 +23,11 @@ type ActionResult = { ok: boolean; error?: string };
 function errorMessage(error: unknown): string {
   if (error instanceof AdminUserErrorsError) {
     return error.userErrors.map((entry) => entry.message).join(' ');
+  }
+  // A missing Shopify scope is actionable — say so instead of "try again",
+  // which invites retrying something that can never succeed.
+  if (error instanceof ShopifyAdminError && error.message) {
+    return error.message;
   }
   return 'The update failed. Please try again.';
 }

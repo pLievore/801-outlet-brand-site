@@ -65,15 +65,36 @@ export async function adminGraphql<TData>(
 
   const payload = (await response.json()) as {
     data?: TData;
-    errors?: Array<{ message?: string }>;
+    errors?: Array<{
+      message?: string;
+      extensions?: { code?: string; requiredAccess?: string };
+    }>;
   };
+
+  // A missing scope comes back as a top-level error, sometimes alongside a
+  // partial `data`. Surfacing it verbatim is the difference between "it
+  // failed, try again" and knowing which scope the app is missing.
+  const denied = payload.errors?.find(
+    (error) => error.extensions?.code === 'ACCESS_DENIED'
+  );
+  if (denied) {
+    console.error('[shopify-admin] access denied', {
+      message: denied.message,
+      requiredAccess: denied.extensions?.requiredAccess,
+    });
+    throw new ShopifyAdminError(
+      denied.message ?? 'The app is missing a Shopify permission.'
+    );
+  }
 
   if (!payload.data) {
     console.error('[shopify-admin] empty response', {
       errorCount: payload.errors?.length ?? 0,
       firstError: payload.errors?.[0]?.message,
     });
-    throw new ShopifyAdminError('Admin API returned no data');
+    throw new ShopifyAdminError(
+      payload.errors?.[0]?.message ?? 'Admin API returned no data'
+    );
   }
 
   return payload.data;
