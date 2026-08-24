@@ -5,6 +5,7 @@ import {
   classifyTrafficSource,
   isFunnelStorageConfigured,
   isProductFunnelStep,
+  otherSourceLabel,
   recordFunnelStep,
   recordProductStep,
   recordSessionContext,
@@ -80,9 +81,12 @@ export async function POST(request: Request) {
       const referrer =
         typeof body.ref === 'string' ? body.ref.slice(0, 300) : '';
       const utm = typeof body.utm === 'string' ? body.utm.slice(0, 60) : '';
+      const source = classifyTrafficSource(referrer, utm);
       await recordSessionContext({
-        source: classifyTrafficSource(referrer, utm),
+        source,
         location: visitorLocation(request.headers),
+        otherDomain:
+          source === 'other' ? otherSourceLabel(referrer) : null,
       });
     }
   } catch {

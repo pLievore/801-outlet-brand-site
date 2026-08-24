@@ -30,6 +30,7 @@ export {
   classifyTrafficSource,
   funnelDateKey,
   isProductFunnelStep,
+  otherSourceLabel,
   sanitizeHandles,
 } from './funnel-rules';
 export type {
@@ -122,6 +123,8 @@ export async function recordFunnelStep(step: FunnelStep): Promise<void> {
 export async function recordSessionContext(context: {
   source: TrafficSource;
   location: string | null;
+  /** Domain behind an "other" visit, so that bucket is not a dead end. */
+  otherDomain?: string | null;
 }): Promise<void> {
   const date = funnelDateKey();
   const sourceKey = `funnel:src:${date}`;
@@ -129,6 +132,13 @@ export async function recordSessionContext(context: {
     ['HINCRBY', sourceKey, context.source, '1'],
     ['EXPIRE', sourceKey, String(COUNTER_TTL_SECONDS)],
   ];
+  if (context.source === 'other' && context.otherDomain) {
+    const otherKey = `funnel:other:${date}`;
+    commands.push(
+      ['HINCRBY', otherKey, context.otherDomain, '1'],
+      ['EXPIRE', otherKey, String(COUNTER_TTL_SECONDS)]
+    );
+  }
   if (context.location) {
     const geoKey = `funnel:geo:${date}`;
     commands.push(
@@ -219,7 +229,7 @@ export type BreakdownEntry = { label: string; count: number };
  */
 export async function getFunnelBreakdown(
   days: number,
-  kind: 'src' | 'geo',
+  kind: 'src' | 'geo' | 'other',
   limit = 8
 ): Promise<BreakdownEntry[]> {
   const dates = Array.from({ length: days }, (_, index) =>

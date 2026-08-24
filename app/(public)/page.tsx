@@ -14,6 +14,7 @@ import { CatalogProductCard } from '../components/catalog-product-card';
 import { ReviewsSection } from '../components/reviews-section';
 import { env } from '../../src/config/env';
 import { MODE_LABEL, SHOWROOM_HOURS } from '../../src/lib/content/hours';
+import { sortAvailableFirst } from '../../src/lib/catalog/ordering';
 import { getProducts } from '../../src/lib/shopify';
 import { adaptProductCard } from '../../src/lib/shopify/adapters/products';
 import { FadeIn, FadeMount, StaggerGrid, StaggerItem } from '../components/motion';
@@ -25,9 +26,12 @@ export const revalidate = 60;
 
 export default async function HomePage() {
   const phoneHref = env.getPhoneHref();
-  const featured = (await getProducts({ first: 4 })).nodes.map(
-    adaptProductCard
-  );
+  // Pull a wider slice than we show, order it, then take the first four: the
+  // home page should lead with pieces someone can actually buy, and only fall
+  // back to sold-out ones when there is nothing left to offer.
+  const featured = sortAvailableFirst(
+    (await getProducts({ first: 24 })).nodes.map(adaptProductCard)
+  ).slice(0, 4);
 
   return (
     <main>

@@ -93,6 +93,29 @@ export function classifyTrafficSource(
   return 'other';
 }
 
+/**
+ * The domain behind an "other" visit — `bing.com`, `reddit.com` and so on.
+ *
+ * Only the host, never the path or query: enough to know where to invest,
+ * nothing that describes the person or what they were reading. Returns null
+ * for anything that is not a real external referrer, so the bucket stays
+ * clean rather than filling with junk.
+ */
+export function otherSourceLabel(referrer: string): string | null {
+  let host = '';
+  try {
+    host = new URL(referrer).hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+
+  if (!host || host.endsWith('801outlet.com')) return null;
+  // A hostname, and nothing that could smuggle other data into the label.
+  if (!/^[a-z0-9.-]{3,60}$/.test(host) || !host.includes('.')) return null;
+
+  return host;
+}
+
 /** Shopify handles are lowercase, digits and dashes. Anything else is junk. */
 const HANDLE_PATTERN = /^[a-z0-9][a-z0-9-]{0,79}$/;
 

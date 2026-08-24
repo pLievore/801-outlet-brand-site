@@ -164,7 +164,8 @@ export default async function FunnelPage({
   const days = PERIODS.find((value) => String(value) === period) ?? 30;
   const configured = isFunnelStorageConfigured();
 
-  const [rows, summary, sources, locations, products] = await Promise.all([
+  const [rows, summary, sources, locations, products, otherDomains] =
+    await Promise.all([
     configured ? getFunnelCounts(days) : Promise.resolve([]),
     getSalesSummary(days === 7 ? 7 : 30),
     configured
@@ -176,6 +177,9 @@ export default async function FunnelPage({
     configured
       ? getProductFunnel(days, 25)
       : Promise.resolve([] as ProductFunnelRow[]),
+    configured
+      ? getFunnelBreakdown(days, 'other')
+      : Promise.resolve([] as BreakdownEntry[]),
   ]);
 
   const totals = FUNNEL_STEPS.reduce(
@@ -343,6 +347,12 @@ export default async function FunnelPage({
           <BreakdownList
             entries={locations}
             emptyText="No location data yet — it fills in as new visits arrive."
+          />
+        </Panel>
+        <Panel title="Inside “Other”">
+          <BreakdownList
+            entries={otherDomains}
+            emptyText="Nothing yet — the domains behind “Other” visits appear here as they arrive."
           />
         </Panel>
       </div>

@@ -4,8 +4,25 @@ import { test } from 'node:test';
 import {
   classifyTrafficSource,
   isProductFunnelStep,
+  otherSourceLabel,
   sanitizeHandles,
 } from './funnel-rules';
+
+test('an "other" visit keeps only the domain it came from', () => {
+  assert.equal(
+    otherSourceLabel('https://www.bing.com/search?q=sofa+utah'),
+    'bing.com',
+    'the path and query are dropped'
+  );
+  assert.equal(otherSourceLabel('https://old.reddit.com/r/utah'), 'old.reddit.com');
+});
+
+test('our own pages and malformed referrers produce no domain', () => {
+  assert.equal(otherSourceLabel('https://801outlet.com/products'), null);
+  assert.equal(otherSourceLabel(''), null);
+  assert.equal(otherSourceLabel('not-a-url'), null);
+  assert.equal(otherSourceLabel('https://localhost/'), null, 'needs a real dot');
+});
 
 test('traffic sources are bucketed from referrer or utm', () => {
   assert.equal(
