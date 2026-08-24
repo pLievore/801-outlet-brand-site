@@ -59,6 +59,9 @@ export const TRAFFIC_SOURCE_LABEL: Record<TrafficSource, string> = {
   other: 'Other',
 };
 
+/** Link-in-bio hosts the store links from Instagram. */
+const LINK_IN_BIO_HOSTS = ['lnk.bio', 'linktr.ee', 'beacons.ai', 'bio.link'];
+
 /**
  * Buckets a referrer/UTM pair into a fixed set of sources. Only the bucket
  * name is ever stored — the raw referrer is discarded.
@@ -76,6 +79,14 @@ export function classifyTrafficSource(
   const utm = utmSource.trim().toLowerCase();
   const haystack = `${utm} ${host}`;
 
+  // Link-in-bio services forward the visit under their own domain, so the
+  // Instagram origin is invisible in the referrer. Ours sits in the Instagram
+  // bio and accounts for roughly half the traffic, so counting it as "other"
+  // hid the store's biggest source. A utm_source on the links inside the page
+  // is what makes this exact rather than inferred.
+  if (LINK_IN_BIO_HOSTS.some((entry) => host === entry || host.endsWith(`.${entry}`))) {
+    return 'instagram';
+  }
   if (haystack.includes('instagram') || utm === 'ig') return 'instagram';
   if (
     haystack.includes('facebook') ||

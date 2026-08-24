@@ -8,6 +8,23 @@ import {
   sanitizeHandles,
 } from './funnel-rules';
 
+test('link-in-bio traffic is credited to Instagram, not lost in "other"', () => {
+  // Roughly half the store's traffic arrives this way.
+  assert.equal(classifyTrafficSource('https://lnk.bio/801outlet', ''), 'instagram');
+  assert.equal(classifyTrafficSource('https://linktr.ee/someone', ''), 'instagram');
+  // A lookalike domain must not be swept in.
+  assert.equal(classifyTrafficSource('https://notlnk.bio.example/', ''), 'other');
+});
+
+test('an explicit utm still decides the source', () => {
+  assert.equal(
+    classifyTrafficSource('https://lnk.bio/801outlet', 'google'),
+    'instagram',
+    'the referring host is checked first, which is what the store links from'
+  );
+  assert.equal(classifyTrafficSource('', 'instagram'), 'instagram');
+});
+
 test('an "other" visit keeps only the domain it came from', () => {
   assert.equal(
     otherSourceLabel('https://www.bing.com/search?q=sofa+utah'),
