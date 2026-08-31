@@ -1,4 +1,7 @@
-import { PRODUCT_ATTRIBUTES } from '../../../../src/lib/catalog/attributes';
+import {
+  PRODUCT_ATTRIBUTES,
+  toSpreadsheetAttributeValue,
+} from '../../../../src/lib/catalog/attributes';
 import { hasValidPanelSession } from '../../../../src/lib/panel/session';
 import { listPanelProducts } from '../../../../src/lib/panel/products';
 
@@ -46,8 +49,13 @@ export async function GET() {
         variant.compareAtPrice ?? '',
         variant.inventoryQuantity,
         product.description,
-        ...PRODUCT_ATTRIBUTES.map(
-          (attribute) => product.attributes[attribute.key] ?? ''
+        // A multi-part value comes back one piece per line, which is how it was
+        // typed in the spreadsheet — the import folds it again on the way in.
+        ...PRODUCT_ATTRIBUTES.map((attribute) =>
+          toSpreadsheetAttributeValue(
+            attribute,
+            product.attributes[attribute.key] ?? ''
+          )
         ),
       ]
         .map(csvCell)

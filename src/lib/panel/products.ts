@@ -3,6 +3,7 @@ import 'server-only';
 import {
   ATTRIBUTE_NAMESPACE,
   PRODUCT_ATTRIBUTES,
+  toStoredAttributeValue,
   type ProductAttributeKey,
 } from '../catalog/attributes';
 import {
@@ -369,10 +370,14 @@ export async function setProductAttributes(
     [];
 
   for (const spec of PRODUCT_ATTRIBUTES) {
-    const value = attributes[spec.key];
-    if (value === undefined) continue;
+    const raw = attributes[spec.key];
+    if (raw === undefined) continue;
 
-    if (value.trim() === '') {
+    // Folded here as well as at the import, so no caller can reach Shopify
+    // with a line break in a single-line metafield.
+    const value = toStoredAttributeValue(spec, raw);
+
+    if (value === '') {
       toDelete.push({
         ownerId: productId,
         namespace: ATTRIBUTE_NAMESPACE,

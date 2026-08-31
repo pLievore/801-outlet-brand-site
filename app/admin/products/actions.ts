@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import {
   PRODUCT_ATTRIBUTES,
+  toStoredAttributeValue,
 } from '../../../src/lib/catalog/attributes';
 import { hasValidPanelSession } from '../../../src/lib/panel/session';
 import {
@@ -176,6 +177,29 @@ function resolveRow(
   return null;
 }
 
+/**
+ * Folds each attribute to the shape Shopify will store, before anything is
+ * compared or written. A spreadsheet describes a sofa and its ottoman on two
+ * lines; `dimensions` is a single-line metafield and would be rejected. Folding
+ * here — rather than only at the write — keeps the preview honest: the diff
+ * compares the stored form against the stored form, so a cell that only differs
+ * by a line break is correctly reported as unchanged.
+ */
+function normalizeRows(rows: ImportRow[]): ImportRow[] {
+  return rows.map((row) => {
+    if (!row.attributes) return row;
+
+    const attributes: ProductAttributes = {};
+    for (const spec of PRODUCT_ATTRIBUTES) {
+      const value = row.attributes[spec.key];
+      if (value === undefined) continue;
+      attributes[spec.key] = toStoredAttributeValue(spec, value);
+    }
+
+    return { ...row, attributes };
+  });
+}
+
 function attributeChanges(
   current: ProductAttributes,
   incoming: ProductAttributes | undefined
@@ -238,12 +262,14 @@ function validateNewRow(
 }
 
 export async function previewImportAction(
-  rows: ImportRow[]
+  input: ImportRow[]
 ): Promise<{ ok: boolean; error?: string; preview?: ImportPreviewRow[] }> {
   if (!(await guard())) return { ok: false, error: 'Session expired. Sign in again.' };
-  if (rows.length === 0 || rows.length > 500) {
+  if (input.length === 0 || input.length > 500) {
     return { ok: false, error: 'The file must contain between 1 and 500 rows.' };
   }
+
+  const rows = normalizeRows(input);
 
   const products = await listPanelProducts();
   const index = buildIndex(products);
@@ -336,10 +362,11 @@ export async function previewImportAction(
 }
 
 export async function applyImportAction(
-  rows: ImportRow[]
+  input: ImportRow[]
 ): Promise<{ ok: boolean; error?: string; applied?: number }> {
   if (!(await guard())) return { ok: false, error: 'Session expired. Sign in again.' };
 
+  const rows = normalizeRows(input);
   const validation = await previewImportAction(rows);
   if (!validation.ok || !validation.preview) {
     return { ok: false, error: validation.error };
