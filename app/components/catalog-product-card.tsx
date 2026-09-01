@@ -46,11 +46,11 @@ export function CatalogProductCard({
       }
       whileTap={reduced ? {} : { scale: 0.98 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="h-full rounded-2xl"
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-white transition-colors hover:border-[rgb(var(--accent))]/30"
     >
       <Link
         href={`/products/${product.handle}`}
-        className="group flex h-full flex-col rounded-2xl border border-[rgb(var(--border))] bg-white p-3 transition-colors hover:border-[rgb(var(--accent))]/30 sm:p-4"
+        className="group flex flex-1 flex-col p-3 sm:p-4"
       >
         <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-neutral-100">
           {primary ? (
@@ -138,10 +138,12 @@ export function CatalogProductCard({
         </div>
       </Link>
 
-      {/* Outside the link: adding is not navigating. Only offered when the
-          piece has one variant and can actually be bought right now. */}
+      {/* A sibling of the link, not a child: adding is not navigating. It sits
+          inside the card's box because the border and background moved up to
+          the wrapper — left on the link, which is full height, this was pushed
+          out of the card and landed on the one below it. */}
       {product.soleVariantId && availability.purchasable ? (
-        <div className="px-4 pb-4">
+        <div className="px-3 pb-3 sm:px-4 sm:pb-4">
           <CardAddToCart
             variantId={product.soleVariantId}
             productHandle={product.handle}
