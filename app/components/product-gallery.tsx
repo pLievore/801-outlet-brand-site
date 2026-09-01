@@ -117,7 +117,7 @@ export function ProductGallery({ images, productName }: Props) {
         {/* Thumbnails */}
         {images.length > 1 ? (
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {images.slice(0, 6).map((img, i) => (
+            {images.map((img, i) => (
               <button
                 key={img.url}
                 type="button"

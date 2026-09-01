@@ -484,12 +484,14 @@ export async function reorderProductMedia(
 ) {
   const data = await adminGraphql<{
     productReorderMedia: {
+      job: { id: string; done: boolean } | null;
       userErrors: Array<{ field?: string[] | null; message: string }>;
     };
   }>(
     `#graphql
     mutation PanelProductReorderMedia($id: ID!, $moves: [MoveInput!]!) {
       productReorderMedia(id: $id, moves: $moves) {
+        job { id done }
         userErrors { field message }
       }
     }
@@ -506,6 +508,39 @@ export async function reorderProductMedia(
     'productReorderMedia',
     data.productReorderMedia.userErrors
   );
+
+  // Reordering is asynchronous: Shopify accepts the moves and hands back a job.
+  // Returning here would let the panel refresh before the job has run and read
+  // back the old order, which looks exactly like a reorder that did not save.
+  await waitForJob(data.productReorderMedia.job);
+}
+
+/**
+ * Waits for one of Shopify's asynchronous jobs to finish, for the handful of
+ * seconds it is worth blocking on. Giving up is not an error — the work is
+ * queued either way; the caller just cannot promise a fresh read.
+ */
+async function waitForJob(
+  job: { id: string; done: boolean } | null,
+  attempts = 12
+): Promise<void> {
+  let current = job;
+
+  for (let attempt = 0; current && !current.done && attempt < attempts; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    const data = await adminGraphql<{
+      job: { id: string; done: boolean } | null;
+    }>(
+      `#graphql
+      query PanelJobStatus($id: ID!) {
+        job(id: $id) { id done }
+      }
+    `,
+      { id: current.id }
+    );
+    current = data.job;
+  }
 }
 
 /** Converts operator-typed plain text into safe paragraph HTML. */
