@@ -84,7 +84,7 @@ export default async function PublicLayout({
         <AnnouncementBar />
         <SiteHeader navigation={navigation} phoneHref={phoneHref} />
         {/* Room for the bottom bar, which floats over the page. */}
-        <div id="main-content" tabIndex={-1} className="pb-[70px] lg:pb-0">
+        <div id="main-content" tabIndex={-1} className="pb-above-tab-bar lg:pb-0">
           {children}
         </div>
         <SiteFooter />

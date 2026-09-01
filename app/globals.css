@@ -98,12 +98,32 @@ a:focus-visible {
 }
 
 /**
- * Sits directly on top of the mobile tab bar rather than on the viewport floor.
- * The bar is 58px plus whatever the home indicator claims, and two things
- * pinned to `bottom: 0` would simply cover one another.
+ * The mobile tab bar's own geometry, in one place.
+ *
+ * The bar's padding and the offset of whatever sits on top of it were written
+ * separately — `max(0.75rem, …)` against a bare `env(…)` — so on a phone whose
+ * inset is under 12px the two disagreed by the difference, and the buy bar
+ * settled a few pixels over the bar's top edge, clipping the orange marker
+ * that says which tab you are on. One source, no drift.
  */
+:root {
+  --tab-bar-height: 52px;
+  --tab-bar-pad: max(0.25rem, env(safe-area-inset-bottom));
+  --tab-bar-total: calc(var(--tab-bar-height) + var(--tab-bar-pad));
+}
+
+.pb-tab-bar {
+  padding-bottom: var(--tab-bar-pad);
+}
+
+/** Sits directly on top of the tab bar rather than on the viewport floor. */
 .above-tab-bar {
-  bottom: calc(58px + env(safe-area-inset-bottom));
+  bottom: var(--tab-bar-total);
+}
+
+/** Room at the end of the document for the bar floating over it. */
+.pb-above-tab-bar {
+  padding-bottom: calc(var(--tab-bar-total) + 0.5rem);
 }
 
 /* Premium grid texture util */

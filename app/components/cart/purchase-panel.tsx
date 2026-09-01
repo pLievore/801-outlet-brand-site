@@ -12,6 +12,7 @@ import { cn } from '../../../src/lib/cn';
 import { trackFunnelStep } from '../track-event';
 import { useCart } from './cart-provider';
 import { HAPTIC, haptic } from '../../../src/lib/haptics';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 type PurchasePanelProps = {
   options: CatalogProductDetail['options'];
@@ -55,6 +56,7 @@ export function PurchasePanel({
    * The bar appears only after the real button has left the screen, so the two
    * are never on screen at the same time saying the same thing.
    */
+  const reducedMotion = useReducedMotion();
   const actionsRef = useRef<HTMLDivElement>(null);
   const [showBar, setShowBar] = useState(false);
 
@@ -276,8 +278,22 @@ export function PurchasePanel({
       ) : null}
 
       {/* Phone only: the desktop panel never leaves the screen. */}
-      {showBar && inStock ? (
-        <div className="above-tab-bar fixed inset-x-0 z-40 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 px-4 py-3 backdrop-blur-xl lg:hidden">
+      <AnimatePresence>
+        {showBar && inStock ? (
+          <motion.div
+            key="buy-bar"
+            // It used to appear and vanish on a frame, which reads as a glitch
+            // rather than as a thing arriving. It slides out of the tab bar it
+            // sits on, and back into it.
+            initial={reducedMotion ? { opacity: 0 } : { y: '110%', opacity: 0 }}
+            animate={reducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+            exit={reducedMotion ? { opacity: 0 } : { y: '110%', opacity: 0 }}
+            transition={
+              reducedMotion
+                ? { duration: 0 }
+                : { type: 'spring', stiffness: 420, damping: 38, mass: 0.9 }
+            }
+            className="above-tab-bar fixed inset-x-0 z-30 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 px-4 py-3 backdrop-blur-xl lg:hidden">
           <div className="mx-auto flex max-w-2xl items-center gap-3">
             {selectedVariant ? (
               <div className="min-w-0">
@@ -299,9 +315,10 @@ export function PurchasePanel({
             >
               {pending ? 'Adding…' : 'Add to cart'}
             </button>
-          </div>
-        </div>
-      ) : null}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

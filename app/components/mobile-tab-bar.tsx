@@ -113,7 +113,7 @@ export function MobileTabBar() {
         dragging.current = false;
         setHover(null);
       }}
-      className="pb-safe fixed inset-x-0 bottom-0 z-40 flex border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 backdrop-blur-xl lg:hidden print:hidden"
+      className="pb-tab-bar fixed inset-x-0 bottom-0 z-40 flex border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 backdrop-blur-xl lg:hidden print:hidden"
     >
       {TABS.map((tab, index) => {
         const isCurrent = index === current;
@@ -126,7 +126,7 @@ export function MobileTabBar() {
             prefetch
             aria-current={isCurrent ? 'page' : undefined}
             onClick={() => haptic(HAPTIC.tap)}
-            className={`relative flex min-h-[58px] flex-1 flex-col items-center justify-center gap-1 transition-colors ${
+            className={`relative flex h-[var(--tab-bar-height)] flex-1 flex-col items-center justify-center gap-0.5 transition-colors ${
               isMarked
                 ? 'text-[rgb(var(--fg))]'
                 : 'text-[rgb(var(--muted))]'
@@ -140,7 +140,7 @@ export function MobileTabBar() {
             ) : null}
 
             <span className="relative">
-              <tab.icon aria-hidden="true" className="size-[22px]" />
+              <tab.icon aria-hidden="true" className="size-5" />
               {tab.href === '/cart' && quantity > 0 ? (
                 <span
                   aria-hidden="true"
