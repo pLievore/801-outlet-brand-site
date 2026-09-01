@@ -7,6 +7,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 import type { CartLineView } from '../../../src/lib/catalog/cart-view';
 import { formatMoney } from '../../../src/lib/format';
 import { useCart } from './cart-provider';
+import { HAPTIC, haptic } from '../../../src/lib/haptics';
 
 export function CartLineItem({
   line,
@@ -73,7 +74,10 @@ export function CartLineItem({
           <div className="flex items-center rounded-full border border-[rgb(var(--border-strong))] bg-white">
             <button
               type="button"
-              onClick={() => updateLine(line.id, line.quantity - 1)}
+              onClick={() => {
+                haptic(HAPTIC.tap);
+                updateLine(line.id, line.quantity - 1);
+              }}
               disabled={pending}
               className="flex size-8 items-center justify-center rounded-full transition hover:bg-[rgb(var(--surface-muted))] disabled:opacity-40"
               aria-label={`Decrease quantity of ${merchandise.productTitle}`}
@@ -88,7 +92,10 @@ export function CartLineItem({
             </span>
             <button
               type="button"
-              onClick={() => updateLine(line.id, line.quantity + 1)}
+              onClick={() => {
+                haptic(HAPTIC.tap);
+                updateLine(line.id, line.quantity + 1);
+              }}
               disabled={pending || atMax}
               className="flex size-8 items-center justify-center rounded-full transition hover:bg-[rgb(var(--surface-muted))] disabled:opacity-40"
               aria-label={`Increase quantity of ${merchandise.productTitle}`}
@@ -99,7 +106,10 @@ export function CartLineItem({
 
           <button
             type="button"
-            onClick={() => removeLine(line.id)}
+            onClick={() => {
+              haptic(HAPTIC.undo);
+              removeLine(line.id);
+            }}
             disabled={pending}
             className="flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-[rgb(var(--muted))] transition hover:text-[rgb(var(--fg))] disabled:opacity-40"
             aria-label={`Remove ${merchandise.productTitle} from cart`}

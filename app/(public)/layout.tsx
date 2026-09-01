@@ -18,6 +18,7 @@ import type { NavigationLink } from '../../src/lib/navigation/types';
 import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { CartProvider } from '../components/cart/cart-provider';
 import { CartButton, MiniCart } from '../components/cart/mini-cart';
+import { HapticTrigger } from '../components/haptic-trigger';
 import { NavLink } from '../components/nav-link';
 import { MobileNav } from '../components/mobile-nav';
 import { PredictiveSearch } from '../components/predictive-search';
@@ -86,6 +87,7 @@ export default async function PublicLayout({
         </div>
         <SiteFooter />
         <MiniCart />
+        <HapticTrigger />
       </div>
     </CartProvider>
   );

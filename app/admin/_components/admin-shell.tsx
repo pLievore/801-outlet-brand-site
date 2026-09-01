@@ -22,6 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { NewTabHint } from '../../components/ui/new-tab-hint';
+import { HapticTrigger } from '../../components/haptic-trigger';
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
 type NavGroup = { title: string; items: NavItem[] };
@@ -352,6 +353,7 @@ export function AdminShell({
         <main id="panel-content" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
+        <HapticTrigger />
       </div>
     </div>
   );

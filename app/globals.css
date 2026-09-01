@@ -70,6 +70,33 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+/**
+ * iOS zooms the whole page when a focused control renders below 16px, and then
+ * leaves it zoomed — you tap a field, the layout lurches, and you pinch back
+ * out to carry on. Most of this shop's visitors are on a phone, and the panel
+ * is worked from one, so no form control is allowed under that threshold on a
+ * small screen. Above it the design's own sizes apply again.
+ *
+ * Checkboxes and radios are excluded: their size comes from the box, not the
+ * text, and 16px would inflate them.
+ */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/**
+ * Room for the home indicator on notched phones. Anything pinned to the bottom
+ * of the viewport uses this instead of a flat padding, which either wastes
+ * space on older phones or sits under the bar on newer ones.
+ */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
 /* Premium grid texture util */
 .bg-grid {
   background-image:

@@ -21,6 +21,8 @@ import { cn } from '../../../../src/lib/cn';
 import { uploadProductImageAction } from '../new/actions';
 import { resizeImage } from '../image-resize';
 import { DrivePickerButton } from '../drive-picker';
+import { useDragSort } from '../../_components/use-drag-sort';
+import { HAPTIC, haptic } from '../../../../src/lib/haptics';
 import { saveProductAction } from '../actions';
 import {
   addMediaAction,
@@ -69,6 +71,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
   const [savingDetails, startDetails] = useTransition();
   const [mutatingMedia, startMedia] = useTransition();
 
+  const dragging = useRef(false);
   const [status, setStatus] = useState(product.status);
   const [variants, setVariants] = useState(() => initialVariants(product));
   const [sellingFeedback, setSellingFeedback] = useState<Feedback>(null);
@@ -90,6 +93,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
    * remember how to spell it. Off simply removes every spelling of it.
    */
   const toggleComingSoon = () => {
+    haptic(HAPTIC.tap);
     const without = tagList.filter((tag) => !hasComingSoonTag([tag]));
     setTags(
       (comingSoon ? without : [...without, COMING_SOON_TAG_VALUE]).join(', ')
@@ -138,6 +142,8 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
           })
         ),
       });
+      // On the result, not on the tap: the tick means it landed in Shopify.
+      haptic(result.ok ? HAPTIC.commit : HAPTIC.undo);
       setSellingFeedback(
         result.ok
           ? { ok: true, text: 'Saved.' }
@@ -156,6 +162,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
         description,
         tags: tagList,
       });
+      haptic(result.ok ? HAPTIC.commit : HAPTIC.undo);
       setDetailsFeedback(
         result.ok
           ? { ok: true, text: 'Saved.' }
@@ -165,12 +172,8 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
     });
   };
 
-  const move = (index: number, direction: -1 | 1) => {
-    const target = index + direction;
-    if (target < 0 || target >= mediaOrder.length) return;
-    const next = [...mediaOrder];
-    [next[index], next[target]] = [next[target], next[index]];
-    setMediaOrder(next);
+  /** Persists whatever order is on screen; reverts to `previous` if refused. */
+  const commitOrder = (next: typeof mediaOrder, previous: typeof mediaOrder) => {
     setMediaFeedback(null);
     startMedia(async () => {
       const result = await reorderMediaAction({
@@ -178,7 +181,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
         orderedMediaIds: next.map((media) => media.id),
       });
       if (!result.ok) {
-        setMediaOrder(mediaOrder);
+        setMediaOrder(previous);
         setMediaFeedback({ ok: false, text: result.error ?? 'Failed.' });
       } else {
         router.refresh();
@@ -186,8 +189,50 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
     });
   };
 
+  /** The keyboard route. Drag is an addition; this is what makes it reachable. */
+  const move = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= mediaOrder.length) return;
+    const next = [...mediaOrder];
+    [next[index], next[target]] = [next[target], next[index]];
+    setMediaOrder(next);
+    haptic(HAPTIC.tap);
+    commitOrder(next, mediaOrder);
+  };
+
+  // What the order was when this drag began, so a refused save can go back to
+  // it — the live reordering has already overwritten the state by then.
+  const beforeDrag = useRef(mediaOrder);
+  // The order as the finger last left it. Read on drop instead of reaching
+  // into a state updater, which React is free to run more than once.
+  const liveOrder = useRef(mediaOrder);
+  liveOrder.current = mediaOrder;
+
+  const drag = useDragSort({
+    count: mediaOrder.length,
+    disabled: mutatingMedia,
+    onMove: (from, to) => {
+      if (!dragging.current) {
+        beforeDrag.current = liveOrder.current;
+        dragging.current = true;
+      }
+      const next = [...liveOrder.current];
+      const [lifted] = next.splice(from, 1);
+      next.splice(to, 0, lifted);
+      liveOrder.current = next;
+      setMediaOrder(next);
+    },
+    onDrop: (moved) => {
+      dragging.current = false;
+      if (!moved) return;
+      haptic(HAPTIC.commit);
+      commitOrder(liveOrder.current, beforeDrag.current);
+    },
+  });
+
   const remove = (mediaId: string) => {
     if (!window.confirm('Remove this photo? This cannot be undone.')) return;
+    haptic(HAPTIC.undo);
     setMediaFeedback(null);
     startMedia(async () => {
       const result = await removeMediaAction({ productId: product.id, mediaId });
@@ -516,6 +561,13 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
           />
         </div>
 
+        {mediaOrder.length > 1 ? (
+          <p className="mt-4 text-xs text-[rgb(var(--muted))]">
+            Hold a photo to pick it up, then drag it where it belongs. The
+            arrows do the same thing from a keyboard.
+          </p>
+        ) : null}
+
         {mediaOrder.length === 0 ? (
           <p className="mt-5 text-sm text-[rgb(var(--muted))]">
             No photos yet — add the first one above.
@@ -525,7 +577,16 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
             {mediaOrder.map((media, index) => (
               <li
                 key={media.id}
-                className="group relative overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface-muted))]"
+                {...drag.itemProps(index)}
+                className={cn(
+                  'group relative overflow-hidden rounded-2xl border bg-[rgb(var(--surface-muted))] transition-[transform,box-shadow]',
+                  // Press and hold to pick a photo up; the cursor says so on a
+                  // mouse, and the lift says so on a finger.
+                  mediaOrder.length > 1 && 'cursor-grab select-none',
+                  drag.dragging === index
+                    ? 'z-10 scale-[1.04] cursor-grabbing border-[rgb(var(--accent))] shadow-lg'
+                    : 'border-[rgb(var(--border))]'
+                )}
               >
                 <div className="relative aspect-square">
                   {media.imageUrl ? (
