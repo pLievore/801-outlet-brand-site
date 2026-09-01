@@ -42,6 +42,15 @@ body {
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  /**
+   * No sideways rubber-band on the page itself. The storefront never scrolls
+   * horizontally, so any give in that direction is the browser bouncing an
+   * edge that should not move — and it fires on the same diagonal drag people
+   * make while scrolling down a grid of sofas, which reads as the page coming
+   * loose. Inner scrollers (tables, the reviews row) keep their own behaviour:
+   * this applies to the root scroller only.
+   */
+  overscroll-behavior-x: none;
 }
 
 body {

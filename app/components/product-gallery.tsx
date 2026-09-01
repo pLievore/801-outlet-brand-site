@@ -138,6 +138,10 @@ export function ProductGallery({ images, productName }: Props) {
             duration: reducedMotion ? 0 : 0.3,
             ease: [0.16, 1, 0.3, 1],
           }}
+          // `pan-y` hands the browser the vertical scroll and keeps the
+          // horizontal for the photo swipe, so passing photos no longer drags
+          // the page sideways underneath.
+          style={{ touchAction: 'pan-y' }}
           className="group block w-full overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2"
           aria-label="Open larger view"
         >
@@ -255,6 +259,10 @@ export function ProductGallery({ images, productName }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: reducedMotion ? 0 : 0.25 }}
+            // The viewer covers the screen, so every touch lands here. Without
+            // taking the gesture outright the page behind kept scrolling — the
+            // body's `overflow: hidden` does not stop a touch drag on iOS.
+            style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-md"
             onClick={() => setZoomOpen(false)}
             role="dialog"
@@ -274,7 +282,7 @@ export function ProductGallery({ images, productName }: Props) {
               }}
               onClick={(e) => e.stopPropagation()}
               {...swipeProps}
-              className="relative max-h-[90vh] max-w-[92vw] touch-pan-y"
+              className="relative max-h-[90vh] max-w-[92vw]"
             >
               <Image
                 src={main.url}
