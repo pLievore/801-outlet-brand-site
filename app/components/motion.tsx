@@ -99,6 +99,18 @@ type StaggerGridProps = {
   fast?: boolean;
 };
 
+/**
+ * Animates on mount, not on scroll.
+ *
+ * These grids hold the products themselves, and `whileInView` made their
+ * visibility depend on an intersection observer firing. On a client-side
+ * navigation — paging through the catalogue — it did not always fire, and the
+ * items stayed at the `hidden` variant's `opacity: 0`: the page rendered with
+ * no sofas at all, and only a full reload brought them back.
+ *
+ * A grid below the fold now finishes its stagger before it is scrolled to,
+ * which costs a flourish nobody sees. Content that cannot appear costs a sale.
+ */
 export function StaggerGrid({ children, className }: StaggerGridProps) {
   const reduced = useReducedMotion();
   if (reduced) return <div className={className}>{children}</div>;
@@ -107,8 +119,7 @@ export function StaggerGrid({ children, className }: StaggerGridProps) {
     <motion.div
       variants={staggerContainer}
       initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: '-60px' }}
+      animate="show"
       className={className}
     >
       {children}
