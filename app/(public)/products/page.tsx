@@ -238,7 +238,7 @@ export default async function ProductsPage({
             <div className="pointer-events-none absolute inset-x-0 -bottom-12 mx-auto h-40 max-w-sm rounded-full bg-[rgb(var(--accent))]/10 blur-3xl" />
           </div>
         ) : (
-          <StaggerGrid className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          <StaggerGrid className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {result.products.map((product) => (
               <StaggerItem key={product.id}>
                 <CatalogProductCard product={product} />

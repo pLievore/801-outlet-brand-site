@@ -147,7 +147,7 @@ export default async function HomePage() {
             </div>
           </FadeIn>
 
-          <StaggerGrid className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <StaggerGrid className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {featured.map((product) => (
               <StaggerItem key={product.id}>
                 <CatalogProductCard product={product} />
@@ -187,7 +187,7 @@ export default async function HomePage() {
           </div>
         </FadeIn>
 
-        <StaggerGrid className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StaggerGrid className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { n: '01', title: 'Sectionals', href: '/products?q=Sectional', desc: 'Space to stretch out' },
             { n: '02', title: 'Sleeper sofas', href: '/products?q=Sleeper', desc: 'Comfort that converts' },
