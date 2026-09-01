@@ -20,6 +20,15 @@ export function ProductGallery({ images, productName }: Props) {
 
   const main = images[activeIndex] ?? images[0];
 
+  // Four photos read clearly; past that the strip turns into a wall of stamps.
+  // The fifth tile becomes the way through to the rest — the photo is still
+  // shown under a veil, so it reads as "more of this", not as a button.
+  // With exactly five there is nothing to hide, so all five are shown plainly.
+  const VISIBLE_THUMBS = 4;
+  const hasOverflow = images.length > VISIBLE_THUMBS + 1;
+  const thumbs = images.slice(0, VISIBLE_THUMBS + 1);
+  const overflowCount = images.length - VISIBLE_THUMBS;
+
   useEffect(() => {
     if (!zoomOpen) return;
 
@@ -116,32 +125,60 @@ export function ProductGallery({ images, productName }: Props) {
 
         {/* Thumbnails */}
         {images.length > 1 ? (
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {images.map((img, i) => (
-              <button
-                key={img.url}
-                type="button"
-                onClick={() => setActiveIndex(i)}
-                aria-label={`View image ${i + 1} of ${images.length}`}
-                aria-pressed={i === activeIndex}
-                className={
-                  'group relative overflow-hidden rounded-2xl border bg-white transition will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2 ' +
-                  (i === activeIndex
-                    ? 'border-[rgb(var(--accent))] ring-1 ring-[rgb(var(--accent))]/30'
-                    : 'border-[rgb(var(--border))] hover:-translate-y-[1px] hover:border-[rgb(var(--accent))]/40 hover:shadow-sm')
-                }
-              >
-                <div className="relative aspect-4/3 bg-neutral-100">
-                  <Image
-                    src={img.url}
-                    alt={img.alt || productName}
-                    fill
-                    sizes="(max-width: 768px) 33vw, 16vw"
-                    className="object-cover transition duration-300 group-hover:scale-[1.04]"
-                  />
-                </div>
-              </button>
-            ))}
+          <div
+            className="grid gap-2 sm:gap-3"
+            // One row, however many tiles there are: three photos should not
+            // sit in a five-column grid trailing empty space.
+            style={{
+              gridTemplateColumns: `repeat(${thumbs.length}, minmax(0, 1fr))`,
+            }}
+          >
+            {thumbs.map((img, i) => {
+              const isOverflowTile = hasOverflow && i === VISIBLE_THUMBS;
+
+              return (
+                <button
+                  key={img.url}
+                  type="button"
+                  onClick={() => {
+                    setActiveIndex(i);
+                    // The tile promises the rest of the photos, so it opens
+                    // the viewer that actually has them.
+                    if (isOverflowTile) setZoomOpen(true);
+                  }}
+                  aria-label={
+                    isOverflowTile
+                      ? `See all ${images.length} photos`
+                      : `View image ${i + 1} of ${images.length}`
+                  }
+                  aria-pressed={!isOverflowTile && i === activeIndex}
+                  className={
+                    'group relative overflow-hidden rounded-2xl border bg-white transition will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2 ' +
+                    (!isOverflowTile && i === activeIndex
+                      ? 'border-[rgb(var(--accent))] ring-1 ring-[rgb(var(--accent))]/30'
+                      : 'border-[rgb(var(--border))] hover:-translate-y-[1px] hover:border-[rgb(var(--accent))]/40 hover:shadow-sm')
+                  }
+                >
+                  <div className="relative aspect-4/3 bg-neutral-100">
+                    <Image
+                      src={img.url}
+                      alt={isOverflowTile ? '' : img.alt || productName}
+                      fill
+                      sizes="(max-width: 768px) 33vw, 16vw"
+                      className="object-cover transition duration-300 group-hover:scale-[1.04]"
+                    />
+                    {isOverflowTile ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 flex items-center justify-center bg-neutral-900/55 text-base font-semibold text-white backdrop-blur-[2px] transition group-hover:bg-neutral-900/45"
+                      >
+                        +{overflowCount}
+                      </span>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         ) : null}
       </div>
