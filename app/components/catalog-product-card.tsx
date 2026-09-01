@@ -8,6 +8,7 @@ import type { CatalogProductCard as CatalogProductCardData } from '../../src/lib
 import { formatMoney } from '../../src/lib/format';
 import { getAvailability } from '../../src/lib/catalog/availability';
 import { Badge } from './ui/badge';
+import { CardAddToCart } from './card-add-to-cart';
 import { Price } from './ui/price';
 
 function savingsFor(product: CatalogProductCardData) {
@@ -136,6 +137,18 @@ export function CatalogProductCard({
           </div>
         </div>
       </Link>
+
+      {/* Outside the link: adding is not navigating. Only offered when the
+          piece has one variant and can actually be bought right now. */}
+      {product.soleVariantId && availability.purchasable ? (
+        <div className="px-4 pb-4">
+          <CardAddToCart
+            variantId={product.soleVariantId}
+            productHandle={product.handle}
+            productTitle={product.title}
+          />
+        </div>
+      ) : null}
     </motion.div>
   );
 }

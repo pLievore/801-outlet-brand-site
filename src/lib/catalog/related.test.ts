@@ -20,6 +20,7 @@ function product(
     price: { amount, currencyCode: 'USD' },
     compareAtPrice: null,
     images: [],
+    soleVariantId: null,
   };
 }
 

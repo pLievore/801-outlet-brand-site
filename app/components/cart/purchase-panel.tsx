@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 
 import type {
@@ -12,7 +12,6 @@ import { cn } from '../../../src/lib/cn';
 import { trackFunnelStep } from '../track-event';
 import { useCart } from './cart-provider';
 import { HAPTIC, haptic } from '../../../src/lib/haptics';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 type PurchasePanelProps = {
   options: CatalogProductDetail['options'];
@@ -48,57 +47,6 @@ export function PurchasePanel({
   const { addLine, pending } = useCart();
   const defaultOnly = isDefaultOnly(options, variants);
 
-  /**
-   * A phone shows the buy button once, at the top, and then loses it behind a
-   * gallery and a description that are both taller than the screen. Deciding to
-   * buy at the bottom of the page meant scrolling back up to act on it.
-   *
-   * The bar appears only after the real button has left the screen, so the two
-   * are never on screen at the same time saying the same thing.
-   */
-  const reducedMotion = useReducedMotion();
-  const actionsRef = useRef<HTMLDivElement>(null);
-  const [showBar, setShowBar] = useState(false);
-
-  useEffect(() => {
-    const target = actionsRef.current;
-    if (!target || typeof IntersectionObserver === 'undefined') return;
-
-    // Gated on the viewport as well as on Tailwind's `lg:hidden`, because the
-    // bar also reserves room at the foot of the document — and reserving it on
-    // a desktop, where the bar never shows, would be a strip of dead space.
-    const phone = window.matchMedia('(max-width: 1023px)');
-    let offScreen = false;
-
-    const sync = () => setShowBar(phone.matches && offScreen);
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        offScreen = !entry.isIntersecting;
-        sync();
-      },
-      { rootMargin: '0px 0px -8px 0px' }
-    );
-    observer.observe(target);
-    phone.addEventListener('change', sync);
-
-    return () => {
-      observer.disconnect();
-      phone.removeEventListener('change', sync);
-    };
-  }, []);
-
-  // The bar floats over the page, so the document has to end above it —
-  // otherwise it sits on top of the last thing in the footer.
-  useEffect(() => {
-    if (!showBar) return;
-    const previous = document.body.style.paddingBottom;
-    // On top of the room the layout already keeps for the tab bar.
-    document.body.style.paddingBottom = '4.75rem';
-    return () => {
-      document.body.style.paddingBottom = previous;
-    };
-  }, [showBar]);
 
   const [selected, setSelected] = useState<Record<string, string>>(() => {
     if (defaultOnly) return {};
@@ -222,7 +170,7 @@ export function PurchasePanel({
         </p>
       ) : null}
 
-      <div ref={actionsRef} className="mt-5 flex items-stretch gap-3">
+      <div className="mt-5 flex items-stretch gap-3">
         <div className="flex items-center rounded-full border border-[rgb(var(--border-strong))] bg-white">
           <button
             type="button"
@@ -277,48 +225,6 @@ export function PurchasePanel({
         </p>
       ) : null}
 
-      {/* Phone only: the desktop panel never leaves the screen. */}
-      <AnimatePresence>
-        {showBar && inStock ? (
-          <motion.div
-            key="buy-bar"
-            // It used to appear and vanish on a frame, which reads as a glitch
-            // rather than as a thing arriving. It slides out of the tab bar it
-            // sits on, and back into it.
-            initial={reducedMotion ? { opacity: 0 } : { y: '110%', opacity: 0 }}
-            animate={reducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
-            exit={reducedMotion ? { opacity: 0 } : { y: '110%', opacity: 0 }}
-            transition={
-              reducedMotion
-                ? { duration: 0 }
-                : { type: 'spring', stiffness: 420, damping: 38, mass: 0.9 }
-            }
-            className="above-tab-bar fixed inset-x-0 z-30 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 px-4 py-3 backdrop-blur-xl lg:hidden">
-          <div className="mx-auto flex max-w-2xl items-center gap-3">
-            {selectedVariant ? (
-              <div className="min-w-0">
-                <p className="truncate text-base font-bold tabular-nums-tight">
-                  {formatMoney(selectedVariant.price)}
-                </p>
-                {selectedVariant.compareAtPrice ? (
-                  <p className="text-xs text-[rgb(var(--muted))] line-through">
-                    {formatMoney(selectedVariant.compareAtPrice)}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-            <button
-              type="button"
-              onClick={onAdd}
-              disabled={pending}
-              className="min-h-12 flex-1 rounded-full bg-[rgb(var(--fg))] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90 disabled:opacity-55"
-            >
-              {pending ? 'Adding…' : 'Add to cart'}
-            </button>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </div>
   );
 }

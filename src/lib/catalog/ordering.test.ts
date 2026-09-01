@@ -19,6 +19,7 @@ function product(
     price: { amount: '100.00', currencyCode: 'USD' },
     compareAtPrice: null,
     images: [],
+    soleVariantId: null,
   };
 }
 

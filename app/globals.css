@@ -125,11 +125,6 @@ a:focus-visible {
   padding-bottom: var(--tab-bar-pad);
 }
 
-/** Sits directly on top of the tab bar rather than on the viewport floor. */
-.above-tab-bar {
-  bottom: var(--tab-bar-total);
-}
-
 /** Room at the end of the document for the bar floating over it. */
 .pb-above-tab-bar {
   padding-bottom: calc(var(--tab-bar-total) + 0.5rem);

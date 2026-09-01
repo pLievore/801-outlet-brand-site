@@ -78,6 +78,21 @@ function summaryDescription(product: ProductSummary): string | null {
   return 'description' in product ? product.description || null : null;
 }
 
+/**
+ * The single buyable variant, or null when there is a choice to make.
+ *
+ * Not every query in the union selects variants, hence the guard — the same
+ * shape `tags` already uses here.
+ */
+function soleVariantId(product: ProductSummary): string | null {
+  if (!('variants' in product)) return null;
+
+  const sellable = product.variants.nodes.filter(
+    (variant) => variant.availableForSale
+  );
+  return sellable.length === 1 ? sellable[0].id : null;
+}
+
 export function adaptProductCard(product: ProductSummary): CatalogProductCard {
   const price = toMoney(product.priceRange.minVariantPrice);
   const image = toImage(product.featuredImage);
@@ -95,6 +110,7 @@ export function adaptProductCard(product: ProductSummary): CatalogProductCard {
       product.compareAtPriceRange.minVariantPrice
     ),
     images: image ? [image] : [],
+    soleVariantId: soleVariantId(product),
   };
 }
 

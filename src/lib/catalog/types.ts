@@ -25,6 +25,14 @@ export type CatalogProductCard = {
   price: CatalogMoney;
   compareAtPrice: CatalogMoney | null;
   images: CatalogImage[];
+  /**
+   * The one variant, when a product has exactly one that can be bought.
+   *
+   * That is what lets the catalogue add straight to the cart. A product with
+   * options has nothing to add until someone picks them, so it keeps sending
+   * people to its own page — a card cannot ask which colour.
+   */
+  soleVariantId: string | null;
 };
 
 export type CatalogSelectedOption = {
