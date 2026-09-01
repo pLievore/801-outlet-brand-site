@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ImagePlus, Loader2, X } from 'lucide-react';
 
 import { resizeImage } from '../image-resize';
+import { DrivePickerButton } from '../drive-picker';
 import { createProductAction, uploadProductImageAction } from './actions';
 
 type PendingImage = {
@@ -272,6 +273,13 @@ export function NewProductForm() {
             if (event.target.files) addFiles(event.target.files);
             event.target.value = '';
           }}
+        />
+
+        <DrivePickerButton
+          className="mt-3"
+          max={MAX_IMAGES - images.length}
+          disabled={submitting || images.length >= MAX_IMAGES}
+          onPick={addFiles}
         />
 
         {images.length > 0 ? (

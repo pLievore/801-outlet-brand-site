@@ -69,6 +69,20 @@ O bloqueio é lido em build time e inlined no bundle do edge: **ligar ou desliga
 |---|---|
 | `ADMIN_ALLOWED_EMAILS` | Lista separada por vírgula de e-mails autorizados ao painel admin |
 
+### Google Drive — seletor de fotos do painel
+
+| Variável | Pública? | Descrição |
+|---|---|---|
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | sim | OAuth client ID (tipo *Web application*) do projeto Google Cloud |
+| `NEXT_PUBLIC_GOOGLE_API_KEY` | sim | API key restrita à *Google Picker API* e às origens do site |
+| `NEXT_PUBLIC_GOOGLE_PROJECT_NUMBER` | sim | **Número** do projeto (não o ID), exigido pelo `setAppId` do Picker |
+
+As três valem em conjunto: faltando qualquer uma, o botão *Choose from Drive* simplesmente não aparece e o upload por arquivo segue funcionando. São públicas por natureza — vão para o JavaScript do painel. A proteção é a restrição de origem na API key e nas *Authorized JavaScript origins* do client, não o sigilo do valor.
+
+O client ID e o número do projeto **precisam ser do mesmo projeto** no Google Cloud: é assim que o `drive.file` associa os arquivos escolhidos ao app. O escopo pedido é apenas `https://www.googleapis.com/auth/drive.file`, que dá acesso somente ao que o operador seleciona no Picker — nunca ao Drive inteiro. O token fica em memória no browser e **nunca chega ao servidor**.
+
+Como toda `NEXT_PUBLIC_*`, são inlined em build time: configurar no Vercel **exige redeploy**.
+
 ## Notas
 
 - Variáveis com prefixo `NEXT_PUBLIC_` são expostas ao browser. Não use esse prefixo em chaves secretas.
