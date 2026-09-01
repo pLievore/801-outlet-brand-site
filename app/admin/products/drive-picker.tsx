@@ -112,7 +112,9 @@ async function getAccessToken(): Promise<string> {
   });
 }
 
-function openPicker(token: string): Promise<PickedDoc[]> {
+type PickerResult = { action: string; docs: PickedDoc[] };
+
+function openPicker(token: string): Promise<PickerResult> {
   return new Promise((resolve) => {
     const picker = window.google.picker;
 
@@ -129,10 +131,14 @@ function openPicker(token: string): Promise<PickedDoc[]> {
       .addView(view)
       .enableFeature(picker.Feature.MULTISELECT_ENABLED)
       .setCallback((data: any) => {
-        if (data.action === picker.Action.PICKED) {
-          resolve((data.docs ?? []) as PickedDoc[]);
-        } else if (data.action === picker.Action.CANCEL) {
-          resolve([]);
+        // Every action except "loaded" ends the picker. Waiting only for PICKED
+        // and CANCEL left the promise pending on anything else, and a pending
+        // promise here is invisible: the button simply did nothing.
+        if (data.action && data.action !== 'loaded') {
+          resolve({
+            action: String(data.action),
+            docs: (data.docs ?? []) as PickedDoc[],
+          });
         }
       });
 
@@ -196,6 +202,30 @@ async function downloadFile(file: DriveFile, token: string): Promise<File> {
 }
 
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
+const SHORTCUT_MIME = 'application/vnd.google-apps.shortcut';
+
+/** Follows a shortcut to the file or folder it points at. */
+async function resolveShortcut(
+  shortcutId: string,
+  token: string
+): Promise<DriveFile | null> {
+  try {
+    const data = await driveRequest(
+      `https://www.googleapis.com/drive/v3/files/${shortcutId}` +
+        '?fields=id,name,mimeType,shortcutDetails&supportsAllDrives=true',
+      token
+    );
+    const target = data.shortcutDetails;
+    if (!target?.targetId) return null;
+    return {
+      id: target.targetId,
+      name: data.name ?? target.targetId,
+      mimeType: target.targetMimeType ?? '',
+    };
+  } catch {
+    return null;
+  }
+}
 
 export function DrivePickerButton({
   onPick,
@@ -222,12 +252,35 @@ export function DrivePickerButton({
       await loadPicker();
 
       setBusy(null);
-      const picked = await openPicker(token);
-      if (picked.length === 0) return;
+      const { action, docs: picked } = await openPicker(token);
+
+      if (action === 'cancel') return;
+      if (picked.length === 0) {
+        setError(
+          action === 'picked'
+            ? 'Drive returned nothing for that selection. Open the folder and select the photos inside it.'
+            : `The picker closed with "${action}" and no selection.`
+        );
+        return;
+      }
 
       setBusy('Reading the folder…');
       const wanted: DriveFile[] = [];
       for (const doc of picked) {
+        // A folder added to My Drive as a shortcut is picked as a shortcut, not
+        // as the folder — following it is what makes "add a shortcut" work.
+        if (doc.mimeType === SHORTCUT_MIME) {
+          const target = await resolveShortcut(doc.id, token);
+          if (target) {
+            if (target.mimeType === FOLDER_MIME) {
+              wanted.push(...(await listFolder(target.id, token)));
+            } else {
+              wanted.push(target);
+            }
+            continue;
+          }
+        }
+
         if (doc.mimeType === FOLDER_MIME) {
           // Picking a folder is the fast path when photos are filed one folder
           // per piece. Whether the scope reaches inside is decided by Google,
@@ -259,10 +312,15 @@ export function DrivePickerButton({
       }
 
       if (files.length === 0) {
+        // Naming the types is the difference between "it did nothing" and a
+        // problem someone can act on.
+        const types = [...new Set(wanted.map((file) => file.mimeType))]
+          .filter(Boolean)
+          .join(', ');
         setError(
           skipped > 0
-            ? 'Those files are not JPEG, PNG or WebP. A photo straight off an iPhone is often HEIC — export it as JPEG first.'
-            : 'That folder has no photos in it.'
+            ? `Nothing usable: only JPEG, PNG and WebP work, and Drive reported ${types || 'no type'}. A photo straight off an iPhone is usually HEIC — export it as JPEG first.`
+            : 'Drive returned no files for that selection. If you picked a folder, open it and select the photos inside instead.'
         );
         return;
       }
