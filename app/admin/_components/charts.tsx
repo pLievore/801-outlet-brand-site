@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   PANEL_CHART,
   PANEL_CHART_ON_DARK,
@@ -47,6 +47,10 @@ export function AreaTrend({
   const area = `${line} L100,44 L0,44 Z`;
   const last = points[points.length - 1];
   const gradientId = `area-${tone}`;
+  // The line draws itself over ~0.9s. Motion runs that in JavaScript, so the
+  // global CSS rule never reaches it: for someone who asked for less movement
+  // the chart still animated. Reduced, it simply appears already drawn.
+  const reducedMotion = useReducedMotion();
   const stroke = tone === 'dark' ? PANEL_CHART_ON_DARK : PANEL_CHART;
   const grid = tone === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const labelClass =
@@ -78,7 +82,7 @@ export function AreaTrend({
             fill={`url(#${gradientId})`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: reducedMotion ? 0 : 0.8 }}
           />
           <motion.path
             d={line}
@@ -88,9 +92,9 @@ export function AreaTrend({
             strokeLinejoin="round"
             strokeLinecap="round"
             vectorEffect="non-scaling-stroke"
-            initial={{ pathLength: 0 }}
+            initial={{ pathLength: reducedMotion ? 1 : 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 0.9, ease: 'easeOut' }}
+            transition={{ duration: reducedMotion ? 0 : 0.9, ease: 'easeOut' }}
             style={{ strokeWidth: 2 }}
           />
           {data.map((d, i) => (
@@ -113,7 +117,7 @@ export function AreaTrend({
               fill={stroke}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
+              transition={{ delay: reducedMotion ? 0 : 0.9 }}
             />
           ) : null}
         </svg>

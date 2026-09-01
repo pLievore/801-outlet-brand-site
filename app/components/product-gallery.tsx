@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 type GalleryImage = { url: string; alt: string | null };
 
@@ -15,6 +15,10 @@ export function ProductGallery({ images, productName }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const zoomTriggerRef = useRef<HTMLButtonElement>(null);
+  // The global CSS rule collapses transitions, but Motion drives these
+  // transforms in JavaScript and never sees it. A full-screen zoom that scales
+  // in is exactly the movement someone asking for less motion is avoiding.
+  const reducedMotion = useReducedMotion();
   const zoomDialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -77,8 +81,11 @@ export function ProductGallery({ images, productName }: Props) {
           ref={zoomTriggerRef}
           type="button"
           onClick={() => setZoomOpen(true)}
-          whileHover={{ scale: 1.005 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={reducedMotion ? undefined : { scale: 1.005 }}
+          transition={{
+            duration: reducedMotion ? 0 : 0.3,
+            ease: [0.16, 1, 0.3, 1],
+          }}
           className="group block w-full overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2"
           aria-label="Open larger view"
         >
@@ -89,7 +96,10 @@ export function ProductGallery({ images, productName }: Props) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                transition={{
+                  duration: reducedMotion ? 0 : 0.35,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
                 className="absolute inset-0"
               >
                 <Image
@@ -192,7 +202,7 @@ export function ProductGallery({ images, productName }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: reducedMotion ? 0 : 0.25 }}
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-md"
             onClick={() => setZoomOpen(false)}
             role="dialog"
@@ -201,10 +211,15 @@ export function ProductGallery({ images, productName }: Props) {
           >
             <motion.div
               key={`zoom-${main.url}`}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              initial={
+                reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }
+              }
+              animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+              exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+              transition={{
+                duration: reducedMotion ? 0 : 0.4,
+                ease: [0.16, 1, 0.3, 1],
+              }}
               onClick={(e) => e.stopPropagation()}
               className="relative max-h-[90vh] max-w-[92vw]"
             >
