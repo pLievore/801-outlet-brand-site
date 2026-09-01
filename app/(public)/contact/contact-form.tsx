@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { env } from '../../../src/config/env';
+import { HOURS_SUMMARY } from '../../../src/lib/content/hours';
 import {
   INSTAGRAM_HANDLE,
   INSTAGRAM_URL,
@@ -123,8 +124,9 @@ export default function ContactForm() {
         </svg>
       ),
       title: 'Showroom hours',
-      description:
-        'Mon – Fri 10 AM – 8 PM (appointment) · Sat 10 AM – 8 PM · Sun 12 PM – 6 PM',
+      // Read from the single source rather than retyped: this line had already
+      // drifted from the real hours once.
+      description: HOURS_SUMMARY,
       action: null,
       href: null,
       value: 'Mountain Time',

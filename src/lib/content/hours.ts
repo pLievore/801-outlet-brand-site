@@ -9,26 +9,20 @@ export type ShowroomHours = {
 };
 
 export const SHOWROOM_HOURS: ShowroomHours[] = [
-  { days: 'Monday – Friday', time: '10 AM – 8 PM', mode: 'appointment' },
-  { days: 'Saturday', time: '10 AM – 8 PM', mode: 'walk-in' },
-  { days: 'Sunday', time: '12 PM – 6 PM', mode: 'walk-in' },
+  { days: 'Monday – Friday', time: '11 AM – 7 PM', mode: 'appointment' },
+  { days: 'Saturday', time: '10 AM – 6 PM', mode: 'walk-in' },
+  { days: 'Sunday', time: '12 PM – 5 PM', mode: 'walk-in' },
 ];
 
 /** Same hours in schema.org shape, for the storefront's structured data. */
 export const SHOWROOM_HOURS_SCHEMA = [
   {
-    dayOfWeek: [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-    ],
-    opens: '10:00',
-    closes: '20:00',
+    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    opens: '11:00',
+    closes: '19:00',
   },
-  { dayOfWeek: ['Sunday'], opens: '12:00', closes: '18:00' },
+  { dayOfWeek: ['Saturday'], opens: '10:00', closes: '18:00' },
+  { dayOfWeek: ['Sunday'], opens: '12:00', closes: '17:00' },
 ];
 
 export const MODE_LABEL: Record<ShowroomHours['mode'], string> = {
@@ -38,15 +32,15 @@ export const MODE_LABEL: Record<ShowroomHours['mode'], string> = {
 
 /** Compact one-line summary for tight spaces (footer, cards). */
 export const HOURS_SUMMARY =
-  'Mon – Fri: 10 AM – 8 PM (by appointment) · Sat: 10 AM – 8 PM · Sun: 12 PM – 6 PM (walk-ins)';
+  'Mon – Fri: 11 AM – 7 PM (by appointment) · Sat: 10 AM – 6 PM · Sun: 12 PM – 5 PM (walk-ins)';
 
 /**
  * Appointment slots (weekdays only — Sat/Sun are walk-in, see SHOWROOM_HOURS).
- * Every half hour from opening (10 AM) to one hour before close (7 PM),
+ * Every half hour from opening (11 AM) to one hour before close (6 PM),
  * expressed as minutes from midnight in store time.
  */
-const FIRST_SLOT_MINUTES = 10 * 60;
-const LAST_SLOT_MINUTES = 19 * 60;
+const FIRST_SLOT_MINUTES = 11 * 60;
+const LAST_SLOT_MINUTES = 18 * 60;
 const SLOT_STEP_MINUTES = 30;
 
 export const APPOINTMENT_SLOT_MINUTES: number[] = Array.from(

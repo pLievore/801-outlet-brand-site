@@ -40,12 +40,12 @@ test('keeps the full day available for future dates', () => {
   const days = getBookingDays(MONDAY_NOON);
   const tuesday = days.find((day) => day.date === '2026-07-21');
   assert.ok(tuesday);
-  assert.equal(tuesday.slots[0].value, '10:00');
-  assert.equal(tuesday.slots[1].value, '10:30');
-  assert.equal(tuesday.slots.at(-1)?.value, '19:00');
-  // Half-hourly from 10:00 through 19:00.
-  assert.equal(tuesday.slots.length, 19);
-  assert.equal(tuesday.slots[1].label, '10:30 AM');
+  assert.equal(tuesday.slots[0].value, '11:00');
+  assert.equal(tuesday.slots[1].value, '11:30');
+  assert.equal(tuesday.slots.at(-1)?.value, '18:00');
+  // Half-hourly from 11:00 through 18:00 — one hour before the 7 PM close.
+  assert.equal(tuesday.slots.length, 15);
+  assert.equal(tuesday.slots[1].label, '11:30 AM');
 });
 
 test('hides the current day entirely once it is too late to book', () => {
@@ -55,13 +55,15 @@ test('hides the current day entirely once it is too late to book', () => {
 });
 
 test('slot validation mirrors the offered schedule', () => {
-  assert.equal(isSlotAvailable('2026-07-21', '10:00', MONDAY_NOON), true);
+  assert.equal(isSlotAvailable('2026-07-21', '11:00', MONDAY_NOON), true);
   // Saturday is walk-in only.
-  assert.equal(isSlotAvailable('2026-07-25', '10:00', MONDAY_NOON), false);
+  assert.equal(isSlotAvailable('2026-07-25', '11:00', MONDAY_NOON), false);
   // Outside opening hours.
   assert.equal(isSlotAvailable('2026-07-21', '21:00', MONDAY_NOON), false);
+  // Before the 11 AM opening.
+  assert.equal(isSlotAvailable('2026-07-21', '10:00', MONDAY_NOON), false);
   // Already past on the current day.
-  assert.equal(isSlotAvailable('2026-07-20', '10:00', MONDAY_NOON), false);
+  assert.equal(isSlotAvailable('2026-07-20', '11:00', MONDAY_NOON), false);
 });
 
 test('formats the slot without shifting the calendar day', () => {
