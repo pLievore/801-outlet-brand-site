@@ -128,9 +128,17 @@ function openPicker(token: string): Promise<PickerResult> {
       // which must be the same one that issued the client ID.
       .setAppId(PROJECT_NUMBER)
       .setOAuthToken(token)
+      // Declared rather than inferred. Left to guess, the picker derived a
+      // parent of `<origin>/favicon.ico` and addressed its reply there: the
+      // dialog opened detached and the selection came back to nothing.
+      .setOrigin(window.location.origin)
       .addView(view)
       .enableFeature(picker.Feature.MULTISELECT_ENABLED)
       .setCallback((data: any) => {
+        // Logged so a picker that goes quiet leaves evidence behind: without
+        // it, "nothing happened" is all anyone can report.
+        console.info('[drive-picker] callback', data?.action, data);
+
         // Every action except "loaded" ends the picker. Waiting only for PICKED
         // and CANCEL left the promise pending on anything else, and a pending
         // promise here is invisible: the button simply did nothing.
