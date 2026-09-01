@@ -131,7 +131,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       <FadeMount delay={0} distance={10} duration={0.35}>
         <Link
           className="text-xs font-semibold tracking-[0.18em] text-[rgb(var(--muted))] transition hover:text-[rgb(var(--fg))]"
-          href="/collections/all-products"
+          href="/products"
         >
           ← BACK TO COLLECTION
         </Link>

@@ -15,6 +15,15 @@ test('maps Online Store menu destinations to headless routes', () => {
     ),
     { href: '/products', external: false }
   );
+  // The retired "Explore The Collection" collection, which stood in for the
+  // whole catalogue and went stale.
+  assert.deepEqual(
+    normalizeShopifyMenuUrl(
+      'https://801outlet.com/collections/all-products',
+      'COLLECTION'
+    ),
+    { href: '/products', external: false }
+  );
   assert.deepEqual(
     normalizeShopifyMenuUrl(
       'https://801outlet.com/pages/contact',

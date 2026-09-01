@@ -60,6 +60,12 @@ const nextConfig: NextConfig = {
       { source: '/policies/shipping-policy', destination: '/delivery', permanent },
       // Theme search → catalog search (keeps the q parameter).
       { source: '/search', destination: '/products', permanent },
+      // "Explore The Collection" was a manual collection meant to hold every
+      // product — the job `/products` already does from Shopify directly. Two
+      // URLs for one catalogue meant one of them was always out of date, and
+      // it was this one: it kept the archived catalogue and none of the new
+      // pieces. Its equity goes to the page that cannot drift.
+      { source: '/collections/all-products', destination: '/products', permanent },
       // Blog exists only in the backlog; send visitors home for now.
       { source: '/blogs/:path*', destination: '/', permanent: false },
       // Remaining theme page handles without an equivalent.

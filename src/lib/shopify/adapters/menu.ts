@@ -55,7 +55,14 @@ export function normalizeShopifyMenuUrl(
     };
   }
 
-  if (parsed.pathname === '/collections/all') {
+  // Both of Shopify's "everything" collections resolve to the catalogue, which
+  // reads the whole store straight from Shopify. `all-products` was a manual
+  // collection standing in for the same thing and drifted out of date; a menu
+  // pointing at it would send shoppers to a stale copy.
+  if (
+    parsed.pathname === '/collections/all' ||
+    parsed.pathname === '/collections/all-products'
+  ) {
     return { href: '/products', external: false };
   }
 

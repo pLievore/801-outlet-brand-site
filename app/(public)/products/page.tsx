@@ -191,12 +191,6 @@ export default async function ProductsPage({
                 ))}
               </select>
             </label>
-            <Link
-              href="/collections/all-products"
-              className="text-xs font-semibold text-[rgb(var(--accent))] transition hover:opacity-75"
-            >
-              View the complete collection
-            </Link>
             {hasFilters ? (
               <Link
                 href="/products"
