@@ -9,6 +9,7 @@ import type { NavigationLink } from '../../src/lib/navigation/types';
 import { PredictiveSearch } from './predictive-search';
 import { Button, buttonStyles } from './ui/button';
 import { Drawer } from './ui/dialog';
+import { NewTabHint } from './ui/new-tab-hint';
 
 export function MobileNav({
   phoneHref,
@@ -78,10 +79,14 @@ export function MobileNav({
                       rel="noreferrer"
                     >
                       {link.label}
+                      <NewTabHint />
                     </a>
                   ) : (
                     <Link
                       href={link.href}
+                      // The current page was marked by colour alone, which a
+                      // screen reader never hears.
+                      aria-current={active ? 'page' : undefined}
                       className={className}
                       onClick={() => setOpen(false)}
                     >

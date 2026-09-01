@@ -8,6 +8,7 @@ import { MODE_LABEL, SHOWROOM_HOURS } from '../../../src/lib/content/hours';
 import { getBookingDays } from '../../../src/lib/content/booking';
 import { AppointmentForm } from './appointment-form';
 import { ShowroomVideo } from './showroom-video';
+import { NewTabHint } from '../../components/ui/new-tab-hint';
 
 export const metadata: Metadata = {
   title: 'Showroom | 801 Outlet',
@@ -135,6 +136,7 @@ export default function ShowroomPage() {
               rel="noreferrer"
             >
               Get directions
+              <NewTabHint />
             </a>
           </div>
         </div>

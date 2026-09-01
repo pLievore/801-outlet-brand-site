@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ChevronRight,
   ExternalLink,
@@ -21,6 +21,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
+import { NewTabHint } from '../../components/ui/new-tab-hint';
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
 type NavGroup = { title: string; items: NavItem[] };
@@ -71,6 +72,55 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [drawer, setDrawer] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const drawerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  /**
+   * The storefront's dialogs have had this since launch; the panel drawer —
+   * the thing the operator opens on a phone all day — had none of it. Without
+   * a trap, Tab walks out of the open drawer and into the page behind it,
+   * where the focus ring is invisible under the backdrop.
+   */
+  useEffect(() => {
+    if (!drawer) return;
+
+    const opener = menuButtonRef.current;
+    drawerRef.current?.querySelector<HTMLElement>('a, button')?.focus();
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setDrawer(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = drawerRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable || focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      opener?.focus();
+    };
+  }, [drawer]);
 
   // Close the mobile drawer on navigation (state adjustment during render).
   const [lastPathname, setLastPathname] = useState(pathname);
@@ -109,7 +159,7 @@ export function AdminShell({
       >
         {NAV.map((group) => (
           <div key={group.title}>
-            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/65">
               {group.title}
             </p>
             <div className="space-y-0.5">
@@ -129,14 +179,14 @@ export function AdminShell({
                     {active ? (
                       <motion.span
                         layoutId="panel-nav-active"
-                        className="absolute bottom-1.5 left-0 top-1.5 w-0.5 rounded-full bg-[#a9bd95]"
+                        className="absolute bottom-1.5 left-0 top-1.5 w-0.5 rounded-full bg-[rgb(var(--panel-marker))]"
                       />
                     ) : null}
                     <item.icon
                       aria-hidden="true"
                       className={`size-[18px] shrink-0 transition ${
                         active
-                          ? 'text-[#a9bd95]'
+                          ? 'text-[rgb(var(--panel-marker))]'
                           : 'text-white/40 group-hover:text-white/80'
                       }`}
                     />
@@ -149,7 +199,7 @@ export function AdminShell({
         ))}
 
         <div>
-          <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+          <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/65">
             Links
           </p>
           <div className="space-y-0.5">
@@ -164,6 +214,7 @@ export function AdminShell({
                 className="size-[18px] shrink-0 text-white/40 transition group-hover:text-white/80"
               />
               View storefront
+              <NewTabHint />
               <ExternalLink aria-hidden="true" className="ml-auto size-3.5 text-white/30" />
             </a>
             <a
@@ -177,6 +228,7 @@ export function AdminShell({
                 className="size-[18px] shrink-0 text-white/40 transition group-hover:text-white/80"
               />
               Shopify Admin
+              <NewTabHint />
             </a>
           </div>
         </div>
@@ -184,14 +236,14 @@ export function AdminShell({
 
       <div className="border-t border-white/10 p-3">
         <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-[#a9bd95] ring-1 ring-inset ring-white/15">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-[rgb(var(--panel-marker))] ring-1 ring-inset ring-white/15">
             OP
           </span>
           <div className="min-w-0 flex-1 leading-tight">
             <p className="truncate text-xs font-semibold text-white">
               Store operator
             </p>
-            <p className="text-[10px] text-white/45">Signed in</p>
+            <p className="text-[10px] text-white/65">Signed in</p>
           </div>
           <form action={signOut}>
             <button
@@ -210,7 +262,16 @@ export function AdminShell({
 
   return (
     <div className="flex min-h-dvh bg-[rgb(var(--bg))]">
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-[#171c17] lg:flex">
+      {/* The storefront has had one since launch; the panel is where it matters
+          more, because the sidebar puts a dozen links before the content. */}
+      <a
+        href="#panel-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-[rgb(var(--fg))] focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Skip to content
+      </a>
+
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-[rgb(var(--panel))] lg:flex">
         {sidebarBody}
       </aside>
 
@@ -225,11 +286,20 @@ export function AdminShell({
               className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
             />
             <motion.aside
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#171c17] lg:hidden"
+              ref={drawerRef}
+              id="panel-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Panel navigation"
+              initial={reducedMotion ? { opacity: 0 } : { x: '-100%' }}
+              animate={reducedMotion ? { opacity: 1 } : { x: 0 }}
+              exit={reducedMotion ? { opacity: 0 } : { x: '-100%' }}
+              transition={
+                reducedMotion
+                  ? { duration: 0 }
+                  : { type: 'spring', damping: 30, stiffness: 300 }
+              }
+              className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[rgb(var(--panel))] lg:hidden"
             >
               <button
                 type="button"
@@ -249,9 +319,12 @@ export function AdminShell({
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-[rgb(var(--border))] bg-white/85 px-4 py-3 backdrop-blur-md sm:px-6">
           <div className="flex items-center gap-2">
             <button
+              ref={menuButtonRef}
               type="button"
               onClick={() => setDrawer(true)}
               aria-label="Open menu"
+              aria-expanded={drawer}
+              aria-controls="panel-drawer"
               className="flex size-9 items-center justify-center rounded-lg border border-[rgb(var(--border-strong))] transition hover:bg-[rgb(var(--surface-muted))] lg:hidden"
             >
               <Menu aria-hidden="true" className="size-[18px]" />
@@ -272,10 +345,11 @@ export function AdminShell({
             className="hidden items-center gap-1.5 rounded-full border border-[rgb(var(--border-strong))] px-3.5 py-1.5 text-xs font-semibold text-[rgb(var(--muted))] transition hover:border-[rgb(var(--fg))] hover:text-[rgb(var(--fg))] sm:inline-flex"
           >
             View store
+            <NewTabHint />
             <ExternalLink aria-hidden="true" className="size-3.5" />
           </a>
         </header>
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main id="panel-content" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>

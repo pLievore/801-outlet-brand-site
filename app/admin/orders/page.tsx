@@ -5,6 +5,7 @@ import { ExternalLink, Info, Megaphone } from 'lucide-react';
 import { formatAttribution } from '../../../src/lib/analytics/attribution';
 import { listRecentPanelOrders } from '../../../src/lib/panel/orders';
 import { PageHeader, Panel } from '../_components/ui';
+import { NewTabHint } from '../../components/ui/new-tab-hint';
 
 export const metadata: Metadata = { title: 'Orders — 801 Outlet Panel' };
 export const dynamic = 'force-dynamic';
@@ -57,6 +58,7 @@ export default async function PanelOrdersPage() {
             className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-sm font-semibold transition hover:border-[rgb(var(--fg))]"
           >
             Open in Shopify
+            <NewTabHint />
             <ExternalLink aria-hidden="true" className="size-4" />
           </a>
         }
@@ -105,6 +107,11 @@ export default async function PanelOrdersPage() {
                     className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-xs font-semibold transition hover:border-[rgb(var(--fg))]"
                   >
                     Details
+                    {/* Every row said just "Details". Read out of context — a
+                        screen reader listing the links on the page — they were
+                        indistinguishable from one another. */}
+                    <span className="sr-only"> for order {order.name}</span>
+                    <NewTabHint />
                     <ExternalLink aria-hidden="true" className="size-3.5" />
                   </a>
                 </div>

@@ -45,11 +45,19 @@ function LoginForm() {
               type="password"
               required
               autoComplete="current-password"
+              // A failed sign-in means this field is what needs fixing; the
+              // message was only announced, never tied to the input.
+              aria-invalid={state.error ? true : undefined}
+              aria-describedby={state.error ? 'login-error' : undefined}
               className="min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15"
             />
           </div>
           {state.error ? (
-            <p role="alert" className="text-xs font-semibold text-[rgb(var(--accent))]">
+            <p
+              id="login-error"
+              role="alert"
+              className="text-xs font-semibold text-[rgb(var(--accent))]"
+            >
               {state.error}
             </p>
           ) : null}

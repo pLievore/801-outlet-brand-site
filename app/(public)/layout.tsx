@@ -18,11 +18,13 @@ import type { NavigationLink } from '../../src/lib/navigation/types';
 import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { CartProvider } from '../components/cart/cart-provider';
 import { CartButton, MiniCart } from '../components/cart/mini-cart';
+import { NavLink } from '../components/nav-link';
 import { MobileNav } from '../components/mobile-nav';
 import { PredictiveSearch } from '../components/predictive-search';
 import { TrackEvent } from '../components/track-event';
 import { buttonStyles } from '../components/ui/button';
 import { Container } from '../components/ui/container';
+import { NewTabHint } from '../components/ui/new-tab-hint';
 
 export default async function PublicLayout({
   children,
@@ -137,7 +139,7 @@ function SiteHeader({
           aria-label="Main navigation"
         >
           {navigation.map((link) => (
-            <NavigationItem key={link.id} link={link} />
+            <NavLink key={link.id} link={link} />
           ))}
         </nav>
 
@@ -163,25 +165,6 @@ function SiteHeader({
         </div>
       </Container>
     </header>
-  );
-}
-
-function NavigationItem({ link }: { link: NavigationLink }) {
-  const className =
-    'rounded-full px-3 py-2 text-sm font-semibold text-[rgb(var(--fg))] transition hover:bg-[rgb(var(--surface-muted))]';
-
-  if (link.external) {
-    return (
-      <a href={link.href} target="_blank" rel="noreferrer" className={className}>
-        {link.label}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={link.href} className={className}>
-      {link.label}
-    </Link>
   );
 }
 
@@ -220,6 +203,7 @@ function SiteFooter() {
             >
               <Instagram aria-hidden="true" className="size-4" />
               {INSTAGRAM_HANDLE}
+              <NewTabHint />
             </a>
           </div>
 

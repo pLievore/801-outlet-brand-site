@@ -196,10 +196,10 @@ export function BiHero({
   children?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-[#171c17] p-6 text-white md:p-8">
+    <section className="relative overflow-hidden rounded-3xl bg-[rgb(var(--panel))] p-6 text-white md:p-8">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-[#a9bd95]/15 blur-3xl"
+        className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-[rgb(var(--panel-marker))]/15 blur-3xl"
       />
       <div className="relative flex flex-wrap items-end justify-between gap-4">
         <div>

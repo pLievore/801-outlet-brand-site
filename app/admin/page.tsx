@@ -214,7 +214,7 @@ export default async function AdminOverviewPage() {
                     </div>
                     <div className="mt-1.5 h-6 overflow-hidden rounded-lg bg-[rgb(var(--surface-muted))]">
                       <div
-                        className="h-full rounded-lg bg-[#6f8352]/80"
+                        className="h-full rounded-lg bg-[rgb(var(--panel-chart))]/80"
                         style={{ width: `${width}%` }}
                       />
                     </div>
