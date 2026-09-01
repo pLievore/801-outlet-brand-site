@@ -20,6 +20,8 @@ import {
 import { cn } from '../../../../src/lib/cn';
 import { uploadProductImageAction } from '../new/actions';
 import { resizeImage } from '../image-resize';
+import { DrivePickerButton } from '../drive-picker';
+import { saveProductAction } from '../actions';
 import {
   addMediaAction,
   removeMediaAction,
@@ -28,6 +30,29 @@ import {
 } from './actions';
 
 type Feedback = { ok: boolean; text: string } | null;
+
+type VariantDraft = { price: string; compareAtPrice: string; quantity: string };
+
+const STATUS_LABEL: Record<PanelProductDetail['status'], string> = {
+  ACTIVE: 'Active',
+  DRAFT: 'Draft',
+  ARCHIVED: 'Archived',
+};
+
+function initialVariants(
+  product: PanelProductDetail
+): Record<string, VariantDraft> {
+  return Object.fromEntries(
+    product.variants.map((variant) => [
+      variant.id,
+      {
+        price: variant.price,
+        compareAtPrice: variant.compareAtPrice ?? '',
+        quantity: String(variant.inventoryQuantity),
+      },
+    ])
+  );
+}
 
 export function ProductEditor({ product }: { product: PanelProductDetail }) {
   const router = useRouter();
@@ -43,6 +68,11 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
   const [uploading, setUploading] = useState<string | null>(null);
   const [savingDetails, startDetails] = useTransition();
   const [mutatingMedia, startMedia] = useTransition();
+
+  const [status, setStatus] = useState(product.status);
+  const [variants, setVariants] = useState(() => initialVariants(product));
+  const [sellingFeedback, setSellingFeedback] = useState<Feedback>(null);
+  const [savingSelling, startSelling] = useTransition();
 
   const tagList = tags
     .split(',')
@@ -64,6 +94,57 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
     setTags(
       (comingSoon ? without : [...without, COMING_SOON_TAG_VALUE]).join(', ')
     );
+  };
+
+  const statusChanged = status !== product.status;
+  const variantChanges = product.variants.map((variant) => {
+    const value = variants[variant.id];
+    return {
+      variant,
+      value,
+      pricingChanged:
+        value.price !== variant.price ||
+        value.compareAtPrice !== (variant.compareAtPrice ?? ''),
+      quantityChanged: value.quantity !== String(variant.inventoryQuantity),
+    };
+  });
+  const sellingDirty =
+    statusChanged ||
+    variantChanges.some(
+      (entry) => entry.pricingChanged || entry.quantityChanged
+    );
+
+  const setVariant = (id: string, patch: Partial<VariantDraft>) => {
+    setVariants((current) => ({ ...current, [id]: { ...current[id], ...patch } }));
+    setSellingFeedback(null);
+  };
+
+  const saveSelling = () => {
+    setSellingFeedback(null);
+    startSelling(async () => {
+      const result = await saveProductAction({
+        productId: product.id,
+        status,
+        statusChanged,
+        variants: variantChanges.map(
+          ({ variant, value, pricingChanged, quantityChanged }) => ({
+            id: variant.id,
+            inventoryItemId: variant.inventoryItemId,
+            price: value.price,
+            compareAtPrice: value.compareAtPrice,
+            quantity: Number(value.quantity),
+            pricingChanged,
+            quantityChanged,
+          })
+        ),
+      });
+      setSellingFeedback(
+        result.ok
+          ? { ok: true, text: 'Saved.' }
+          : { ok: false, text: result.error ?? 'Failed.' }
+      );
+      if (result.ok) router.refresh();
+    });
   };
 
   const saveDetails = () => {
@@ -121,7 +202,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
     });
   };
 
-  async function addPhotos(list: FileList | null) {
+  async function addPhotos(list: FileList | File[] | null) {
     if (!list || list.length === 0) return;
     const files = [...list]
       .filter((file) => /^image\/(jpeg|png|webp)$/.test(file.type))
@@ -284,6 +365,120 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
         ) : null}
       </section>
 
+      {/* Price, stock and status */}
+      <section className="rounded-3xl border border-[rgb(var(--border))] bg-white p-5 md:p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-bold">Price &amp; stock</h2>
+            <p className="mt-0.5 text-xs text-[rgb(var(--muted))]">
+              Stock is what decides Sold out on the storefront.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={saveSelling}
+            disabled={!sellingDirty || savingSelling}
+            className={cn(
+              'min-h-9 rounded-full px-5 text-xs font-semibold transition',
+              sellingDirty
+                ? 'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg))]/90'
+                : 'border border-[rgb(var(--border))] text-[rgb(var(--muted))]',
+              savingSelling && 'opacity-60'
+            )}
+          >
+            {savingSelling ? 'Saving…' : 'Save price & stock'}
+          </button>
+        </div>
+
+        <label className="mt-4 block text-xs font-semibold sm:max-w-56">
+          Status
+          <select
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value as PanelProductDetail['status']);
+              setSellingFeedback(null);
+            }}
+            className={cn(inputClass, 'mt-1.5')}
+          >
+            {(
+              Object.keys(STATUS_LABEL) as Array<PanelProductDetail['status']>
+            ).map((value) => (
+              <option key={value} value={value}>
+                {STATUS_LABEL[value]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="mt-4 space-y-4">
+          {product.variants.map((variant) => (
+            <div
+              key={variant.id}
+              className="rounded-2xl bg-[rgb(var(--surface-muted))] p-3.5"
+            >
+              {product.variants.length > 1 ||
+              variant.title !== 'Default Title' ? (
+                <div className="mb-2.5 text-xs font-semibold">
+                  {variant.title}
+                </div>
+              ) : null}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="block text-[11px] font-semibold">
+                  Price
+                  <input
+                    inputMode="decimal"
+                    value={variants[variant.id].price}
+                    onChange={(event) =>
+                      setVariant(variant.id, { price: event.target.value })
+                    }
+                    className={cn(inputClass, 'mt-1')}
+                  />
+                </label>
+                <label className="block text-[11px] font-semibold">
+                  Compare at
+                  <input
+                    inputMode="decimal"
+                    placeholder="none"
+                    value={variants[variant.id].compareAtPrice}
+                    onChange={(event) =>
+                      setVariant(variant.id, {
+                        compareAtPrice: event.target.value,
+                      })
+                    }
+                    className={cn(inputClass, 'mt-1')}
+                  />
+                </label>
+                <label className="block text-[11px] font-semibold">
+                  Stock
+                  <input
+                    inputMode="numeric"
+                    value={variants[variant.id].quantity}
+                    onChange={(event) =>
+                      setVariant(variant.id, { quantity: event.target.value })
+                    }
+                    className={cn(inputClass, 'mt-1')}
+                  />
+                </label>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {sellingFeedback ? (
+          <p
+            role="status"
+            className={cn(
+              'mt-3 text-xs font-semibold',
+              sellingFeedback.ok
+                ? 'text-[rgb(var(--sage-ink))]'
+                : 'text-[rgb(var(--accent))]'
+            )}
+          >
+            {sellingFeedback.text}
+          </p>
+        ) : null}
+      </section>
+
       {/* Photos */}
       <section className="rounded-3xl border border-[rgb(var(--border))] bg-white p-5 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -313,6 +508,11 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
             multiple
             className="hidden"
             onChange={(event) => void addPhotos(event.target.files)}
+          />
+          <DrivePickerButton
+            max={12}
+            disabled={uploading !== null}
+            onPick={(files) => void addPhotos(files)}
           />
         </div>
 
