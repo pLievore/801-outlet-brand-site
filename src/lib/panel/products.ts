@@ -703,7 +703,42 @@ export async function createPanelProduct(input: {
     { inventoryItemId: variant.inventoryItem.id, quantity: input.quantity },
   ]);
 
+  await publishToHeadlessChannel(product.id);
+
   return { productId: product.id };
+}
+
+/**
+ * Puts a product on the sales channel that serves the storefront.
+ *
+ * In a headless store, `ACTIVE` alone shows nothing: a product must also be
+ * published to the channel, and one created through the Admin API is published
+ * to nothing at all. The failure is silent — the product exists in Shopify and
+ * simply does not exist for the site — which is why this runs at creation
+ * rather than being left as a step to remember (D-026).
+ *
+ * Publishing is independent of status: a draft goes on the channel too, so
+ * flipping it to Active is the only thing left when the piece is ready.
+ */
+export async function publishToHeadlessChannel(productId: string) {
+  const publicationId = process.env.SHOPIFY_HEADLESS_PUBLICATION_ID?.trim();
+  if (!publicationId) return;
+
+  const data = await adminGraphql<{
+    publishablePublish: {
+      userErrors: Array<{ field?: string[] | null; message: string }>;
+    };
+  }>(
+    `#graphql
+    mutation PanelPublishToChannel($id: ID!, $input: [PublicationInput!]!) {
+      publishablePublish(id: $id, input: $input) {
+        userErrors { field message }
+      }
+    }
+  `,
+    { id: productId, input: [{ publicationId }] }
+  );
+  assertNoUserErrors('publishablePublish', data.publishablePublish.userErrors);
 }
 
 export async function updateProductStatus(

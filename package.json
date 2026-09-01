@@ -20,7 +20,8 @@
     "panel:token": "tsx --env-file=.env.local scripts/get-panel-token.ts",
     "shipping:rates": "tsx --env-file=.env.local scripts/shipping-rates.ts",
     "shipping:required": "tsx --env-file=.env.local scripts/requires-shipping.ts",
-    "metafields:setup": "tsx --env-file=.env.local scripts/setup-product-metafields.ts"
+    "metafields:setup": "tsx --env-file=.env.local scripts/setup-product-metafields.ts",
+    "publish:channel": "tsx --env-file=.env.local scripts/publish-channel.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

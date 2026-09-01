@@ -36,6 +36,7 @@ O bloqueio é lido em build time e inlined no bundle do edge: **ligar ou desliga
 | `SHOPIFY_STOREFRONT_API_VERSION` | não | Versão fixada da Storefront API |
 | `SHOPIFY_STOREFRONT_PRIVATE_ACCESS_TOKEN` | **não** | Token privado server-side do Headless channel |
 | `SHOPIFY_REVALIDATION_SECRET` | **não** | Segredo aleatório de no mínimo 32 caracteres compartilhado somente entre o app Admin e o endpoint interno de revalidação |
+| `SHOPIFY_HEADLESS_PUBLICATION_ID` | não | GID do canal de venda que serve a storefront (`gid://shopify/Publication/...`). Produto não publicado nesse canal é **invisível para o site mesmo estando ACTIVE**. Sem a variável, produtos criados pelo painel não são publicados automaticamente. Ver `npm run publish:channel` |
 | `SHOPIFY_SHOP_ID` | não | ID numérico da loja, usado nos endpoints do Customer Account API |
 | `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` | não | Client ID público (PKCE) do Customer Account API no canal Headless; sem client secret |
 
