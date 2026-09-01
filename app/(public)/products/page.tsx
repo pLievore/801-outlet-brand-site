@@ -10,6 +10,7 @@ import {
 } from '../../../src/lib/catalog/filters';
 import { getShopifyCatalogPage } from '../../../src/lib/shopify/catalog';
 import { CatalogProductCard } from '../../components/catalog-product-card';
+import { FilterDisclosure } from '../../components/filter-disclosure';
 import { StaggerGrid, StaggerItem } from '../../components/motion';
 
 export const revalidate = 300;
@@ -88,6 +89,17 @@ export default async function ProductsPage({
     priceMin: params.priceMin || undefined,
     priceMax: params.priceMax || undefined,
   };
+  // What the collapsed filter button shows while the panel is shut: a hidden
+  // filter quietly cutting the results is how someone concludes the shop is
+  // empty.
+  const activeFilterCount = [
+    search,
+    availability === 'available' ? availability : '',
+    params.priceMin,
+    params.priceMax,
+    sort === 'featured' ? '' : sort,
+  ].filter(Boolean).length;
+
   const hasFilters = Boolean(
     search ||
       availability === 'available' ||
@@ -128,7 +140,8 @@ export default async function ProductsPage({
           action="/products"
           className="mt-8 rounded-2xl border border-[rgb(var(--border))] bg-white/70 p-4 sm:p-5"
         >
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,0.7fr))_auto]">
+          <FilterDisclosure activeCount={activeFilterCount}>
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,0.7fr))_auto]">
             <input
               type="search"
               name="q"
@@ -200,6 +213,7 @@ export default async function ProductsPage({
               </Link>
             ) : null}
           </div>
+          </FilterDisclosure>
         </form>
 
         {result.products.length === 0 ? (

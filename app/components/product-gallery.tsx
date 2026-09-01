@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
+import { HAPTIC, haptic } from '../../src/lib/haptics';
+
 type GalleryImage = { url: string; alt: string | null };
 
 type Props = {
@@ -20,6 +22,47 @@ export function ProductGallery({ images, productName }: Props) {
   // in is exactly the movement someone asking for less motion is avoiding.
   const reducedMotion = useReducedMotion();
   const zoomDialogRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Swiping the photo is how a phone expects to move through a gallery, and
+   * without it the only way through was aiming at thumbnails the size of a
+   * stamp. Most of the people looking at these sofas are holding a phone.
+   *
+   * The gesture only claims the finger once it is clearly horizontal —
+   * otherwise it would fight the page scroll, which is the same finger doing
+   * the far more common thing.
+   */
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
+
+  const swipeProps = {
+    onPointerDown: (event: React.PointerEvent) => {
+      swipeStart.current = { x: event.clientX, y: event.clientY };
+      swiped.current = false;
+    },
+    onPointerMove: (event: React.PointerEvent) => {
+      const start = swipeStart.current;
+      if (!start || swiped.current || images.length < 2) return;
+
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      if (Math.abs(dx) < 44 || Math.abs(dx) <= Math.abs(dy)) return;
+
+      swiped.current = true;
+      const direction = dx < 0 ? 1 : -1;
+      setActiveIndex(
+        (index) => (index + direction + images.length) % images.length
+      );
+      haptic(HAPTIC.tap);
+    },
+    onPointerUp: () => {
+      swipeStart.current = null;
+    },
+    onPointerCancel: () => {
+      swipeStart.current = null;
+      swiped.current = false;
+    },
+  };
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const main = images[activeIndex] ?? images[0];
@@ -80,7 +123,16 @@ export function ProductGallery({ images, productName }: Props) {
         <motion.button
           ref={zoomTriggerRef}
           type="button"
-          onClick={() => setZoomOpen(true)}
+          {...swipeProps}
+          onClick={() => {
+            // A swipe ends with a click on the same element; without this the
+            // viewer would open on every photo change.
+            if (swiped.current) {
+              swiped.current = false;
+              return;
+            }
+            setZoomOpen(true);
+          }}
           whileHover={reducedMotion ? undefined : { scale: 1.005 }}
           transition={{
             duration: reducedMotion ? 0 : 0.3,
@@ -221,7 +273,8 @@ export function ProductGallery({ images, productName }: Props) {
                 ease: [0.16, 1, 0.3, 1],
               }}
               onClick={(e) => e.stopPropagation()}
-              className="relative max-h-[90vh] max-w-[92vw]"
+              {...swipeProps}
+              className="relative max-h-[90vh] max-w-[92vw] touch-pan-y"
             >
               <Image
                 src={main.url}
