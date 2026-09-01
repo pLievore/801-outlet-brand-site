@@ -78,7 +78,13 @@ O bloqueio é lido em build time e inlined no bundle do edge: **ligar ou desliga
 | `NEXT_PUBLIC_GOOGLE_API_KEY` | sim | API key restrita à *Google Picker API* e às origens do site |
 | `NEXT_PUBLIC_GOOGLE_PROJECT_NUMBER` | sim | **Número** do projeto (não o ID), exigido pelo `setAppId` do Picker |
 
-As três valem em conjunto: faltando qualquer uma, o botão *Choose from Drive* simplesmente não aparece e o upload por arquivo segue funcionando. São públicas por natureza — vão para o JavaScript do painel. A proteção é a restrição de origem na API key e nas *Authorized JavaScript origins* do client, não o sigilo do valor.
+As três valem em conjunto: faltando qualquer uma, o botão *Choose from Drive* simplesmente não aparece e o upload por arquivo segue funcionando. São públicas por natureza — vão para o JavaScript do painel; o sigilo do valor não protege nada.
+
+> **A API key não pode ter restrição de sites.** Quem valida essa chave é o backend do `docs.google.com/picker`, não o browser — nessa checagem não existe o referer do nosso site, e uma chave restrita por origem é recusada com a mensagem enganosa *"The API developer key is invalid"*. Em **Restrições do aplicativo** ela precisa ficar em **Nenhum**.
+>
+> A proteção dela é outra: manter **Restrições da API** limitada à *Google Picker API*. A chave só autoriza abrir a interface do Picker e **não dá acesso a dado nenhum** — quem libera as fotos é o token OAuth do operador, com escopo `drive.file`, limitado ao que ele seleciona e vivo apenas na aba.
+
+O client ID é diferente: as **Authorized JavaScript origins** dele funcionam normalmente e devem continuar restritas ao domínio do site.
 
 O client ID e o número do projeto **precisam ser do mesmo projeto** no Google Cloud: é assim que o `drive.file` associa os arquivos escolhidos ao app. O escopo pedido é apenas `https://www.googleapis.com/auth/drive.file`, que dá acesso somente ao que o operador seleciona no Picker — nunca ao Drive inteiro. O token fica em memória no browser e **nunca chega ao servidor**.
 
