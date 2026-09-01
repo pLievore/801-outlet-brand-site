@@ -42,7 +42,6 @@ export function HapticTrigger() {
         // screen reader finds an unnamed switch inside an aria-hidden island.
         tabIndex={-1}
         aria-hidden="true"
-        readOnly
       />
       <label
         htmlFor="haptic-trigger-switch"
