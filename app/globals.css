@@ -97,6 +97,15 @@ a:focus-visible {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
+/**
+ * Sits directly on top of the mobile tab bar rather than on the viewport floor.
+ * The bar is 58px plus whatever the home indicator claims, and two things
+ * pinned to `bottom: 0` would simply cover one another.
+ */
+.above-tab-bar {
+  bottom: calc(58px + env(safe-area-inset-bottom));
+}
+
 /* Premium grid texture util */
 .bg-grid {
   background-image:

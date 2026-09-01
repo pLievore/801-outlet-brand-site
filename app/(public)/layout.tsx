@@ -19,6 +19,7 @@ import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { CartProvider } from '../components/cart/cart-provider';
 import { CartButton, MiniCart } from '../components/cart/mini-cart';
 import { HapticTrigger } from '../components/haptic-trigger';
+import { MobileTabBar } from '../components/mobile-tab-bar';
 import { NavLink } from '../components/nav-link';
 import { MobileNav } from '../components/mobile-nav';
 import { PredictiveSearch } from '../components/predictive-search';
@@ -82,11 +83,13 @@ export default async function PublicLayout({
         </a>
         <AnnouncementBar />
         <SiteHeader navigation={navigation} phoneHref={phoneHref} />
-        <div id="main-content" tabIndex={-1}>
+        {/* Room for the bottom bar, which floats over the page. */}
+        <div id="main-content" tabIndex={-1} className="pb-[70px] lg:pb-0">
           {children}
         </div>
         <SiteFooter />
         <MiniCart />
+        <MobileTabBar />
         <HapticTrigger />
       </div>
     </CartProvider>

@@ -91,7 +91,8 @@ export function PurchasePanel({
   useEffect(() => {
     if (!showBar) return;
     const previous = document.body.style.paddingBottom;
-    document.body.style.paddingBottom = '5.5rem';
+    // On top of the room the layout already keeps for the tab bar.
+    document.body.style.paddingBottom = '4.75rem';
     return () => {
       document.body.style.paddingBottom = previous;
     };
@@ -276,7 +277,7 @@ export function PurchasePanel({
 
       {/* Phone only: the desktop panel never leaves the screen. */}
       {showBar && inStock ? (
-        <div className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 px-4 pt-3 backdrop-blur-xl lg:hidden">
+        <div className="above-tab-bar fixed inset-x-0 z-40 border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 px-4 py-3 backdrop-blur-xl lg:hidden">
           <div className="mx-auto flex max-w-2xl items-center gap-3">
             {selectedVariant ? (
               <div className="min-w-0">
