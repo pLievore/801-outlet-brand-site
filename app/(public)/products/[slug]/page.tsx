@@ -8,13 +8,12 @@ import {
   parseFeatures,
 } from '../../../../src/lib/catalog/attributes';
 import { getAvailability } from '../../../../src/lib/catalog/availability';
-import { sortAvailableFirst } from '../../../../src/lib/catalog/ordering';
+import { pickRelatedByPrice } from '../../../../src/lib/catalog/related';
 import { formatMoney } from '../../../../src/lib/format';
 import { safeJsonLd } from '../../../../src/lib/seo';
 import {
   getProductByHandle,
   getProducts,
-  getRelatedProducts,
 } from '../../../../src/lib/shopify';
 import {
   adaptProductCard,
@@ -91,8 +90,13 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const availability = getAvailability({ availableForSale: inStock, tags: product.tags });
   const quantity = primaryVariant?.quantityAvailable ?? null;
   const showLowStock = inStock && quantity !== null && quantity <= 3;
-  const related = sortAvailableFirst(
-    (await getRelatedProducts(product.id, 4)).map(adaptProductCard)
+  // Shopify's own recommendations learn from order history this shop does not
+  // have yet, so they paired pieces across wildly different budgets. Price is
+  // the signal that means something here — see `catalog/related`.
+  const related = pickRelatedByPrice(
+    (await getProducts({ first: 100 })).nodes.map(adaptProductCard),
+    { id: product.id, price },
+    4
   );
   const smsHref = env.getSmsHref(
     `Hi 801 Outlet, I would like more information about ${product.title}: ${env.siteUrl}/products/${product.handle}`
