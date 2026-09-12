@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Tag } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
 import { trackFunnelStep } from '../track-event';
@@ -97,13 +97,31 @@ export function MiniCart() {
             <div className="mt-auto border-t border-[rgb(var(--border))] pt-4">
               {cart ? (
                 <>
-                  <dl className="space-y-1 text-sm">
+                  <dl className="space-y-1.5 text-sm">
                     <div className="flex justify-between">
                       <dt className="text-[rgb(var(--muted))]">Subtotal</dt>
                       <dd className="font-semibold tabular-nums-tight">
                         {formatMoney(cart.subtotal)}
                       </dd>
                     </div>
+                    {Number(cart.subtotal.amount) > Number(cart.total.amount) ? (
+                      <div className="flex justify-between text-[rgb(var(--sage-ink))]">
+                        <dt className="font-medium">Discount savings</dt>
+                        <dd className="font-semibold tabular-nums-tight">
+                          -${(Number(cart.subtotal.amount) - Number(cart.total.amount)).toFixed(2)}
+                        </dd>
+                      </div>
+                    ) : null}
+                    {cart.discountCodes
+                      .filter((d) => d.applicable)
+                      .map((d) => (
+                        <div key={d.code} className="flex items-center justify-between text-xs text-[rgb(var(--sage-ink))] font-semibold">
+                          <span className="flex items-center gap-1">
+                            <Tag className="size-3" aria-hidden="true" />
+                            {d.code} applied
+                          </span>
+                        </div>
+                      ))}
                   </dl>
                   <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--muted))]">
                     Taxes and delivery are calculated at checkout.

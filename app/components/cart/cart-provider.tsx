@@ -17,7 +17,9 @@ import type {
 } from '../../../src/lib/catalog/cart-view';
 import {
   addCartLineAction,
+  applyCartDiscountAction,
   getCartAction,
+  removeCartDiscountAction,
   removeCartLineAction,
   updateCartLineAction,
 } from '../../actions/cart';
@@ -35,6 +37,8 @@ type CartContextValue = {
   addLine: (variantId: string, quantity: number) => Promise<boolean>;
   updateLine: (lineId: string, quantity: number) => Promise<void>;
   removeLine: (lineId: string) => Promise<void>;
+  applyDiscount: (code: string) => Promise<boolean>;
+  removeDiscount: () => Promise<boolean>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -120,6 +124,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       removeLine: async (lineId) => {
         await run(removeCartLineAction(lineId));
+      },
+      applyDiscount: async (code) => {
+        return await run(applyCartDiscountAction(code));
+      },
+      removeDiscount: async () => {
+        return await run(removeCartDiscountAction());
       },
     }),
     [cart, pending, errors, isOpen, run]

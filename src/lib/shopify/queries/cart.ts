@@ -176,6 +176,22 @@ export const CART_BUYER_IDENTITY_UPDATE_MUTATION = `#graphql
   ${CART_FRAGMENT}
 ` as const;
 
+export const CART_DISCOUNT_CODES_UPDATE_MUTATION = `#graphql
+  mutation CartDiscountCodesUpdate($cartId: ID!, $discountCodes: [String!]!) {
+    cartDiscountCodesUpdate(cartId: $cartId, discountCodes: $discountCodes) {
+      cart {
+        ...CartFields
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+  ${CART_FRAGMENT}
+` as const;
+
 type CartUserError = { field?: string[] | null; message: string; code?: string | null };
 
 export class CartUserErrorsError extends Error {
@@ -318,3 +334,32 @@ export async function removeCartLines(
   assertNoUserErrors('cartLinesRemove', result.data.cartLinesRemove?.userErrors);
   return result.data.cartLinesRemove?.cart ?? null;
 }
+
+export async function updateCartDiscountCodes(
+  cartId: string,
+  discountCodes: string[],
+  buyerIp?: string
+) {
+  const result = await shopifyStorefrontRequest<
+    {
+      cartDiscountCodesUpdate?: {
+        cart?: NonNullable<CartQuery['cart']>;
+        userErrors?: CartUserError[];
+      };
+    },
+    { cartId: string; discountCodes: string[] }
+  >(CART_DISCOUNT_CODES_UPDATE_MUTATION, {
+    operationName: 'CartDiscountCodesUpdate',
+    variables: { cartId, discountCodes },
+    cache: 'no-store',
+    retries: 0,
+    buyerIp,
+  });
+
+  assertNoUserErrors(
+    'cartDiscountCodesUpdate',
+    result.data.cartDiscountCodesUpdate?.userErrors
+  );
+  return result.data.cartDiscountCodesUpdate?.cart ?? null;
+}
+

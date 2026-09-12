@@ -15,6 +15,7 @@ import {
   fetchCart,
   removeCartLines,
   updateCartBuyerIdentity,
+  updateCartDiscountCodes,
   updateCartLines,
 } from '../../src/lib/shopify/queries/cart';
 import { getCustomerAccessToken } from '../../src/lib/shopify/customer/session';
@@ -171,3 +172,58 @@ export async function removeCartLineAction(
     return toErrorResult(error);
   }
 }
+
+export async function applyCartDiscountAction(
+  code: string
+): Promise<CartActionResult> {
+  const cartId = await readCartId();
+  if (!cartId) {
+    return { cart: null, errors: ['Your cart is empty. Add a piece before applying a coupon.'] };
+  }
+
+  const cleanCode = code.trim().toUpperCase();
+  if (!cleanCode) {
+    return { cart: null, errors: ['Please enter a coupon code.'] };
+  }
+
+  try {
+    const buyerIp = await getBuyerIp();
+    const rawCart = await updateCartDiscountCodes(cartId, [cleanCode], buyerIp);
+    if (!rawCart) {
+      return { cart: null, errors: [GENERIC_ERROR] };
+    }
+
+    const adapted = adaptCart(rawCart);
+    const match = adapted.discountCodes.find(
+      (dc) => dc.code.toUpperCase() === cleanCode
+    );
+
+    if (match && !match.applicable) {
+      // Revert so invalid code doesn't stick
+      await updateCartDiscountCodes(cartId, [], buyerIp);
+      return {
+        cart: adapted,
+        errors: [`Coupon "${cleanCode}" is invalid, expired, or usage limit reached.`],
+      };
+    }
+
+    return { cart: adapted };
+  } catch (error) {
+    return toErrorResult(error);
+  }
+}
+
+export async function removeCartDiscountAction(): Promise<CartActionResult> {
+  const cartId = await readCartId();
+  if (!cartId) {
+    return { cart: null, errors: [GENERIC_ERROR] };
+  }
+
+  try {
+    const rawCart = await updateCartDiscountCodes(cartId, [], await getBuyerIp());
+    return toResult(rawCart);
+  } catch (error) {
+    return toErrorResult(error);
+  }
+}
+
