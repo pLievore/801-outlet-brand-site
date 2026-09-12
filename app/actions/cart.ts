@@ -15,6 +15,7 @@ import {
   fetchCart,
   removeCartLines,
   updateCartBuyerIdentity,
+  updateCartDiscountCodes,
   updateCartLines,
 } from '../../src/lib/shopify/queries/cart';
 import { getCustomerAccessToken } from '../../src/lib/shopify/customer/session';
@@ -50,6 +51,30 @@ async function persistCartId(cartId: string) {
     path: '/',
     maxAge: CART_COOKIE_MAX_AGE_SECONDS,
   });
+}
+
+const PENDING_DISCOUNT_COOKIE = 'shopify_pending_discount';
+
+async function readPendingDiscount(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const value = cookieStore.get(PENDING_DISCOUNT_COOKIE)?.value?.trim();
+  return value ? value.toUpperCase() : null;
+}
+
+async function persistPendingDiscount(code: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(PENDING_DISCOUNT_COOKIE, code.trim().toUpperCase(), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+async function clearPendingDiscount() {
+  const cookieStore = await cookies();
+  cookieStore.delete(PENDING_DISCOUNT_COOKIE);
 }
 
 function clampQuantity(quantity: number): number {
@@ -121,6 +146,25 @@ export async function addCartLineAction(
       }
     }
 
+    if (cart) {
+      const pendingDiscount = await readPendingDiscount();
+      if (pendingDiscount) {
+        try {
+          const withDiscount = await updateCartDiscountCodes(
+            cart.id,
+            [pendingDiscount],
+            buyerIp
+          );
+          if (withDiscount) {
+            cart = withDiscount;
+            await clearPendingDiscount();
+          }
+        } catch {
+          // Pending discount application is best-effort.
+        }
+      }
+    }
+
     return toResult(cart);
   } catch (error) {
     return toErrorResult(error);
@@ -171,3 +215,62 @@ export async function removeCartLineAction(
     return toErrorResult(error);
   }
 }
+
+export async function applyCartDiscountAction(
+  code: string
+): Promise<CartActionResult> {
+  const cleanCode = code.trim().toUpperCase();
+  if (!cleanCode) {
+    return { cart: null, errors: ['Please enter a coupon code.'] };
+  }
+
+  const cartId = await readCartId();
+  if (!cartId) {
+    // No cart created yet: persist pending discount so it automatically attaches when any item is added!
+    await persistPendingDiscount(cleanCode);
+    return { cart: null, errors: [] };
+  }
+
+  try {
+    const buyerIp = await getBuyerIp();
+    const rawCart = await updateCartDiscountCodes(cartId, [cleanCode], buyerIp);
+    if (!rawCart) {
+      return { cart: null, errors: [GENERIC_ERROR] };
+    }
+
+    const adapted = adaptCart(rawCart);
+    const match = adapted.discountCodes.find(
+      (dc) => dc.code.toUpperCase() === cleanCode
+    );
+
+    if (match && !match.applicable) {
+      // Revert so invalid code doesn't stick
+      await updateCartDiscountCodes(cartId, [], buyerIp);
+      return {
+        cart: adapted,
+        errors: [`Coupon "${cleanCode}" is invalid, expired, or usage limit reached.`],
+      };
+    }
+
+    await clearPendingDiscount();
+    return { cart: adapted };
+  } catch (error) {
+    return toErrorResult(error);
+  }
+}
+
+export async function removeCartDiscountAction(): Promise<CartActionResult> {
+  await clearPendingDiscount();
+  const cartId = await readCartId();
+  if (!cartId) {
+    return { cart: null, errors: [GENERIC_ERROR] };
+  }
+
+  try {
+    const rawCart = await updateCartDiscountCodes(cartId, [], await getBuyerIp());
+    return toResult(rawCart);
+  } catch (error) {
+    return toErrorResult(error);
+  }
+}
+

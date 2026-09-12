@@ -17,10 +17,13 @@ import type {
 } from '../../../src/lib/catalog/cart-view';
 import {
   addCartLineAction,
+  applyCartDiscountAction,
   getCartAction,
+  removeCartDiscountAction,
   removeCartLineAction,
   updateCartLineAction,
 } from '../../actions/cart';
+import { getClientContact, syncLeadToServer } from '../../../src/lib/leads/client';
 import { currentAttribution } from '../track-event';
 
 type CartContextValue = {
@@ -35,6 +38,8 @@ type CartContextValue = {
   addLine: (variantId: string, quantity: number) => Promise<boolean>;
   updateLine: (lineId: string, quantity: number) => Promise<void>;
   removeLine: (lineId: string) => Promise<void>;
+  applyDiscount: (code: string) => Promise<boolean>;
+  removeDiscount: () => Promise<boolean>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -86,6 +91,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   }, [applyResult]);
 
+  useEffect(() => {
+    if (!cart) return;
+    const known = getClientContact();
+    if (known) {
+      void syncLeadToServer(known, {
+        hasItems: cart.lines.length > 0,
+        totalQuantity: cart.totalQuantity,
+        totalAmount: cart.total.amount,
+        items: cart.lines.map((l) => ({
+          title: l.merchandise.productTitle,
+          variantTitle: l.merchandise.variantTitle,
+          quantity: l.quantity,
+          price: l.lineTotal.amount,
+        })),
+        discountCode: cart.discountCodes[0]?.code,
+      });
+    }
+  }, [cart]);
+
   const run = useCallback(
     async (operation: Promise<CartActionResult>): Promise<boolean> => {
       setPending(true);
@@ -120,6 +144,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       removeLine: async (lineId) => {
         await run(removeCartLineAction(lineId));
+      },
+      applyDiscount: async (code) => {
+        return await run(applyCartDiscountAction(code));
+      },
+      removeDiscount: async () => {
+        return await run(removeCartDiscountAction());
       },
     }),
     [cart, pending, errors, isOpen, run]

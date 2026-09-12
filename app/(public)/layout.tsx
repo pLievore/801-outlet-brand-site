@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Instagram } from 'lucide-react';
@@ -18,11 +18,17 @@ import type { NavigationLink } from '../../src/lib/navigation/types';
 import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { CartProvider } from '../components/cart/cart-provider';
 import { CartButton, MiniCart } from '../components/cart/mini-cart';
+import { HapticTrigger } from '../components/haptic-trigger';
+import { MobileTabBar } from '../components/mobile-tab-bar';
+import { NavLink } from '../components/nav-link';
 import { MobileNav } from '../components/mobile-nav';
 import { PredictiveSearch } from '../components/predictive-search';
+import { RouteProgress } from '../components/route-progress';
 import { TrackEvent } from '../components/track-event';
 import { buttonStyles } from '../components/ui/button';
 import { Container } from '../components/ui/container';
+import { NewTabHint } from '../components/ui/new-tab-hint';
+import { WelcomeDiscountModal } from '../components/welcome-discount-modal';
 
 export default async function PublicLayout({
   children,
@@ -71,6 +77,9 @@ export default async function PublicLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <TrackEvent />
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
         <a
           href="#main-content"
           className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-full bg-[rgb(var(--fg))] px-5 py-3 text-sm font-semibold text-white transition focus:translate-y-0"
@@ -79,11 +88,15 @@ export default async function PublicLayout({
         </a>
         <AnnouncementBar />
         <SiteHeader navigation={navigation} phoneHref={phoneHref} />
-        <div id="main-content" tabIndex={-1}>
+        {/* Room before the footer; the footer itself provides clearance for the bottom bar. */}
+        <div id="main-content" tabIndex={-1} className="pb-8 lg:pb-0">
           {children}
         </div>
         <SiteFooter />
         <MiniCart />
+        <MobileTabBar />
+        <HapticTrigger />
+        <WelcomeDiscountModal />
       </div>
     </CartProvider>
   );
@@ -92,7 +105,7 @@ export default async function PublicLayout({
 function AnnouncementBar() {
   return (
     <div className="bg-[rgb(var(--sage-ink))] text-white">
-      <Container className="flex min-h-9 items-center justify-center py-2 text-center text-xs font-semibold tracking-wide">
+      <Container className="flex min-h-8 items-center justify-center py-1.5 text-center text-xs font-semibold tracking-wide">
         Utah delivery available · Showroom open weekends for walk-ins
       </Container>
     </div>
@@ -108,13 +121,13 @@ function SiteHeader({
 }) {
   return (
     <header className="sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 backdrop-blur-xl">
-      <Container size="wide" className="flex min-h-20 items-center gap-4 py-3">
+      <Container size="wide" className="flex min-h-16 items-center gap-3 sm:gap-4 py-2">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-3 rounded-xl"
+          className="flex shrink-0 items-center gap-2.5 sm:gap-3 rounded-xl"
           aria-label="801 Outlet home"
         >
-          <span className="relative size-11 overflow-hidden rounded-xl border border-[rgb(var(--border))] bg-white">
+          <span className="relative size-10 overflow-hidden rounded-xl border border-[rgb(var(--border))] bg-white sm:size-11">
             <Image
               src="/brand/icon-512x512.png"
               alt=""
@@ -133,17 +146,17 @@ function SiteHeader({
         </Link>
 
         <nav
-          className="ml-3 hidden items-center gap-1 lg:flex"
+          className="ml-2 hidden items-center gap-1 lg:flex"
           aria-label="Main navigation"
         >
           {navigation.map((link) => (
-            <NavigationItem key={link.id} link={link} />
+            <NavLink key={link.id} link={link} />
           ))}
         </nav>
 
         {/* Everything from here sits flush right — the search is hidden on
             small screens, so the auto margin has to live on the group. */}
-        <div className="ml-auto flex items-center gap-3 md:w-full md:max-w-xs md:flex-1 xl:max-w-sm">
+        <div className="ml-auto flex items-center gap-2.5 sm:gap-3 md:w-full md:max-w-xs md:flex-1 xl:max-w-sm">
           <PredictiveSearch className="hidden w-full md:block" />
 
           <CartButton />
@@ -166,28 +179,9 @@ function SiteHeader({
   );
 }
 
-function NavigationItem({ link }: { link: NavigationLink }) {
-  const className =
-    'rounded-full px-3 py-2 text-sm font-semibold text-[rgb(var(--fg))] transition hover:bg-[rgb(var(--surface-muted))]';
-
-  if (link.external) {
-    return (
-      <a href={link.href} target="_blank" rel="noreferrer" className={className}>
-        {link.label}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={link.href} className={className}>
-      {link.label}
-    </Link>
-  );
-}
-
 function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
+    <footer className="mt-20 border-t border-[rgb(var(--border))] bg-[rgb(var(--surface))] pb-above-tab-bar lg:pb-0">
       <Container size="wide" className="py-14 md:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-16">
           <div>
@@ -220,6 +214,7 @@ function SiteFooter() {
             >
               <Instagram aria-hidden="true" className="size-4" />
               {INSTAGRAM_HANDLE}
+              <NewTabHint />
             </a>
           </div>
 

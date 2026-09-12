@@ -1,12 +1,13 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeftCircle,
   ArrowRightCircle,
   ClipboardCopy,
+  GripVertical,
   ImagePlus,
   Loader2,
   Trash2,
@@ -21,6 +22,8 @@ import { cn } from '../../../../src/lib/cn';
 import { uploadProductImageAction } from '../new/actions';
 import { resizeImage } from '../image-resize';
 import { DrivePickerButton } from '../drive-picker';
+import { useDragSort } from '../../_components/use-drag-sort';
+import { HAPTIC, haptic } from '../../../../src/lib/haptics';
 import { saveProductAction } from '../actions';
 import {
   addMediaAction,
@@ -69,6 +72,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
   const [savingDetails, startDetails] = useTransition();
   const [mutatingMedia, startMedia] = useTransition();
 
+  const dragging = useRef(false);
   const [status, setStatus] = useState(product.status);
   const [variants, setVariants] = useState(() => initialVariants(product));
   const [sellingFeedback, setSellingFeedback] = useState<Feedback>(null);
@@ -90,6 +94,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
    * remember how to spell it. Off simply removes every spelling of it.
    */
   const toggleComingSoon = () => {
+    haptic(HAPTIC.tap);
     const without = tagList.filter((tag) => !hasComingSoonTag([tag]));
     setTags(
       (comingSoon ? without : [...without, COMING_SOON_TAG_VALUE]).join(', ')
@@ -138,6 +143,8 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
           })
         ),
       });
+      // On the result, not on the tap: the tick means it landed in Shopify.
+      haptic(result.ok ? HAPTIC.commit : HAPTIC.undo);
       setSellingFeedback(
         result.ok
           ? { ok: true, text: 'Saved.' }
@@ -156,6 +163,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
         description,
         tags: tagList,
       });
+      haptic(result.ok ? HAPTIC.commit : HAPTIC.undo);
       setDetailsFeedback(
         result.ok
           ? { ok: true, text: 'Saved.' }
@@ -165,29 +173,93 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
     });
   };
 
+  const containerRef = useRef<HTMLUListElement | null>(null);
+  const saveOrderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const baselineOrder = useRef(product.media);
+  const [savingOrder, setSavingOrder] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (saveOrderTimer.current !== null) {
+        clearTimeout(saveOrderTimer.current);
+      }
+    };
+  }, []);
+
+  /**
+   * Debounces the persistence to Shopify so rapid arrow taps or quick drags
+   * update the UI with 0ms latency while queuing a single consolidated save.
+   */
+  const queueOrderSave = useCallback(
+    (next: typeof mediaOrder) => {
+      if (saveOrderTimer.current !== null) {
+        clearTimeout(saveOrderTimer.current);
+      }
+      setSavingOrder(true);
+      saveOrderTimer.current = setTimeout(async () => {
+        const result = await reorderMediaAction({
+          productId: product.id,
+          orderedMediaIds: next.map((media) => media.id),
+        });
+        setSavingOrder(false);
+        if (!result.ok) {
+          setMediaOrder(baselineOrder.current);
+          setMediaFeedback({
+            ok: false,
+            text: result.error ?? 'Failed to save photo order.',
+          });
+        } else {
+          baselineOrder.current = next;
+          setMediaFeedback({ ok: true, text: 'Photo order saved.' });
+          setTimeout(() => setMediaFeedback(null), 2500);
+        }
+      }, 500);
+    },
+    [product.id]
+  );
+
+  /** Instantaneous arrow swap: zero delay, non-blocking, debounced save. */
   const move = (index: number, direction: -1 | 1) => {
     const target = index + direction;
     if (target < 0 || target >= mediaOrder.length) return;
     const next = [...mediaOrder];
     [next[index], next[target]] = [next[target], next[index]];
     setMediaOrder(next);
-    setMediaFeedback(null);
-    startMedia(async () => {
-      const result = await reorderMediaAction({
-        productId: product.id,
-        orderedMediaIds: next.map((media) => media.id),
-      });
-      if (!result.ok) {
-        setMediaOrder(mediaOrder);
-        setMediaFeedback({ ok: false, text: result.error ?? 'Failed.' });
-      } else {
-        router.refresh();
-      }
-    });
+    liveOrder.current = next;
+    haptic(HAPTIC.tap);
+    queueOrderSave(next);
   };
+
+  // What the order was when this drag began, so a refused save can go back to it
+  const beforeDrag = useRef(mediaOrder);
+  const liveOrder = useRef(mediaOrder);
+  liveOrder.current = mediaOrder;
+
+  const drag = useDragSort({
+    count: mediaOrder.length,
+    containerRef,
+    onMove: (from, to) => {
+      if (!dragging.current) {
+        beforeDrag.current = liveOrder.current;
+        dragging.current = true;
+      }
+      const next = [...liveOrder.current];
+      const [lifted] = next.splice(from, 1);
+      next.splice(to, 0, lifted);
+      liveOrder.current = next;
+      setMediaOrder(next);
+    },
+    onDrop: (moved) => {
+      dragging.current = false;
+      if (!moved) return;
+      haptic(HAPTIC.commit);
+      queueOrderSave(liveOrder.current);
+    },
+  });
 
   const remove = (mediaId: string) => {
     if (!window.confirm('Remove this photo? This cannot be undone.')) return;
+    haptic(HAPTIC.undo);
     setMediaFeedback(null);
     startMedia(async () => {
       const result = await removeMediaAction({ productId: product.id, mediaId });
@@ -516,25 +588,50 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
           />
         </div>
 
+        {mediaOrder.length > 1 ? (
+          <div className="mt-4 flex items-center justify-between gap-3 text-xs text-[rgb(var(--muted))]">
+            <p>
+              Hold and drag any photo to reorder, or tap the arrows for instant moving.
+            </p>
+            {savingOrder ? (
+              <span className="flex shrink-0 items-center gap-1.5 font-medium text-[rgb(var(--accent))]">
+                <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+                Saving order…
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
         {mediaOrder.length === 0 ? (
           <p className="mt-5 text-sm text-[rgb(var(--muted))]">
             No photos yet — add the first one above.
           </p>
         ) : (
-          <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <ul
+            ref={containerRef}
+            className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+          >
             {mediaOrder.map((media, index) => (
               <li
                 key={media.id}
-                className="group relative overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface-muted))]"
+                {...drag.itemProps(index)}
+                className={cn(
+                  'group relative overflow-hidden rounded-2xl border bg-[rgb(var(--surface-muted))] transition-[transform,box-shadow,border-color]',
+                  mediaOrder.length > 1 && 'cursor-grab active:cursor-grabbing select-none',
+                  drag.dragging === index
+                    ? 'z-30 scale-[1.05] cursor-grabbing border-[rgb(var(--accent))] shadow-2xl ring-2 ring-[rgb(var(--accent))]/30'
+                    : 'border-[rgb(var(--border))]'
+                )}
               >
-                <div className="relative aspect-square">
+                <div className="relative aspect-square pointer-events-none select-none">
                   {media.imageUrl ? (
                     <Image
                       src={media.imageUrl}
                       alt={media.alt ?? ''}
                       fill
+                      draggable={false}
                       sizes="(max-width: 640px) 50vw, 25vw"
-                      className="object-cover"
+                      className="object-cover pointer-events-none select-none"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs text-[rgb(var(--muted))]">
@@ -546,13 +643,18 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
                       Cover
                     </span>
                   ) : null}
+                  {mediaOrder.length > 1 ? (
+                    <span className="absolute right-2 top-2 rounded-md bg-black/40 p-1 text-white/80 opacity-0 transition group-hover:opacity-100 sm:opacity-60">
+                      <GripVertical aria-hidden="true" className="size-3.5" />
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex items-center justify-between gap-1 p-2">
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => move(index, -1)}
-                      disabled={index === 0 || mutatingMedia}
+                      disabled={index === 0}
                       aria-label="Move photo earlier"
                       className="flex size-8 items-center justify-center rounded-lg text-[rgb(var(--muted))] transition hover:bg-[rgb(var(--surface-muted))] hover:text-[rgb(var(--fg))] disabled:opacity-30"
                     >
@@ -561,7 +663,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
                     <button
                       type="button"
                       onClick={() => move(index, 1)}
-                      disabled={index === mediaOrder.length - 1 || mutatingMedia}
+                      disabled={index === mediaOrder.length - 1}
                       aria-label="Move photo later"
                       className="flex size-8 items-center justify-center rounded-lg text-[rgb(var(--muted))] transition hover:bg-[rgb(var(--surface-muted))] hover:text-[rgb(var(--fg))] disabled:opacity-30"
                     >

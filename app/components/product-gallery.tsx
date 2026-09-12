@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+
+import { HAPTIC, haptic } from '../../src/lib/haptics';
 
 type GalleryImage = { url: string; alt: string | null };
 
@@ -15,7 +17,52 @@ export function ProductGallery({ images, productName }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const zoomTriggerRef = useRef<HTMLButtonElement>(null);
+  // The global CSS rule collapses transitions, but Motion drives these
+  // transforms in JavaScript and never sees it. A full-screen zoom that scales
+  // in is exactly the movement someone asking for less motion is avoiding.
+  const reducedMotion = useReducedMotion();
   const zoomDialogRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Swiping the photo is how a phone expects to move through a gallery, and
+   * without it the only way through was aiming at thumbnails the size of a
+   * stamp. Most of the people looking at these sofas are holding a phone.
+   *
+   * The gesture only claims the finger once it is clearly horizontal —
+   * otherwise it would fight the page scroll, which is the same finger doing
+   * the far more common thing.
+   */
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
+
+  const swipeProps = {
+    onPointerDown: (event: React.PointerEvent) => {
+      swipeStart.current = { x: event.clientX, y: event.clientY };
+      swiped.current = false;
+    },
+    onPointerMove: (event: React.PointerEvent) => {
+      const start = swipeStart.current;
+      if (!start || swiped.current || images.length < 2) return;
+
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      if (Math.abs(dx) < 44 || Math.abs(dx) <= Math.abs(dy)) return;
+
+      swiped.current = true;
+      const direction = dx < 0 ? 1 : -1;
+      setActiveIndex(
+        (index) => (index + direction + images.length) % images.length
+      );
+      haptic(HAPTIC.tap);
+    },
+    onPointerUp: () => {
+      swipeStart.current = null;
+    },
+    onPointerCancel: () => {
+      swipeStart.current = null;
+      swiped.current = false;
+    },
+  };
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const main = images[activeIndex] ?? images[0];
@@ -76,9 +123,25 @@ export function ProductGallery({ images, productName }: Props) {
         <motion.button
           ref={zoomTriggerRef}
           type="button"
-          onClick={() => setZoomOpen(true)}
-          whileHover={{ scale: 1.005 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          {...swipeProps}
+          onClick={() => {
+            // A swipe ends with a click on the same element; without this the
+            // viewer would open on every photo change.
+            if (swiped.current) {
+              swiped.current = false;
+              return;
+            }
+            setZoomOpen(true);
+          }}
+          whileHover={reducedMotion ? undefined : { scale: 1.005 }}
+          transition={{
+            duration: reducedMotion ? 0 : 0.3,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+          // `pan-y` hands the browser the vertical scroll and keeps the
+          // horizontal for the photo swipe, so passing photos no longer drags
+          // the page sideways underneath.
+          style={{ touchAction: 'pan-y' }}
           className="group block w-full overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2"
           aria-label="Open larger view"
         >
@@ -89,7 +152,10 @@ export function ProductGallery({ images, productName }: Props) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                transition={{
+                  duration: reducedMotion ? 0 : 0.35,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
                 className="absolute inset-0"
               >
                 <Image
@@ -192,7 +258,11 @@ export function ProductGallery({ images, productName }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: reducedMotion ? 0 : 0.25 }}
+            // The viewer covers the screen, so every touch lands here. Without
+            // taking the gesture outright the page behind kept scrolling — the
+            // body's `overflow: hidden` does not stop a touch drag on iOS.
+            style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-md"
             onClick={() => setZoomOpen(false)}
             role="dialog"
@@ -201,11 +271,17 @@ export function ProductGallery({ images, productName }: Props) {
           >
             <motion.div
               key={`zoom-${main.url}`}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              initial={
+                reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }
+              }
+              animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+              exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+              transition={{
+                duration: reducedMotion ? 0 : 0.4,
+                ease: [0.16, 1, 0.3, 1],
+              }}
               onClick={(e) => e.stopPropagation()}
+              {...swipeProps}
               className="relative max-h-[90vh] max-w-[92vw]"
             >
               <Image

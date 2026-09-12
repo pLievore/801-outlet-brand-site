@@ -11,6 +11,7 @@ import { formatMoney } from '../../../src/lib/format';
 import { cn } from '../../../src/lib/cn';
 import { trackFunnelStep } from '../track-event';
 import { useCart } from './cart-provider';
+import { HAPTIC, haptic } from '../../../src/lib/haptics';
 
 type PurchasePanelProps = {
   options: CatalogProductDetail['options'];
@@ -45,6 +46,7 @@ export function PurchasePanel({
 }: PurchasePanelProps) {
   const { addLine, pending } = useCart();
   const defaultOnly = isDefaultOnly(options, variants);
+
 
   const [selected, setSelected] = useState<Record<string, string>>(() => {
     if (defaultOnly) return {};
@@ -98,6 +100,8 @@ export function PurchasePanel({
     setFeedback(null);
     const ok = await addLine(selectedVariant.id, boundedQuantity);
     setFeedback(ok ? null : 'We could not add this item. Please try again.');
+    // The one moment on the whole storefront worth confirming in the hand.
+    haptic(ok ? HAPTIC.commit : HAPTIC.undo);
     if (ok) {
       setQuantity(1);
       trackFunnelStep(
@@ -170,7 +174,10 @@ export function PurchasePanel({
         <div className="flex items-center rounded-full border border-[rgb(var(--border-strong))] bg-white">
           <button
             type="button"
-            onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+            onClick={() => {
+              haptic(HAPTIC.tap);
+              setQuantity((value) => Math.max(1, value - 1));
+            }}
             disabled={!inStock || boundedQuantity <= 1}
             className="flex size-11 items-center justify-center rounded-full transition hover:bg-[rgb(var(--surface-muted))] disabled:opacity-40"
             aria-label="Decrease quantity"
@@ -217,6 +224,7 @@ export function PurchasePanel({
           {feedback}
         </p>
       ) : null}
+
     </div>
   );
 }

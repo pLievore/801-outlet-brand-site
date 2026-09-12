@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { env } from '../../../src/config/env';
+import { FormError } from '../../components/form-error';
 import { HOURS_SUMMARY } from '../../../src/lib/content/hours';
 import {
   INSTAGRAM_HANDLE,
@@ -242,14 +243,7 @@ export default function ContactForm() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                {error ? (
-                  <p
-                    role="alert"
-                    className="rounded-xl border border-[rgb(var(--accent))]/40 bg-[rgb(var(--accent-soft))] px-4 py-3 text-sm leading-6"
-                  >
-                    {error}
-                  </p>
-                ) : null}
+                <FormError>{error}</FormError>
 
                 <div aria-hidden="true" className="hidden">
                   <label htmlFor="company">Company</label>

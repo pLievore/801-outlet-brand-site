@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
+import { HAPTIC, haptic } from '../../../src/lib/haptics';
+import { CartCouponSection } from '../../components/cart/cart-coupon-section';
 import { CartLineItem } from '../../components/cart/cart-line-item';
 import { useCart } from '../../components/cart/cart-provider';
 import { trackFunnelStep } from '../../components/track-event';
@@ -13,6 +15,10 @@ import { Container } from '../../components/ui/container';
 export function CartView() {
   const { cart, errors, pending } = useCart();
   const lines = cart?.lines ?? [];
+
+  const subtotalNum = Number(cart?.subtotal?.amount ?? 0);
+  const totalNum = Number(cart?.total?.amount ?? 0);
+  const savings = subtotalNum > totalNum ? subtotalNum - totalNum : 0;
 
   return (
     <main>
@@ -77,18 +83,16 @@ export function CartView() {
                       {formatMoney(cart.subtotal)}
                     </dd>
                   </div>
-                  {cart.discountCodes
-                    .filter((discount) => discount.applicable)
-                    .map((discount) => (
-                      <div key={discount.code} className="flex justify-between">
-                        <dt className="text-[rgb(var(--muted))]">
-                          Discount ({discount.code})
-                        </dt>
-                        <dd className="font-semibold text-[rgb(var(--sage-ink))]">
-                          Applied
-                        </dd>
-                      </div>
-                    ))}
+
+                  {savings > 0 ? (
+                    <div className="flex justify-between text-[rgb(var(--sage-ink))]">
+                      <dt className="font-medium">Discount savings</dt>
+                      <dd className="font-semibold tabular-nums-tight">
+                        -${savings.toFixed(2)}
+                      </dd>
+                    </div>
+                  ) : null}
+
                   <div className="flex justify-between border-t border-[rgb(var(--border))] pt-2">
                     <dt className="font-semibold">Total</dt>
                     <dd className="font-semibold tabular-nums-tight">
@@ -96,19 +100,24 @@ export function CartView() {
                     </dd>
                   </div>
                 </dl>
-                <p className="mt-3 text-xs leading-relaxed text-[rgb(var(--muted))]">
+
+                {/* Coupon input & applied tags */}
+                <CartCouponSection idPrefix="cart-page" />
+
+                <p className="mt-4 text-xs leading-relaxed text-[rgb(var(--muted))]">
                   Taxes, delivery and pickup options are confirmed at the secure
                   Shopify checkout.
                 </p>
                 <a
                   href={cart.checkoutUrl}
-                  onClick={() =>
-                      trackFunnelStep('checkout_start', {
-                        handles: cart.lines.map(
-                          (line) => line.merchandise.productHandle
-                        ),
-                      })
-                    }
+                  onClick={() => {
+                    haptic(HAPTIC.commit);
+                    trackFunnelStep('checkout_start', {
+                      handles: cart.lines.map(
+                        (line) => line.merchandise.productHandle
+                      ),
+                    });
+                  }}
                   className={buttonStyles({
                     variant: 'primary',
                     size: 'lg',
@@ -119,6 +128,7 @@ export function CartView() {
                 </a>
                 <Link
                   href="/products"
+                  onClick={() => haptic(HAPTIC.tap)}
                   className={buttonStyles({
                     variant: 'ghost',
                     size: 'md',

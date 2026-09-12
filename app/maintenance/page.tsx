@@ -7,6 +7,7 @@ import {
   INSTAGRAM_URL,
 } from '../../src/lib/content/social';
 import { buttonStyles } from '../components/ui/button';
+import { NewTabHint } from '../components/ui/new-tab-hint';
 
 export const metadata: Metadata = {
   title: 'Under maintenance — 801 Outlet',
@@ -56,6 +57,7 @@ export default function MaintenancePage() {
         >
           <Instagram aria-hidden="true" className="size-4 shrink-0" />
           Message us on Instagram
+          <NewTabHint />
         </a>
       </div>
 

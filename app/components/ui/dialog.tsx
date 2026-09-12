@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode, RefObject } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 import { cn } from '../../../src/lib/cn';
@@ -31,6 +31,11 @@ export function Dialog({
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const reducedMotion = useReducedMotion();
+  // Ids were fixed strings. The mini-cart and the mobile menu are both dialogs
+  // and can be mounted at the same time — two nodes answering to
+  // `dialog-title` leaves the label pointing at whichever came first.
+  const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -97,8 +102,8 @@ export function Dialog({
               ref={panelRef}
               role="dialog"
               aria-modal="true"
-              aria-labelledby="dialog-title"
-              aria-describedby={description ? 'dialog-description' : undefined}
+              aria-labelledby={titleId}
+              aria-describedby={description ? descriptionId : undefined}
               className={cn(
                 'pointer-events-auto flex max-h-dvh w-full flex-col bg-[rgb(var(--bg))] shadow-2xl',
                 placement === 'center' &&
@@ -129,12 +134,12 @@ export function Dialog({
             >
               <div className="flex items-start justify-between gap-4 border-b border-[rgb(var(--border))] px-5 py-4">
                 <div>
-                  <h2 id="dialog-title" className="text-base font-semibold">
+                  <h2 id={titleId} className="text-base font-semibold">
                     {title}
                   </h2>
                   {description ? (
                     <p
-                      id="dialog-description"
+                      id={descriptionId}
                       className="mt-1 text-xs text-[rgb(var(--muted))]"
                     >
                       {description}

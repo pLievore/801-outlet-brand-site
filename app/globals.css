@@ -22,6 +22,13 @@
   --sage-ink: 62 82 64;
   --sage-soft: 238 242 236;
 
+  /* Panel. The admin sidebar and its markers were loose hex in components,
+     outside the token system and outside the contrast test that guards every
+     other colour in the site. Same greens, now measurable. */
+  --panel: 23 28 23;          /* sidebar and dark cards */
+  --panel-marker: 169 189 149; /* active-item rule in the sidebar */
+  --panel-chart: 111 131 82;   /* bars and areas in the panel charts */
+
   /* Premium feel */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
@@ -35,6 +42,15 @@ body {
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  /**
+   * No sideways rubber-band on the page itself. The storefront never scrolls
+   * horizontally, so any give in that direction is the browser bouncing an
+   * edge that should not move — and it fires on the same diagonal drag people
+   * make while scrolling down a grid of sofas, which reads as the page coming
+   * loose. Inner scrollers (tables, the reviews row) keep their own behaviour:
+   * this applies to the root scroller only.
+   */
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -61,6 +77,57 @@ body {
 button:focus-visible,
 a:focus-visible {
   outline-offset: 3px;
+}
+
+/**
+ * iOS zooms the whole page when a focused control renders below 16px, and then
+ * leaves it zoomed — you tap a field, the layout lurches, and you pinch back
+ * out to carry on. Most of this shop's visitors are on a phone, and the panel
+ * is worked from one, so no form control is allowed under that threshold on a
+ * small screen. Above it the design's own sizes apply again.
+ *
+ * Checkboxes and radios are excluded: their size comes from the box, not the
+ * text, and 16px would inflate them.
+ */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/**
+ * Room for the home indicator on notched phones. Anything pinned to the bottom
+ * of the viewport uses this instead of a flat padding, which either wastes
+ * space on older phones or sits under the bar on newer ones.
+ */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/**
+ * The mobile tab bar's own geometry, in one place.
+ *
+ * The bar's padding and the offset of whatever sits on top of it were written
+ * separately — `max(0.75rem, …)` against a bare `env(…)` — so on a phone whose
+ * inset is under 12px the two disagreed by the difference, and the buy bar
+ * settled a few pixels over the bar's top edge, clipping the orange marker
+ * that says which tab you are on. One source, no drift.
+ */
+:root {
+  --tab-bar-height: 52px;
+  --tab-bar-pad: max(0.25rem, env(safe-area-inset-bottom));
+  --tab-bar-total: calc(var(--tab-bar-height) + var(--tab-bar-pad));
+}
+
+.pb-tab-bar {
+  padding-bottom: var(--tab-bar-pad);
+}
+
+/** Room at the end of the document for the bar floating over it. */
+.pb-above-tab-bar {
+  padding-bottom: calc(var(--tab-bar-total) + 1.5rem);
 }
 
 /* Premium grid texture util */

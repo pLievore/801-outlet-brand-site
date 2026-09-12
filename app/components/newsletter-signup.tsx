@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 export function NewsletterSignup() {
+  const reducedMotion = useReducedMotion();
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'submitting' | 'done'>('idle');
 
@@ -59,10 +60,10 @@ export function NewsletterSignup() {
       <AnimatePresence>
         {state === 'done' && (
           <motion.p
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: reducedMotion ? 0 : 0.3 }}
             className="mt-3 text-xs font-medium text-[rgb(var(--accent))]"
             role="status"
           >

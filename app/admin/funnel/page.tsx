@@ -19,6 +19,7 @@ import {
 import { formatPercent, formatShortDay } from '../_components/format';
 import { BiHero, KpiCard, PageHeader, Panel } from '../_components/ui';
 import { AreaTrend } from '../_components/charts';
+import { NewTabHint } from '../../components/ui/new-tab-hint';
 
 export const metadata: Metadata = { title: 'Funnel — 801 Outlet Panel' };
 export const dynamic = 'force-dynamic';
@@ -75,7 +76,7 @@ function BreakdownList({
           </div>
           <div className="mt-1 h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-muted))]">
             <div
-              className="h-full rounded-full bg-[#6f8352]/80"
+              className="h-full rounded-full bg-[rgb(var(--panel-chart))]/80"
               style={{ width: `${Math.max((entry.count / max) * 100, 3)}%` }}
             />
           </div>
@@ -136,6 +137,7 @@ function ProductFunnelTable({ rows }: { rows: ProductFunnelRow[] }) {
                     target="_blank"
                   >
                     {row.handle}
+                    <NewTabHint />
                   </Link>
                 </td>
                 <td className="px-2 py-2.5 text-right tabular-nums">{views}</td>
@@ -320,7 +322,7 @@ export default async function FunnelPage({
                   </div>
                   <div className="mt-1.5 h-8 overflow-hidden rounded-lg bg-[rgb(var(--surface-muted))]">
                     <div
-                      className="h-full rounded-lg bg-[#6f8352]/80"
+                      className="h-full rounded-lg bg-[rgb(var(--panel-chart))]/80"
                       style={{ width: `${width}%` }}
                     />
                   </div>

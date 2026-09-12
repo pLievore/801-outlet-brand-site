@@ -2,7 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import {
+  PANEL_CHART,
+  PANEL_CHART_ON_DARK,
+} from '../../../src/lib/design/panel-palette';
 
 import { formatMoney, formatShortDay } from './format';
 
@@ -43,7 +47,11 @@ export function AreaTrend({
   const area = `${line} L100,44 L0,44 Z`;
   const last = points[points.length - 1];
   const gradientId = `area-${tone}`;
-  const stroke = tone === 'dark' ? '#c9dbb2' : '#6f8352';
+  // The line draws itself over ~0.9s. Motion runs that in JavaScript, so the
+  // global CSS rule never reaches it: for someone who asked for less movement
+  // the chart still animated. Reduced, it simply appears already drawn.
+  const reducedMotion = useReducedMotion();
+  const stroke = tone === 'dark' ? PANEL_CHART_ON_DARK : PANEL_CHART;
   const grid = tone === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const labelClass =
     tone === 'dark' ? 'text-white/50' : 'text-[rgb(var(--muted))]';
@@ -74,7 +82,7 @@ export function AreaTrend({
             fill={`url(#${gradientId})`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: reducedMotion ? 0 : 0.8 }}
           />
           <motion.path
             d={line}
@@ -84,9 +92,9 @@ export function AreaTrend({
             strokeLinejoin="round"
             strokeLinecap="round"
             vectorEffect="non-scaling-stroke"
-            initial={{ pathLength: 0 }}
+            initial={{ pathLength: reducedMotion ? 1 : 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 0.9, ease: 'easeOut' }}
+            transition={{ duration: reducedMotion ? 0 : 0.9, ease: 'easeOut' }}
             style={{ strokeWidth: 2 }}
           />
           {data.map((d, i) => (
@@ -109,7 +117,7 @@ export function AreaTrend({
               fill={stroke}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
+              transition={{ delay: reducedMotion ? 0 : 0.9 }}
             />
           ) : null}
         </svg>
@@ -134,7 +142,7 @@ export function AreaTrend({
 export function Sparkline({
   values,
   height = 36,
-  color = '#6f8352',
+  color = PANEL_CHART,
 }: {
   values: number[];
   height?: number;
@@ -219,7 +227,7 @@ export function RevenueBarChart({
               x={index * barWidth + barWidth * 0.15}
               width={barWidth * 0.7}
               rx={0.6}
-              className={day.revenue > 0 ? 'fill-[#6f8352]' : 'fill-[#e2e5df]'}
+              className={day.revenue > 0 ? 'fill-[rgb(var(--panel-chart))]' : 'fill-[#e2e5df]'}
             >
               <title>{`${formatShortDay(day.date)} — ${formatMoney(day.revenue, currency)} · ${day.orders} order${day.orders === 1 ? '' : 's'}`}</title>
             </motion.rect>
@@ -371,7 +379,7 @@ export function HBar({
                 initial={{ width: 0 }}
                 animate={{ width: `${(row.value / max) * 100}%` }}
                 transition={{ delay: index * 0.04, duration: 0.45, ease: 'easeOut' }}
-                className="h-full rounded bg-[#6f8352]/80"
+                className="h-full rounded bg-[rgb(var(--panel-chart))]/80"
               />
             </div>
             <span className="w-20 shrink-0 text-right text-xs font-semibold tabular-nums sm:text-sm">

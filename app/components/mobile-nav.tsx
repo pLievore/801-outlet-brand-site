@@ -6,9 +6,11 @@ import { usePathname } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 
 import type { NavigationLink } from '../../src/lib/navigation/types';
+import { HAPTIC, haptic } from '../../src/lib/haptics';
 import { PredictiveSearch } from './predictive-search';
 import { Button, buttonStyles } from './ui/button';
 import { Drawer } from './ui/dialog';
+import { NewTabHint } from './ui/new-tab-hint';
 
 export function MobileNav({
   phoneHref,
@@ -28,7 +30,10 @@ export function MobileNav({
         ref={triggerRef}
         variant="ghost"
         size="icon"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          haptic(HAPTIC.tap);
+        }}
         className="shrink-0 lg:hidden"
         aria-label="Open menu"
         aria-expanded={open}
@@ -78,12 +83,19 @@ export function MobileNav({
                       rel="noreferrer"
                     >
                       {link.label}
+                      <NewTabHint />
                     </a>
                   ) : (
                     <Link
                       href={link.href}
+                      // The current page was marked by colour alone, which a
+                      // screen reader never hears.
+                      aria-current={active ? 'page' : undefined}
                       className={className}
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        setOpen(false);
+                        haptic(HAPTIC.tap);
+                      }}
                     >
                       {link.label}
                     </Link>
@@ -92,6 +104,44 @@ export function MobileNav({
               );
             })}
           </ul>
+
+          <div className="mt-6 border-t border-[rgb(var(--border))] pt-4">
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-[rgb(var(--muted))]">
+              Store & Policies
+            </p>
+            <ul className="mt-2 space-y-0.5">
+              {[
+                { href: '/showroom', label: 'Showroom & Hours' },
+                { href: '/delivery', label: 'Delivery Information' },
+                { href: '/pickup', label: 'Pickup Policy' },
+                { href: '/returns', label: 'Returns & Refunds' },
+                { href: '/terms', label: 'Terms of Service' },
+                { href: '/privacy', label: 'Privacy Policy' },
+              ].map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      onClick={() => {
+                        setOpen(false);
+                        haptic(HAPTIC.tap);
+                      }}
+                      className={
+                        'flex min-h-10 items-center rounded-xl px-3 py-2 text-sm font-medium transition ' +
+                        (active
+                          ? 'bg-[rgb(var(--surface-muted))] font-semibold text-[rgb(var(--fg))]'
+                          : 'text-[rgb(var(--muted))] hover:bg-[rgb(var(--surface-muted))] hover:text-[rgb(var(--fg))]')
+                      }
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
 
           <div className="mt-auto border-t border-[rgb(var(--border))] pt-6">
             <a

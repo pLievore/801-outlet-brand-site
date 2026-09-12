@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
+import { HAPTIC, haptic } from '../../../src/lib/haptics';
 import { trackFunnelStep } from '../track-event';
 import { Button, buttonStyles } from '../ui/button';
 import { Drawer } from '../ui/dialog';
+import { CartCouponSection } from './cart-coupon-section';
 import { CartLineItem } from './cart-line-item';
 import { useCart } from './cart-provider';
 
@@ -19,7 +21,10 @@ export function CartButton() {
     <Button
       variant="ghost"
       size="icon"
-      onClick={openCart}
+      onClick={() => {
+        openCart();
+        haptic(HAPTIC.tap);
+      }}
       className="relative shrink-0"
       aria-label={
         quantity > 0 ? `Open cart, ${quantity} items` : 'Open cart, empty'
@@ -97,26 +102,45 @@ export function MiniCart() {
             <div className="mt-auto border-t border-[rgb(var(--border))] pt-4">
               {cart ? (
                 <>
-                  <dl className="space-y-1 text-sm">
+                  <dl className="space-y-1.5 text-sm">
                     <div className="flex justify-between">
                       <dt className="text-[rgb(var(--muted))]">Subtotal</dt>
                       <dd className="font-semibold tabular-nums-tight">
                         {formatMoney(cart.subtotal)}
                       </dd>
                     </div>
+                    {Number(cart.subtotal.amount) > Number(cart.total.amount) ? (
+                      <>
+                        <div className="flex justify-between text-[rgb(var(--sage-ink))]">
+                          <dt className="font-medium">Discount savings</dt>
+                          <dd className="font-semibold tabular-nums-tight">
+                            -${(Number(cart.subtotal.amount) - Number(cart.total.amount)).toFixed(2)}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between border-t border-[rgb(var(--border))] pt-1.5 font-semibold">
+                          <dt>Total</dt>
+                          <dd className="tabular-nums-tight">{formatMoney(cart.total)}</dd>
+                        </div>
+                      </>
+                    ) : null}
                   </dl>
-                  <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--muted))]">
+
+                  {/* Promo coupon input & active badge */}
+                  <CartCouponSection compact idPrefix="mini-cart" />
+
+                  <p className="mt-3 text-xs leading-relaxed text-[rgb(var(--muted))]">
                     Taxes and delivery are calculated at checkout.
                   </p>
                   <a
                     href={cart.checkoutUrl}
-                    onClick={() =>
+                    onClick={() => {
+                      haptic(HAPTIC.commit);
                       trackFunnelStep('checkout_start', {
                         handles: cart.lines.map(
                           (line) => line.merchandise.productHandle
                         ),
-                      })
-                    }
+                      });
+                    }}
                     className={buttonStyles({
                       variant: 'primary',
                       size: 'lg',
@@ -127,7 +151,10 @@ export function MiniCart() {
                   </a>
                   <Link
                     href="/cart"
-                    onClick={closeCart}
+                    onClick={() => {
+                      closeCart();
+                      haptic(HAPTIC.tap);
+                    }}
                     className={buttonStyles({
                       variant: 'ghost',
                       size: 'md',
