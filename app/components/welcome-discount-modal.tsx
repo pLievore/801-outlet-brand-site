@@ -177,13 +177,13 @@ export function WelcomeDiscountModal() {
           animate={{ scale: 1, opacity: 1 }}
           whileHover={reducedMotion ? {} : { scale: 1.05 }}
           whileTap={reducedMotion ? {} : { scale: 0.96 }}
-          className="fixed bottom-[calc(var(--tab-bar-total)+1rem)] left-4 z-30 flex items-center gap-2 rounded-full border border-[rgb(var(--border-strong))] bg-white/95 px-3.5 py-2 text-xs font-bold text-[rgb(var(--fg))] shadow-lg backdrop-blur-md transition hover:border-[rgb(var(--accent))] hover:bg-white lg:bottom-6 lg:left-6 print:hidden"
+          className="fixed bottom-[calc(var(--tab-bar-total)+1rem)] left-4 z-30 flex items-center gap-2 rounded-full border border-[rgb(var(--border-strong))] bg-white/95 px-3 py-1.5 text-xs font-bold text-[rgb(var(--fg))] shadow-lg backdrop-blur-md transition hover:border-[rgb(var(--accent))] hover:bg-white lg:bottom-6 lg:left-6 print:hidden"
           aria-label="Unlock $50 Off Coupon"
         >
           <span className="flex size-5 items-center justify-center rounded-full bg-[rgb(var(--accent))]/15 text-[rgb(var(--accent))]">
             <Gift className="size-3.5" />
           </span>
-          <span>$50 Off First Order</span>
+          <span>$50 Off</span>
         </motion.button>
       ) : null}
 
