@@ -23,6 +23,7 @@ import { MobileTabBar } from '../components/mobile-tab-bar';
 import { NavLink } from '../components/nav-link';
 import { MobileNav } from '../components/mobile-nav';
 import { PredictiveSearch } from '../components/predictive-search';
+import { RouteProgress } from '../components/route-progress';
 import { TrackEvent } from '../components/track-event';
 import { buttonStyles } from '../components/ui/button';
 import { Container } from '../components/ui/container';
@@ -75,6 +76,7 @@ export default async function PublicLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <TrackEvent />
+        <RouteProgress />
         <a
           href="#main-content"
           className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-full bg-[rgb(var(--fg))] px-5 py-3 text-sm font-semibold text-white transition focus:translate-y-0"

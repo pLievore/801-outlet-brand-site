@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, LayoutGrid, ShoppingBag, User } from 'lucide-react';
@@ -17,7 +17,7 @@ import { useCart } from './cart/cart-provider';
  * collections, policies, the showroom — because a bar that tried to hold all of
  * it would hold none of it well.
  *
- * **Dragging along the bar picks a tab.** The mark follows the finger one to
+ * **Dragging along the bar picks a tab:** The mark follows the finger one to
  * one and the release commits, so a thumb can rake across without lifting. The
  * reading is positional — where the finger is over the bar — rather than by
  * distance travelled: each button is a quarter of the width, and asking for a
@@ -28,10 +28,10 @@ import { useCart } from './cart/cart-provider';
  * the brand's ease-out-expo curve, giving immediate tactile visual feedback on
  * tap and following finger drags cleanly.
  *
- * **It carries a native switch per button.** Since iOS 26.5 only physical
- * manipulation of a native control reaches the Taptic Engine, so a transparent
- * switch under the finger is the one path left that still ticks on an iPhone —
- * on tap and on each tab the drag crosses.
+ * **Global optimistic synchronization:** When a shopper taps any navigation link
+ * anywhere on the site (including inside the hamburger menu or footer), the
+ * orange indicator begins sliding immediately (0ms) without waiting for serverless
+ * preview cold starts or network latency to resolve.
  */
 
 const TABS = [
@@ -62,8 +62,10 @@ export function MobileTabBar() {
   const quantity = cart?.totalQuantity ?? 0;
 
   const navRef = useRef<HTMLElement>(null);
-  const dragging = useRef(false);
+  const dragStart = useRef<{ x: number; y: number } | null>(null);
+  const isDragging = useRef(false);
   const lastCrossed = useRef<number | null>(null);
+
   const [hover, setHover] = useState<number | null>(null);
   const [pending, setPending] = useState<{
     fromPathname: string;
@@ -75,6 +77,39 @@ export function MobileTabBar() {
   const pendingIndex =
     pending && pending.fromPathname === pathname ? pending.targetIndex : null;
   const marked = hover ?? pendingIndex ?? current;
+
+  // Synchronize optimistic tab sliding with any link clicked across the entire site
+  // (e.g. "Catalog" in the hamburger menu, footer links, header links).
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
+        return;
+      }
+      const anchor = (e.target as HTMLElement).closest('a');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href) return;
+      if (
+        href.startsWith('http://') ||
+        href.startsWith('https://') ||
+        href.startsWith('//') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('tel:') ||
+        href.startsWith('#') ||
+        anchor.target === '_blank'
+      ) {
+        return;
+      }
+
+      const idx = activeIndex(href);
+      setPending({ fromPathname: pathname, targetIndex: idx });
+    };
+
+    document.addEventListener('click', handleDocumentClick, { capture: true });
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, { capture: true });
+    };
+  }, [pathname]);
 
   /**
    * Which tab the finger is over, from the bar's own geometry. Clamped so a
@@ -89,12 +124,19 @@ export function MobileTabBar() {
 
   const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType === 'mouse') return;
-    dragging.current = true;
+    dragStart.current = { x: event.clientX, y: event.clientY };
+    isDragging.current = false;
     lastCrossed.current = tabUnder(event.clientX);
   };
 
   const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
-    if (!dragging.current) return;
+    if (!dragStart.current) return;
+    const deltaX = Math.abs(event.clientX - dragStart.current.x);
+    if (!isDragging.current && deltaX > 6) {
+      isDragging.current = true;
+    }
+    if (!isDragging.current) return;
+
     const over = tabUnder(event.clientX);
     if (over === lastCrossed.current) return;
 
@@ -106,14 +148,18 @@ export function MobileTabBar() {
   };
 
   const endDrag = (event: React.PointerEvent<HTMLElement>) => {
-    if (!dragging.current) return;
-    dragging.current = false;
-
-    const target = tabUnder(event.clientX);
+    const wasDragging = isDragging.current;
+    dragStart.current = null;
+    isDragging.current = false;
     setHover(null);
-    if (target !== current) {
-      setPending({ fromPathname: pathname, targetIndex: target });
-      router.push(TABS[target].href);
+
+    // If it was a deliberate drag along the bar, commit the navigation on release
+    if (wasDragging) {
+      const target = tabUnder(event.clientX);
+      if (target !== current && target >= 0) {
+        setPending({ fromPathname: pathname, targetIndex: target });
+        router.push(TABS[target].href);
+      }
     }
   };
 
@@ -125,7 +171,8 @@ export function MobileTabBar() {
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={() => {
-        dragging.current = false;
+        dragStart.current = null;
+        isDragging.current = false;
         setHover(null);
       }}
       className="pb-tab-bar fixed inset-x-0 bottom-0 z-40 flex border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 backdrop-blur-xl lg:hidden print:hidden"
@@ -178,26 +225,6 @@ export function MobileTabBar() {
             {tab.href === '/cart' && quantity > 0 ? (
               <span className="sr-only">{quantity} items in cart</span>
             ) : null}
-
-            {/* The iPhone's only remaining route to a tick: a real native
-                control under the finger, transparent and inert to everything
-                else. Hidden from assistive tech — the link above is the
-                control that matters. */}
-            <label
-              htmlFor={`tab-switch-${index}`}
-              aria-hidden="true"
-              className="absolute inset-0 z-10 block cursor-pointer"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-              <input
-                type="checkbox"
-                id={`tab-switch-${index}`}
-                {...{ switch: '' }}
-                tabIndex={-1}
-                aria-hidden="true"
-                className="absolute inset-0 size-full cursor-pointer opacity-0"
-              />
-            </label>
           </Link>
         );
       })}
