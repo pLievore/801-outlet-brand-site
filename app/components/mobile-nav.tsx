@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 
 import type { NavigationLink } from '../../src/lib/navigation/types';
+import { HAPTIC, haptic } from '../../src/lib/haptics';
 import { PredictiveSearch } from './predictive-search';
 import { Button, buttonStyles } from './ui/button';
 import { Drawer } from './ui/dialog';
@@ -29,7 +30,10 @@ export function MobileNav({
         ref={triggerRef}
         variant="ghost"
         size="icon"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          haptic(HAPTIC.tap);
+        }}
         className="shrink-0 lg:hidden"
         aria-label="Open menu"
         aria-expanded={open}
@@ -88,7 +92,10 @@ export function MobileNav({
                       // screen reader never hears.
                       aria-current={active ? 'page' : undefined}
                       className={className}
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        setOpen(false);
+                        haptic(HAPTIC.tap);
+                      }}
                     >
                       {link.label}
                     </Link>
@@ -117,7 +124,10 @@ export function MobileNav({
                     <Link
                       href={item.href}
                       aria-current={active ? 'page' : undefined}
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        setOpen(false);
+                        haptic(HAPTIC.tap);
+                      }}
                       className={
                         'flex min-h-10 items-center rounded-xl px-3 py-2 text-sm font-medium transition ' +
                         (active

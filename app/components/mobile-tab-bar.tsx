@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, LayoutGrid, ShoppingBag, User } from 'lucide-react';
@@ -111,6 +111,23 @@ export function MobileTabBar() {
     };
   }, [pathname]);
 
+  const lastNavTime = useRef(0);
+
+  const navigateToTab = useCallback(
+    (index: number, href: string, isDragCommit = false) => {
+      const now = typeof performance !== 'undefined' ? performance.now() : 0;
+      if (now - lastNavTime.current < 150) return;
+      lastNavTime.current = now;
+
+      setPending({ fromPathname: pathname, targetIndex: index });
+      haptic(isDragCommit ? HAPTIC.commit : HAPTIC.tap);
+      if (pathname !== href) {
+        router.push(href);
+      }
+    },
+    [pathname, router]
+  );
+
   /**
    * Which tab the finger is over, from the bar's own geometry. Clamped so a
    * thumb that slides off the end still resolves to the end button.
@@ -126,7 +143,9 @@ export function MobileTabBar() {
     if (event.pointerType === 'mouse') return;
     dragStart.current = { x: event.clientX, y: event.clientY };
     isDragging.current = false;
-    lastCrossed.current = tabUnder(event.clientX);
+    const over = tabUnder(event.clientX);
+    lastCrossed.current = over;
+    haptic(HAPTIC.tap);
   };
 
   const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
@@ -156,9 +175,8 @@ export function MobileTabBar() {
     // If it was a deliberate drag along the bar, commit the navigation on release
     if (wasDragging) {
       const target = tabUnder(event.clientX);
-      if (target !== current && target >= 0) {
-        setPending({ fromPathname: pathname, targetIndex: target });
-        router.push(TABS[target].href);
+      if (target >= 0) {
+        navigateToTab(target, TABS[target].href, true);
       }
     }
   };
@@ -195,37 +213,58 @@ export function MobileTabBar() {
         const isMarked = index === marked;
 
         return (
-          <Link
+          <div
             key={tab.href}
-            href={tab.href}
-            prefetch
-            aria-current={isCurrent ? 'page' : undefined}
-            onClick={() => {
-              setPending({ fromPathname: pathname, targetIndex: index });
-              haptic(HAPTIC.tap);
-            }}
-            className={`relative flex h-[var(--tab-bar-height)] flex-1 flex-col items-center justify-center gap-0.5 transition-colors ${
-              isMarked
-                ? 'text-[rgb(var(--fg))]'
-                : 'text-[rgb(var(--muted))]'
-            }`}
+            className="relative flex h-[var(--tab-bar-height)] flex-1 flex-col items-center justify-center"
           >
-            <span className="relative">
-              <tab.icon aria-hidden="true" className="size-5" />
+            <Link
+              href={tab.href}
+              prefetch
+              aria-current={isCurrent ? 'page' : undefined}
+              onClick={() => navigateToTab(index, tab.href)}
+              className={`relative flex size-full flex-col items-center justify-center gap-0.5 transition-colors ${
+                isMarked
+                  ? 'text-[rgb(var(--fg))]'
+                  : 'text-[rgb(var(--muted))]'
+              }`}
+            >
+              <span className="relative">
+                <tab.icon aria-hidden="true" className="size-5" />
+                {tab.href === '/cart' && quantity > 0 ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-2 -top-1.5 flex min-w-4 items-center justify-center rounded-full bg-[rgb(var(--accent))] px-1 text-[10px] font-bold leading-4 text-white"
+                  >
+                    {quantity > 99 ? '99+' : quantity}
+                  </span>
+                ) : null}
+              </span>
+              <span className="text-[11px] font-semibold">{tab.label}</span>
               {tab.href === '/cart' && quantity > 0 ? (
-                <span
-                  aria-hidden="true"
-                  className="absolute -right-2 -top-1.5 flex min-w-4 items-center justify-center rounded-full bg-[rgb(var(--accent))] px-1 text-[10px] font-bold leading-4 text-white"
-                >
-                  {quantity > 99 ? '99+' : quantity}
-                </span>
+                <span className="sr-only">{quantity} items in cart</span>
               ) : null}
-            </span>
-            <span className="text-[11px] font-semibold">{tab.label}</span>
-            {tab.href === '/cart' && quantity > 0 ? (
-              <span className="sr-only">{quantity} items in cart</span>
-            ) : null}
-          </Link>
+            </Link>
+
+            {/* The iPhone's only remaining route to a physical tick:
+                a real native switch under the finger. Toggling it plays
+                the system Taptic Engine tick on iOS Safari. */}
+            <label
+              htmlFor={`tab-switch-${index}`}
+              aria-hidden="true"
+              className="absolute inset-0 z-10 block cursor-pointer"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              <input
+                type="checkbox"
+                id={`tab-switch-${index}`}
+                {...{ switch: '' }}
+                tabIndex={-1}
+                aria-hidden="true"
+                onChange={() => navigateToTab(index, tab.href)}
+                className="absolute inset-0 size-full cursor-pointer opacity-0"
+              />
+            </label>
+          </div>
         );
       })}
     </nav>

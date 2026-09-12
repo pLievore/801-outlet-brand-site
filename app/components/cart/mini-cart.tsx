@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ShoppingBag, Tag } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
+import { HAPTIC, haptic } from '../../../src/lib/haptics';
 import { trackFunnelStep } from '../track-event';
 import { Button, buttonStyles } from '../ui/button';
 import { Drawer } from '../ui/dialog';
@@ -19,7 +20,10 @@ export function CartButton() {
     <Button
       variant="ghost"
       size="icon"
-      onClick={openCart}
+      onClick={() => {
+        openCart();
+        haptic(HAPTIC.tap);
+      }}
       className="relative shrink-0"
       aria-label={
         quantity > 0 ? `Open cart, ${quantity} items` : 'Open cart, empty'
@@ -128,13 +132,14 @@ export function MiniCart() {
                   </p>
                   <a
                     href={cart.checkoutUrl}
-                    onClick={() =>
+                    onClick={() => {
+                      haptic(HAPTIC.commit);
                       trackFunnelStep('checkout_start', {
                         handles: cart.lines.map(
                           (line) => line.merchandise.productHandle
                         ),
-                      })
-                    }
+                      });
+                    }}
                     className={buttonStyles({
                       variant: 'primary',
                       size: 'lg',
@@ -145,7 +150,10 @@ export function MiniCart() {
                   </a>
                   <Link
                     href="/cart"
-                    onClick={closeCart}
+                    onClick={() => {
+                      closeCart();
+                      haptic(HAPTIC.tap);
+                    }}
                     className={buttonStyles({
                       variant: 'ghost',
                       size: 'md',

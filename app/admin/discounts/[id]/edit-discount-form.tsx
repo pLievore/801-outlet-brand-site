@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import type { AdminDiscountItem } from '../../../../src/lib/shopify-admin/discounts';
+import { HAPTIC, haptic } from '../../../../src/lib/haptics';
 import { deleteDiscountAction, updateDiscountAction } from '../actions';
 import { buttonStyles } from '../../../components/ui/button';
 
@@ -40,6 +41,7 @@ export function EditDiscountForm({ discount }: { discount: AdminDiscountItem }) 
 
   const handleCopy = () => {
     navigator.clipboard.writeText(discount.code);
+    haptic(HAPTIC.tap);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -50,6 +52,7 @@ export function EditDiscountForm({ discount }: { discount: AdminDiscountItem }) 
         `Are you sure you want to delete coupon "${discount.code}"? This will permanently remove it from Shopify.`
       )
     ) {
+      haptic(HAPTIC.undo);
       startDeleteTransition(async () => {
         const res = await deleteDiscountAction(discount.id);
         if (res.ok) {
@@ -293,6 +296,7 @@ export function EditDiscountForm({ discount }: { discount: AdminDiscountItem }) 
             <button
               type="submit"
               disabled={isPending}
+              onClick={() => haptic(HAPTIC.commit)}
               className={buttonStyles({
                 variant: 'primary',
                 size: 'md',

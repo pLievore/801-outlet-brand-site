@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ShoppingBag, Tag, X } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
+import { HAPTIC, haptic } from '../../../src/lib/haptics';
 import { CartLineItem } from '../../components/cart/cart-line-item';
 import { useCart } from '../../components/cart/cart-provider';
 import { trackFunnelStep } from '../../components/track-event';
@@ -109,13 +110,14 @@ export function CartView() {
                 </p>
                 <a
                   href={cart.checkoutUrl}
-                  onClick={() =>
+                  onClick={() => {
+                    haptic(HAPTIC.commit);
                     trackFunnelStep('checkout_start', {
                       handles: cart.lines.map(
                         (line) => line.merchandise.productHandle
                       ),
-                    })
-                  }
+                    });
+                  }}
                   className={buttonStyles({
                     variant: 'primary',
                     size: 'lg',
@@ -126,6 +128,7 @@ export function CartView() {
                 </a>
                 <Link
                   href="/products"
+                  onClick={() => haptic(HAPTIC.tap)}
                   className={buttonStyles({
                     variant: 'ghost',
                     size: 'md',
@@ -163,9 +166,11 @@ function CartCouponSection() {
     setLoading(false);
 
     if (success) {
+      haptic(HAPTIC.commit);
       setFeedback({ type: 'success', message: `Coupon "${clean}" applied successfully!` });
       setCouponInput('');
     } else {
+      haptic(HAPTIC.undo);
       setFeedback({
         type: 'error',
         message: `Coupon "${clean}" is invalid, expired, or has reached its usage limit.`,
@@ -174,6 +179,7 @@ function CartCouponSection() {
   };
 
   const handleRemove = async () => {
+    haptic(HAPTIC.undo);
     setLoading(true);
     setFeedback(null);
     await removeDiscount();

@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ArrowLeft, Check, Loader2, Percent, Tag } from 'lucide-react';
 
+import { HAPTIC, haptic } from '../../../../src/lib/haptics';
 import { createDiscountAction } from '../actions';
 import { buttonStyles } from '../../../components/ui/button';
 
@@ -95,7 +96,10 @@ export function NewDiscountForm() {
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => setDiscountType('percentage')}
+            onClick={() => {
+              setDiscountType('percentage');
+              haptic(HAPTIC.tap);
+            }}
             className={`flex items-center justify-center gap-2 rounded-2xl border p-4 text-xs font-bold transition ${
               discountType === 'percentage'
                 ? 'border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/5 text-[rgb(var(--fg))] ring-2 ring-[rgb(var(--accent))]/20'
@@ -107,7 +111,10 @@ export function NewDiscountForm() {
 
           <button
             type="button"
-            onClick={() => setDiscountType('fixed_amount')}
+            onClick={() => {
+              setDiscountType('fixed_amount');
+              haptic(HAPTIC.tap);
+            }}
             className={`flex items-center justify-center gap-2 rounded-2xl border p-4 text-xs font-bold transition ${
               discountType === 'fixed_amount'
                 ? 'border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/5 text-[rgb(var(--fg))] ring-2 ring-[rgb(var(--accent))]/20'
@@ -269,6 +276,7 @@ export function NewDiscountForm() {
           <button
             type="submit"
             disabled={isPending}
+            onClick={() => haptic(HAPTIC.commit)}
             className={buttonStyles({
               variant: 'primary',
               size: 'md',

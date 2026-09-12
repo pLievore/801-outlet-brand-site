@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Copy, Check, Edit2, Plus, Tag, Trash2, Search } from 'lucide-react';
 
 import type { AdminDiscountItem } from '../../../src/lib/shopify-admin/discounts';
+import { HAPTIC, haptic } from '../../../src/lib/haptics';
 import { deleteDiscountAction } from './actions';
 import { buttonStyles } from '../../components/ui/button';
 
@@ -21,12 +22,14 @@ export function DiscountListClient({
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code);
+    haptic(HAPTIC.tap);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
   const handleDelete = (id: string, code: string) => {
     if (confirm(`Are you sure you want to permanently delete coupon "${code}" from Shopify?`)) {
+      haptic(HAPTIC.undo);
       setDeletingId(id);
       startTransition(async () => {
         const res = await deleteDiscountAction(id);
@@ -72,7 +75,10 @@ export function DiscountListClient({
             <button
               key={status}
               type="button"
-              onClick={() => setFilter(status)}
+              onClick={() => {
+                setFilter(status);
+                haptic(HAPTIC.tap);
+              }}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                 filter === status
                   ? 'bg-[rgb(var(--fg))] text-white'

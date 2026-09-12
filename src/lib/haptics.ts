@@ -33,19 +33,23 @@ export const HAPTIC_LABEL_ID = 'haptic-trigger-label';
  */
 export const HAPTIC = {
   /** Selection, toggle, picking up a photo to drag. */
-  tap: 10,
+  tap: 15,
   /** Something committed: added to cart, saved, dropped into place. */
-  commit: 18,
+  commit: 25,
   /** Something removed or refused. Two short ticks read as "undone". */
-  undo: [12, 40, 12],
+  undo: [15, 50, 15],
 } as const;
 
 export function haptic(
   pattern: number | readonly number[] = HAPTIC.tap
 ): void {
   if (typeof document !== 'undefined') {
-    // Must be the label — clicking the input from script never ticks.
-    document.getElementById(HAPTIC_LABEL_ID)?.click();
+    try {
+      // Must be the label — clicking the input from script never ticks.
+      document.getElementById(HAPTIC_LABEL_ID)?.click();
+    } catch {
+      // Silent catch
+    }
   }
 
   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {

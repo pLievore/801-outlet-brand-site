@@ -23,14 +23,13 @@ export function HapticTrigger() {
       aria-hidden="true"
       style={{
         position: 'fixed',
-        bottom: 0,
-        right: 0,
-        width: 1,
-        height: 1,
-        opacity: 0.001,
+        top: -100,
+        left: -100,
+        width: 10,
+        height: 10,
+        opacity: 0.01,
         overflow: 'hidden',
         zIndex: -1,
-        pointerEvents: 'none',
       }}
     >
       <input
