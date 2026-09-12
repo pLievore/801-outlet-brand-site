@@ -22,6 +22,7 @@ import {
 import { HAPTIC, haptic } from '../../../src/lib/haptics';
 import type { LeadRecord, LeadStatus } from '../../../src/lib/leads/types';
 import { buttonStyles } from '../../components/ui/button';
+import { deleteLeadAction, updateLeadStatusAction } from './actions';
 
 export function LeadListClient({ initialLeads }: { initialLeads: LeadRecord[] }) {
   const [leads, setLeads] = useState<LeadRecord[]>(initialLeads);
@@ -58,13 +59,10 @@ export function LeadListClient({ initialLeads }: { initialLeads: LeadRecord[] })
     );
 
     startTransition(async () => {
-      try {
-        await fetch('/api/leads', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, status: newStatus }),
-        });
-      } catch {}
+      const res = await updateLeadStatusAction(id, newStatus);
+      if (!res.ok) {
+        alert(res.error ?? 'Failed to update lead status.');
+      }
     });
   };
 
@@ -75,12 +73,11 @@ export function LeadListClient({ initialLeads }: { initialLeads: LeadRecord[] })
       setLeads((prev) => prev.filter((l) => l.id !== id));
 
       startTransition(async () => {
-        try {
-          await fetch(`/api/leads?id=${encodeURIComponent(id)}`, {
-            method: 'DELETE',
-          });
-        } catch {}
+        const res = await deleteLeadAction(id);
         setDeletingId(null);
+        if (!res.ok) {
+          alert(res.error ?? 'Failed to delete lead.');
+        }
       });
     }
   };
