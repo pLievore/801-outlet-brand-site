@@ -28,6 +28,7 @@ import { TrackEvent } from '../components/track-event';
 import { buttonStyles } from '../components/ui/button';
 import { Container } from '../components/ui/container';
 import { NewTabHint } from '../components/ui/new-tab-hint';
+import { WelcomeDiscountModal } from '../components/welcome-discount-modal';
 
 export default async function PublicLayout({
   children,
@@ -95,6 +96,7 @@ export default async function PublicLayout({
         <MiniCart />
         <MobileTabBar />
         <HapticTrigger />
+        <WelcomeDiscountModal />
       </div>
     </CartProvider>
   );

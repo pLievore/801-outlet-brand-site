@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ShieldCheck, Store, Truck } from 'lucide-react';
 
 import { env } from '../../../../src/config/env';
 import {
@@ -194,9 +195,15 @@ export default async function ProductDetailPage({ params }: PageProps) {
               >
                 {inStock ? `✓ ${availability.label}` : availability.label}
               </span>
-              {showLowStock ? (
-                <span className="rounded-full border border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/10 px-3 py-1 font-semibold text-[rgb(var(--accent))]">
-                  Only {quantity} left
+              {inStock && quantity === 1 ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 font-semibold text-amber-900 shadow-xs">
+                  <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" aria-hidden="true" />
+                  Only 1 left in stock · Unique showroom piece
+                </span>
+              ) : showLowStock ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50/70 px-3 py-1 font-semibold text-amber-900">
+                  <span className="size-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+                  Low stock: Only {quantity} left
                 </span>
               ) : null}
               <span className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1">
@@ -217,6 +224,47 @@ export default async function ProductDetailPage({ params }: PageProps) {
               >
                 Text us about this piece
               </a>
+            </div>
+
+            {/* Local Utah Trust & Delivery signals */}
+            <div className="mt-5 rounded-2xl border border-[rgb(var(--border))] bg-neutral-50/70 p-4 text-xs">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg border border-[rgb(var(--border))] bg-white text-[rgb(var(--accent))] shadow-xs">
+                    <Truck className="size-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[rgb(var(--fg))]">Fast Utah Delivery</p>
+                    <p className="text-[rgb(var(--muted))] leading-relaxed">
+                      Doorstep or room-of-choice delivery across Salt Lake County and Utah Valley.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg border border-[rgb(var(--border))] bg-white text-[rgb(var(--sage-ink))] shadow-xs">
+                    <Store className="size-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[rgb(var(--fg))]">Free Showroom Pickup</p>
+                    <p className="text-[rgb(var(--muted))] leading-relaxed">
+                      Inspect and pick up in South Salt Lake during weekend hours or by appointment.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg border border-[rgb(var(--border))] bg-white text-emerald-700 shadow-xs">
+                    <ShieldCheck className="size-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[rgb(var(--fg))]">100% In-Person Guarantee</p>
+                    <p className="text-[rgb(var(--muted))] leading-relaxed">
+                      No surprises. See actual floor photos or test sit before completing your order.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mt-7 rounded-2xl border border-[rgb(var(--border))] bg-white p-5">
