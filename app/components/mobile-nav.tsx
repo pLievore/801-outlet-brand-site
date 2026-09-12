@@ -98,6 +98,41 @@ export function MobileNav({
             })}
           </ul>
 
+          <div className="mt-6 border-t border-[rgb(var(--border))] pt-4">
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-[rgb(var(--muted))]">
+              Store & Policies
+            </p>
+            <ul className="mt-2 space-y-0.5">
+              {[
+                { href: '/showroom', label: 'Showroom & Hours' },
+                { href: '/delivery', label: 'Delivery Information' },
+                { href: '/pickup', label: 'Pickup Policy' },
+                { href: '/returns', label: 'Returns & Refunds' },
+                { href: '/terms', label: 'Terms of Service' },
+                { href: '/privacy', label: 'Privacy Policy' },
+              ].map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      onClick={() => setOpen(false)}
+                      className={
+                        'flex min-h-10 items-center rounded-xl px-3 py-2 text-sm font-medium transition ' +
+                        (active
+                          ? 'bg-[rgb(var(--surface-muted))] font-semibold text-[rgb(var(--fg))]'
+                          : 'text-[rgb(var(--muted))] hover:bg-[rgb(var(--surface-muted))] hover:text-[rgb(var(--fg))]')
+                      }
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
           <div className="mt-auto border-t border-[rgb(var(--border))] pt-6">
             <a
               href={phoneHref}

@@ -23,6 +23,11 @@ import { useCart } from './cart/cart-provider';
  * distance travelled: each button is a quarter of the width, and asking for a
  * screen's worth of travel per tab would make the drag feel dead.
  *
+ * **Smooth sliding indicator:** Rather than popping abruptly into place, the
+ * orange bar glides smoothly across the bar using a GPU-driven transform with
+ * the brand's ease-out-expo curve, giving immediate tactile visual feedback on
+ * tap and following finger drags cleanly.
+ *
  * **It carries a native switch per button.** Since iOS 26.5 only physical
  * manipulation of a native control reaches the Taptic Engine, so a transparent
  * switch under the finger is the one path left that still ticks on an iPhone —
@@ -60,9 +65,16 @@ export function MobileTabBar() {
   const dragging = useRef(false);
   const lastCrossed = useRef<number | null>(null);
   const [hover, setHover] = useState<number | null>(null);
+  const [pending, setPending] = useState<{
+    fromPathname: string;
+    targetIndex: number;
+  } | null>(null);
 
   const current = activeIndex(pathname);
-  const marked = hover ?? current;
+  // When pathname updates to the new route, pending expires declaratively without an effect
+  const pendingIndex =
+    pending && pending.fromPathname === pathname ? pending.targetIndex : null;
+  const marked = hover ?? pendingIndex ?? current;
 
   /**
    * Which tab the finger is over, from the bar's own geometry. Clamped so a
@@ -99,7 +111,10 @@ export function MobileTabBar() {
 
     const target = tabUnder(event.clientX);
     setHover(null);
-    if (target !== current) router.push(TABS[target].href);
+    if (target !== current) {
+      setPending({ fromPathname: pathname, targetIndex: target });
+      router.push(TABS[target].href);
+    }
   };
 
   return (
@@ -115,6 +130,19 @@ export function MobileTabBar() {
       }}
       className="pb-tab-bar fixed inset-x-0 bottom-0 z-40 flex border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 backdrop-blur-xl lg:hidden print:hidden"
     >
+      {/* Sliding orange indicator */}
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute left-0 top-0 z-20 h-[2px] w-1/4 transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          marked >= 0 ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          transform: `translate3d(${Math.max(0, marked) * 100}%, 0, 0)`,
+        }}
+      >
+        <span className="mx-auto block h-full w-[56%] rounded-b bg-[rgb(var(--accent))]" />
+      </span>
+
       {TABS.map((tab, index) => {
         const isCurrent = index === current;
         const isMarked = index === marked;
@@ -125,20 +153,16 @@ export function MobileTabBar() {
             href={tab.href}
             prefetch
             aria-current={isCurrent ? 'page' : undefined}
-            onClick={() => haptic(HAPTIC.tap)}
+            onClick={() => {
+              setPending({ fromPathname: pathname, targetIndex: index });
+              haptic(HAPTIC.tap);
+            }}
             className={`relative flex h-[var(--tab-bar-height)] flex-1 flex-col items-center justify-center gap-0.5 transition-colors ${
               isMarked
                 ? 'text-[rgb(var(--fg))]'
                 : 'text-[rgb(var(--muted))]'
             }`}
           >
-            {isMarked ? (
-              <span
-                aria-hidden="true"
-                className="absolute inset-x-[22%] top-0 h-[2px] rounded-b bg-[rgb(var(--accent))]"
-              />
-            ) : null}
-
             <span className="relative">
               <tab.icon aria-hidden="true" className="size-5" />
               {tab.href === '/cart' && quantity > 0 ? (

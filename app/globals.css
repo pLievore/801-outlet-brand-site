@@ -127,7 +127,7 @@ a:focus-visible {
 
 /** Room at the end of the document for the bar floating over it. */
 .pb-above-tab-bar {
-  padding-bottom: calc(var(--tab-bar-total) + 0.5rem);
+  padding-bottom: calc(var(--tab-bar-total) + 1.5rem);
 }
 
 /* Premium grid texture util */
