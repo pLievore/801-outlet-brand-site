@@ -19,6 +19,7 @@ import {
   ReceiptText,
   Store,
   Tag,
+  Users,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ const NAV: NavGroup[] = [
     title: 'Operation',
     items: [
       { href: '/admin', label: 'Overview', icon: LayoutDashboard },
+      { href: '/admin/leads', label: 'Leads', icon: Users },
       { href: '/admin/sales', label: 'Sales', icon: LineChart },
       { href: '/admin/orders', label: 'Orders', icon: ReceiptText },
       { href: '/admin/discounts', label: 'Discounts', icon: Tag },

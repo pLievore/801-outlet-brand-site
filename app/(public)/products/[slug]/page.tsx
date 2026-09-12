@@ -23,6 +23,7 @@ import {
 import { PurchasePanel } from '../../../components/cart/purchase-panel';
 import { CatalogProductCard } from '../../../components/catalog-product-card';
 import { TrackEvent } from '../../../components/track-event';
+import { TrackProductInterest } from '../../../components/track-product-interest';
 import {
   FadeIn,
   FadeMount,
@@ -128,6 +129,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 md:py-14">
       <TrackEvent step="product_view" handle={product.handle} />
+      <TrackProductInterest
+        handle={product.handle}
+        title={product.title}
+        image={product.images[0]?.url}
+        price={formatMoney(price)}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}

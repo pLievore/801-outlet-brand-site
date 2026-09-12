@@ -23,6 +23,7 @@ import {
   removeCartLineAction,
   updateCartLineAction,
 } from '../../actions/cart';
+import { getClientContact, syncLeadToServer } from '../../../src/lib/leads/client';
 import { currentAttribution } from '../track-event';
 
 type CartContextValue = {
@@ -89,6 +90,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [applyResult]);
+
+  useEffect(() => {
+    if (!cart) return;
+    const known = getClientContact();
+    if (known) {
+      void syncLeadToServer(known, {
+        hasItems: cart.lines.length > 0,
+        totalQuantity: cart.totalQuantity,
+        totalAmount: cart.total.amount,
+        items: cart.lines.map((l) => ({
+          title: l.merchandise.productTitle,
+          variantTitle: l.merchandise.variantTitle,
+          quantity: l.quantity,
+          price: l.lineTotal.amount,
+        })),
+        discountCode: cart.discountCodes[0]?.code,
+      });
+    }
+  }, [cart]);
 
   const run = useCallback(
     async (operation: Promise<CartActionResult>): Promise<boolean> => {

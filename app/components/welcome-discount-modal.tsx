@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Check, Copy, Gift, Sparkles, X } from 'lucide-react';
 
 import { HAPTIC, haptic } from '../../src/lib/haptics';
+import { saveClientContact, syncLeadToServer } from '../../src/lib/leads/client';
 import { useCart } from './cart/cart-provider';
 import { buttonStyles } from './ui/button';
 
@@ -107,6 +108,28 @@ export function WelcomeDiscountModal() {
 
     try {
       localStorage.setItem(STORAGE_UNLOCKED_KEY, WELCOME_CODE);
+      saveClientContact(clean, isEmail ? 'email' : 'phone');
+
+      const cartData = cart
+        ? {
+            hasItems: cart.lines.length > 0,
+            totalQuantity: cart.totalQuantity,
+            totalAmount: cart.total.amount,
+            items: cart.lines.map((l) => ({
+              title: l.merchandise.productTitle,
+              variantTitle: l.merchandise.variantTitle,
+              quantity: l.quantity,
+              price: l.lineTotal.amount,
+            })),
+            discountCode: cart.discountCodes[0]?.code,
+          }
+        : null;
+
+      void syncLeadToServer(
+        { contact: clean, channel: isEmail ? 'email' : 'phone' },
+        cartData
+      );
+
       // Fire lead capture beacon
       void fetch('/api/events', {
         method: 'POST',
@@ -135,6 +158,7 @@ export function WelcomeDiscountModal() {
     if (cart && cart.lines.length > 0) {
       openCart();
     }
+    void syncLeadToServer();
   };
 
   if (!hasMounted) return null;
