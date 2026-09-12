@@ -1,12 +1,13 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeftCircle,
   ArrowRightCircle,
   ClipboardCopy,
+  GripVertical,
   ImagePlus,
   Loader2,
   Trash2,
@@ -172,45 +173,71 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
     });
   };
 
-  /** Persists whatever order is on screen; reverts to `previous` if refused. */
-  const commitOrder = (next: typeof mediaOrder, previous: typeof mediaOrder) => {
-    setMediaFeedback(null);
-    startMedia(async () => {
-      const result = await reorderMediaAction({
-        productId: product.id,
-        orderedMediaIds: next.map((media) => media.id),
-      });
-      if (!result.ok) {
-        setMediaOrder(previous);
-        setMediaFeedback({ ok: false, text: result.error ?? 'Failed.' });
-      } else {
-        router.refresh();
-      }
-    });
-  };
+  const containerRef = useRef<HTMLUListElement | null>(null);
+  const saveOrderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const baselineOrder = useRef(product.media);
+  const [savingOrder, setSavingOrder] = useState(false);
 
-  /** The keyboard route. Drag is an addition; this is what makes it reachable. */
+  useEffect(() => {
+    return () => {
+      if (saveOrderTimer.current !== null) {
+        clearTimeout(saveOrderTimer.current);
+      }
+    };
+  }, []);
+
+  /**
+   * Debounces the persistence to Shopify so rapid arrow taps or quick drags
+   * update the UI with 0ms latency while queuing a single consolidated save.
+   */
+  const queueOrderSave = useCallback(
+    (next: typeof mediaOrder) => {
+      if (saveOrderTimer.current !== null) {
+        clearTimeout(saveOrderTimer.current);
+      }
+      setSavingOrder(true);
+      saveOrderTimer.current = setTimeout(async () => {
+        const result = await reorderMediaAction({
+          productId: product.id,
+          orderedMediaIds: next.map((media) => media.id),
+        });
+        setSavingOrder(false);
+        if (!result.ok) {
+          setMediaOrder(baselineOrder.current);
+          setMediaFeedback({
+            ok: false,
+            text: result.error ?? 'Failed to save photo order.',
+          });
+        } else {
+          baselineOrder.current = next;
+          setMediaFeedback({ ok: true, text: 'Photo order saved.' });
+          setTimeout(() => setMediaFeedback(null), 2500);
+        }
+      }, 500);
+    },
+    [product.id]
+  );
+
+  /** Instantaneous arrow swap: zero delay, non-blocking, debounced save. */
   const move = (index: number, direction: -1 | 1) => {
     const target = index + direction;
     if (target < 0 || target >= mediaOrder.length) return;
     const next = [...mediaOrder];
     [next[index], next[target]] = [next[target], next[index]];
     setMediaOrder(next);
+    liveOrder.current = next;
     haptic(HAPTIC.tap);
-    commitOrder(next, mediaOrder);
+    queueOrderSave(next);
   };
 
-  // What the order was when this drag began, so a refused save can go back to
-  // it — the live reordering has already overwritten the state by then.
+  // What the order was when this drag began, so a refused save can go back to it
   const beforeDrag = useRef(mediaOrder);
-  // The order as the finger last left it. Read on drop instead of reaching
-  // into a state updater, which React is free to run more than once.
   const liveOrder = useRef(mediaOrder);
   liveOrder.current = mediaOrder;
 
   const drag = useDragSort({
     count: mediaOrder.length,
-    disabled: mutatingMedia,
+    containerRef,
     onMove: (from, to) => {
       if (!dragging.current) {
         beforeDrag.current = liveOrder.current;
@@ -226,7 +253,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
       dragging.current = false;
       if (!moved) return;
       haptic(HAPTIC.commit);
-      commitOrder(liveOrder.current, beforeDrag.current);
+      queueOrderSave(liveOrder.current);
     },
   });
 
@@ -562,10 +589,17 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
         </div>
 
         {mediaOrder.length > 1 ? (
-          <p className="mt-4 text-xs text-[rgb(var(--muted))]">
-            Hold a photo to pick it up, then drag it where it belongs. The
-            arrows do the same thing from a keyboard.
-          </p>
+          <div className="mt-4 flex items-center justify-between gap-3 text-xs text-[rgb(var(--muted))]">
+            <p>
+              Hold and drag any photo to reorder, or tap the arrows for instant moving.
+            </p>
+            {savingOrder ? (
+              <span className="flex shrink-0 items-center gap-1.5 font-medium text-[rgb(var(--accent))]">
+                <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+                Saving order…
+              </span>
+            ) : null}
+          </div>
         ) : null}
 
         {mediaOrder.length === 0 ? (
@@ -573,29 +607,31 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
             No photos yet — add the first one above.
           </p>
         ) : (
-          <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <ul
+            ref={containerRef}
+            className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+          >
             {mediaOrder.map((media, index) => (
               <li
                 key={media.id}
                 {...drag.itemProps(index)}
                 className={cn(
-                  'group relative overflow-hidden rounded-2xl border bg-[rgb(var(--surface-muted))] transition-[transform,box-shadow]',
-                  // Press and hold to pick a photo up; the cursor says so on a
-                  // mouse, and the lift says so on a finger.
-                  mediaOrder.length > 1 && 'cursor-grab select-none',
+                  'group relative overflow-hidden rounded-2xl border bg-[rgb(var(--surface-muted))] transition-[transform,box-shadow,border-color]',
+                  mediaOrder.length > 1 && 'cursor-grab active:cursor-grabbing select-none',
                   drag.dragging === index
-                    ? 'z-10 scale-[1.04] cursor-grabbing border-[rgb(var(--accent))] shadow-lg'
+                    ? 'z-30 scale-[1.05] cursor-grabbing border-[rgb(var(--accent))] shadow-2xl ring-2 ring-[rgb(var(--accent))]/30'
                     : 'border-[rgb(var(--border))]'
                 )}
               >
-                <div className="relative aspect-square">
+                <div className="relative aspect-square pointer-events-none select-none">
                   {media.imageUrl ? (
                     <Image
                       src={media.imageUrl}
                       alt={media.alt ?? ''}
                       fill
+                      draggable={false}
                       sizes="(max-width: 640px) 50vw, 25vw"
-                      className="object-cover"
+                      className="object-cover pointer-events-none select-none"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs text-[rgb(var(--muted))]">
@@ -607,13 +643,18 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
                       Cover
                     </span>
                   ) : null}
+                  {mediaOrder.length > 1 ? (
+                    <span className="absolute right-2 top-2 rounded-md bg-black/40 p-1 text-white/80 opacity-0 transition group-hover:opacity-100 sm:opacity-60">
+                      <GripVertical aria-hidden="true" className="size-3.5" />
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex items-center justify-between gap-1 p-2">
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => move(index, -1)}
-                      disabled={index === 0 || mutatingMedia}
+                      disabled={index === 0}
                       aria-label="Move photo earlier"
                       className="flex size-8 items-center justify-center rounded-lg text-[rgb(var(--muted))] transition hover:bg-[rgb(var(--surface-muted))] hover:text-[rgb(var(--fg))] disabled:opacity-30"
                     >
@@ -622,7 +663,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
                     <button
                       type="button"
                       onClick={() => move(index, 1)}
-                      disabled={index === mediaOrder.length - 1 || mutatingMedia}
+                      disabled={index === mediaOrder.length - 1}
                       aria-label="Move photo later"
                       className="flex size-8 items-center justify-center rounded-lg text-[rgb(var(--muted))] transition hover:bg-[rgb(var(--surface-muted))] hover:text-[rgb(var(--fg))] disabled:opacity-30"
                     >
