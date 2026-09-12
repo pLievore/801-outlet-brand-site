@@ -2,13 +2,14 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Tag } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
 import { HAPTIC, haptic } from '../../../src/lib/haptics';
 import { trackFunnelStep } from '../track-event';
 import { Button, buttonStyles } from '../ui/button';
 import { Drawer } from '../ui/dialog';
+import { CartCouponSection } from './cart-coupon-section';
 import { CartLineItem } from './cart-line-item';
 import { useCart } from './cart-provider';
 
@@ -109,25 +110,25 @@ export function MiniCart() {
                       </dd>
                     </div>
                     {Number(cart.subtotal.amount) > Number(cart.total.amount) ? (
-                      <div className="flex justify-between text-[rgb(var(--sage-ink))]">
-                        <dt className="font-medium">Discount savings</dt>
-                        <dd className="font-semibold tabular-nums-tight">
-                          -${(Number(cart.subtotal.amount) - Number(cart.total.amount)).toFixed(2)}
-                        </dd>
-                      </div>
-                    ) : null}
-                    {cart.discountCodes
-                      .filter((d) => d.applicable)
-                      .map((d) => (
-                        <div key={d.code} className="flex items-center justify-between text-xs text-[rgb(var(--sage-ink))] font-semibold">
-                          <span className="flex items-center gap-1">
-                            <Tag className="size-3" aria-hidden="true" />
-                            {d.code} applied
-                          </span>
+                      <>
+                        <div className="flex justify-between text-[rgb(var(--sage-ink))]">
+                          <dt className="font-medium">Discount savings</dt>
+                          <dd className="font-semibold tabular-nums-tight">
+                            -${(Number(cart.subtotal.amount) - Number(cart.total.amount)).toFixed(2)}
+                          </dd>
                         </div>
-                      ))}
+                        <div className="flex justify-between border-t border-[rgb(var(--border))] pt-1.5 font-semibold">
+                          <dt>Total</dt>
+                          <dd className="tabular-nums-tight">{formatMoney(cart.total)}</dd>
+                        </div>
+                      </>
+                    ) : null}
                   </dl>
-                  <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--muted))]">
+
+                  {/* Promo coupon input & active badge */}
+                  <CartCouponSection compact idPrefix="mini-cart" />
+
+                  <p className="mt-3 text-xs leading-relaxed text-[rgb(var(--muted))]">
                     Taxes and delivery are calculated at checkout.
                   </p>
                   <a

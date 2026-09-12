@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Tag, X } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
 import { HAPTIC, haptic } from '../../../src/lib/haptics';
+import { CartCouponSection } from '../../components/cart/cart-coupon-section';
 import { CartLineItem } from '../../components/cart/cart-line-item';
 import { useCart } from '../../components/cart/cart-provider';
 import { trackFunnelStep } from '../../components/track-event';
@@ -102,7 +102,7 @@ export function CartView() {
                 </dl>
 
                 {/* Coupon input & applied tags */}
-                <CartCouponSection />
+                <CartCouponSection idPrefix="cart-page" />
 
                 <p className="mt-4 text-xs leading-relaxed text-[rgb(var(--muted))]">
                   Taxes, delivery and pickup options are confirmed at the secure
@@ -143,115 +143,5 @@ export function CartView() {
         )}
       </Container>
     </main>
-  );
-}
-
-function CartCouponSection() {
-  const { cart, applyDiscount, removeDiscount, pending } = useCart();
-  const [couponInput, setCouponInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
-
-  const appliedCodes = cart?.discountCodes.filter((d) => d.applicable) ?? [];
-
-  const handleApply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = couponInput.trim().toUpperCase();
-    if (!clean) return;
-
-    setLoading(true);
-    setFeedback(null);
-
-    const success = await applyDiscount(clean);
-    setLoading(false);
-
-    if (success) {
-      haptic(HAPTIC.commit);
-      setFeedback({ type: 'success', message: `Coupon "${clean}" applied successfully!` });
-      setCouponInput('');
-    } else {
-      haptic(HAPTIC.undo);
-      setFeedback({
-        type: 'error',
-        message: `Coupon "${clean}" is invalid, expired, or has reached its usage limit.`,
-      });
-    }
-  };
-
-  const handleRemove = async () => {
-    haptic(HAPTIC.undo);
-    setLoading(true);
-    setFeedback(null);
-    await removeDiscount();
-    setLoading(false);
-  };
-
-  return (
-    <div className="mt-5 border-t border-[rgb(var(--border))] pt-4">
-      {appliedCodes.length > 0 ? (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-[rgb(var(--muted))] uppercase tracking-wider">
-            Active Coupon
-          </p>
-          {appliedCodes.map((discount) => (
-            <div
-              key={discount.code}
-              className="flex items-center justify-between rounded-xl border border-[rgb(var(--sage))]/40 bg-[rgb(var(--sage-soft))] px-3.5 py-2 text-xs font-semibold text-[rgb(var(--sage-ink))]"
-            >
-              <span className="flex items-center gap-1.5">
-                <Tag className="size-3.5" aria-hidden="true" />
-                {discount.code}
-              </span>
-              <button
-                type="button"
-                onClick={handleRemove}
-                disabled={loading || pending}
-                className="rounded p-1 text-[rgb(var(--sage-ink))] transition hover:bg-black/5 hover:text-red-700"
-                aria-label="Remove coupon"
-              >
-                <X className="size-3.5" aria-hidden="true" />
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <form onSubmit={handleApply} className="space-y-2">
-          <label
-            htmlFor="coupon-code-field"
-            className="block text-xs font-semibold text-[rgb(var(--muted))]"
-          >
-            Have a discount code?
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="coupon-code-field"
-              type="text"
-              placeholder="e.g. SAVE10"
-              value={couponInput}
-              onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-              disabled={loading || pending}
-              className="min-w-0 flex-1 rounded-xl border border-[rgb(var(--border))] bg-white px-3.5 py-2 text-xs font-semibold uppercase tracking-wider transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20"
-            />
-            <button
-              type="submit"
-              disabled={loading || pending || !couponInput.trim()}
-              className="rounded-xl bg-[rgb(var(--fg))] px-4 py-2 text-xs font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50"
-            >
-              {loading ? '…' : 'Apply'}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {feedback ? (
-        <p
-          className={`mt-2 text-xs font-medium leading-tight ${
-            feedback.type === 'error' ? 'text-red-600' : 'text-[rgb(var(--sage-ink))]'
-          }`}
-        >
-          {feedback.message}
-        </p>
-      ) : null}
-    </div>
   );
 }
