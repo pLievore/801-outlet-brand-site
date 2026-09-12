@@ -53,6 +53,30 @@ async function persistCartId(cartId: string) {
   });
 }
 
+const PENDING_DISCOUNT_COOKIE = 'shopify_pending_discount';
+
+async function readPendingDiscount(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const value = cookieStore.get(PENDING_DISCOUNT_COOKIE)?.value?.trim();
+  return value ? value.toUpperCase() : null;
+}
+
+async function persistPendingDiscount(code: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(PENDING_DISCOUNT_COOKIE, code.trim().toUpperCase(), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+async function clearPendingDiscount() {
+  const cookieStore = await cookies();
+  cookieStore.delete(PENDING_DISCOUNT_COOKIE);
+}
+
 function clampQuantity(quantity: number): number {
   if (!Number.isFinite(quantity)) return 1;
   return Math.min(99, Math.max(1, Math.trunc(quantity)));
@@ -122,6 +146,25 @@ export async function addCartLineAction(
       }
     }
 
+    if (cart) {
+      const pendingDiscount = await readPendingDiscount();
+      if (pendingDiscount) {
+        try {
+          const withDiscount = await updateCartDiscountCodes(
+            cart.id,
+            [pendingDiscount],
+            buyerIp
+          );
+          if (withDiscount) {
+            cart = withDiscount;
+            await clearPendingDiscount();
+          }
+        } catch {
+          // Pending discount application is best-effort.
+        }
+      }
+    }
+
     return toResult(cart);
   } catch (error) {
     return toErrorResult(error);
@@ -176,14 +219,16 @@ export async function removeCartLineAction(
 export async function applyCartDiscountAction(
   code: string
 ): Promise<CartActionResult> {
-  const cartId = await readCartId();
-  if (!cartId) {
-    return { cart: null, errors: ['Your cart is empty. Add a piece before applying a coupon.'] };
-  }
-
   const cleanCode = code.trim().toUpperCase();
   if (!cleanCode) {
     return { cart: null, errors: ['Please enter a coupon code.'] };
+  }
+
+  const cartId = await readCartId();
+  if (!cartId) {
+    // No cart created yet: persist pending discount so it automatically attaches when any item is added!
+    await persistPendingDiscount(cleanCode);
+    return { cart: null, errors: [] };
   }
 
   try {
@@ -207,6 +252,7 @@ export async function applyCartDiscountAction(
       };
     }
 
+    await clearPendingDiscount();
     return { cart: adapted };
   } catch (error) {
     return toErrorResult(error);
@@ -214,6 +260,7 @@ export async function applyCartDiscountAction(
 }
 
 export async function removeCartDiscountAction(): Promise<CartActionResult> {
+  await clearPendingDiscount();
   const cartId = await readCartId();
   if (!cartId) {
     return { cart: null, errors: [GENERIC_ERROR] };

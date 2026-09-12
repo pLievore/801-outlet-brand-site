@@ -38,7 +38,7 @@ function useStoredUnlocked(): boolean {
 }
 
 export function WelcomeDiscountModal() {
-  const { applyDiscount, openCart } = useCart();
+  const { cart, applyDiscount, openCart } = useCart();
   const reducedMotion = useReducedMotion();
   const hasMounted = useHasMounted();
   const storedUnlocked = useStoredUnlocked();
@@ -132,7 +132,9 @@ export function WelcomeDiscountModal() {
     setApplied(true);
     await applyDiscount(WELCOME_CODE);
     setIsOpen(false);
-    openCart();
+    if (cart && cart.lines.length > 0) {
+      openCart();
+    }
   };
 
   if (!hasMounted) return null;
@@ -325,11 +327,15 @@ export function WelcomeDiscountModal() {
                     >
                       {applied ? (
                         <>
-                          <Check className="size-4" /> Applied to cart!
+                          <Check className="size-4" /> Applied!
+                        </>
+                      ) : cart && cart.lines.length > 0 ? (
+                        <>
+                          <Sparkles className="size-4" /> Apply code to my cart
                         </>
                       ) : (
                         <>
-                          <Sparkles className="size-4" /> Apply code to my cart
+                          <Sparkles className="size-4" /> Apply code to my order
                         </>
                       )}
                     </button>
