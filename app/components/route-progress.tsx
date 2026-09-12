@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useReducedMotion } from 'framer-motion';
 
 /**
@@ -16,7 +16,6 @@ import { useReducedMotion } from 'framer-motion';
  */
 export function RouteProgress() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const reducedMotion = useReducedMotion();
 
   const [state, setState] = useState<'idle' | 'loading' | 'finishing'>('idle');
@@ -30,7 +29,7 @@ export function RouteProgress() {
     };
   }, []);
 
-  // When pathname or searchParams change, route has loaded -> complete progress
+  // When pathname changes, route has loaded -> complete progress
   useEffect(() => {
     const timer = setTimeout(() => {
       setState((current) => {
@@ -48,7 +47,7 @@ export function RouteProgress() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   // Listen to document link clicks
   useEffect(() => {

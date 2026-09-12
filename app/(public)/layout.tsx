@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Instagram } from 'lucide-react';
@@ -76,7 +76,9 @@ export default async function PublicLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <TrackEvent />
-        <RouteProgress />
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
         <a
           href="#main-content"
           className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-full bg-[rgb(var(--fg))] px-5 py-3 text-sm font-semibold text-white transition focus:translate-y-0"
