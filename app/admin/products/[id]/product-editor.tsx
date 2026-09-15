@@ -414,8 +414,8 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
               <span className="text-xs">
                 <span className="font-semibold">Coming soon</span>
                 <span className="block text-[11px] leading-relaxed text-[rgb(var(--muted))]">
-                  Shown instead of &ldquo;Sold out&rdquo; while the product is
-                  out of stock. With stock available it sells as normal.
+                  Shown instead of &ldquo;Out of stock&rdquo; while the product
+                  has none. With stock available it sells as normal.
                 </span>
               </span>
             </label>
@@ -443,7 +443,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
           <div>
             <h2 className="text-sm font-bold">Price &amp; stock</h2>
             <p className="mt-0.5 text-xs text-[rgb(var(--muted))]">
-              Stock is what decides Sold out on the storefront.
+              Stock is what decides Out of stock on the storefront.
             </p>
           </div>
           <button

@@ -15,7 +15,7 @@ test('an unavailable product without tags reads as sold out', () => {
   const availability = getAvailability({ availableForSale: false, tags: [] });
 
   assert.equal(availability.state, 'sold-out');
-  assert.equal(availability.label, 'Sold out');
+  assert.equal(availability.label, 'Out of stock');
   assert.equal(availability.purchasable, false);
 });
 

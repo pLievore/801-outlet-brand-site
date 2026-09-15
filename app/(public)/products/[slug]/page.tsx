@@ -90,8 +90,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
   // Sold out vs Coming soon: the operator marks the difference with a tag in
   // Shopify instead of deleting the product. See `catalog/availability`.
   const availability = getAvailability({ availableForSale: inStock, tags: product.tags });
-  const quantity = primaryVariant?.quantityAvailable ?? null;
-  const showLowStock = inStock && quantity !== null && quantity <= 3;
+  // No count is shown to the shopper. The page says whether a piece can be
+  // bought, not how nearly gone it is — how many are left is the shop's
+  // business, and putting a number on it turns stock into a nudge.
   // Shopify's own recommendations learn from order history this shop does not
   // have yet, so they paired pieces across wildly different budgets. Price is
   // the signal that means something here — see `catalog/related`.
@@ -202,17 +203,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
               >
                 {inStock ? `✓ ${availability.label}` : availability.label}
               </span>
-              {inStock && quantity === 1 ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 font-semibold text-amber-900 shadow-xs">
-                  <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" aria-hidden="true" />
-                  Only 1 left in stock · Unique showroom piece
-                </span>
-              ) : showLowStock ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50/70 px-3 py-1 font-semibold text-amber-900">
-                  <span className="size-1.5 rounded-full bg-amber-400" aria-hidden="true" />
-                  Low stock: Only {quantity} left
-                </span>
-              ) : null}
               <span className="rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1">
                 Delivery & pickup at checkout
               </span>

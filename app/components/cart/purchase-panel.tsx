@@ -17,7 +17,7 @@ type PurchasePanelProps = {
   options: CatalogProductDetail['options'];
   variants: CatalogProductVariant[];
   /**
-   * What the button says when nothing can be added — "Sold out" or
+   * What the button says when nothing can be added — "Out of stock" or
    * "Coming soon", decided by the page from the product's availability.
    */
   unavailableLabel?: string;
@@ -150,7 +150,7 @@ export function PurchasePanel({
                 >
                   {value}
                   {unavailable ? (
-                    <span className="sr-only"> (sold out)</span>
+                    <span className="sr-only"> (out of stock)</span>
                   ) : null}
                 </button>
               );

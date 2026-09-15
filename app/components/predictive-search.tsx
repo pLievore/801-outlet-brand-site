@@ -255,7 +255,7 @@ export function PredictiveSearch({
                     </span>
                     <span className="mt-0.5 block text-xs text-[rgb(var(--muted))]">
                       {formatMoney(item.product.price)}
-                      {!item.product.availableForSale ? ' · Sold out' : ''}
+                      {!item.product.availableForSale ? ' · Out of stock' : ''}
                     </span>
                   </span>
                 </>

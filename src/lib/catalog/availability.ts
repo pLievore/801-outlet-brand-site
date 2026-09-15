@@ -34,7 +34,8 @@ export type Availability = {
 
 const AVAILABILITY: Record<AvailabilityState, Availability> = {
   'in-stock': { state: 'in-stock', label: 'In stock', purchasable: true },
-  'sold-out': { state: 'sold-out', label: 'Sold out', purchasable: false },
+  // The state keeps its name; only what the shopper reads changed.
+  'sold-out': { state: 'sold-out', label: 'Out of stock', purchasable: false },
   'coming-soon': {
     state: 'coming-soon',
     label: 'Coming soon',
