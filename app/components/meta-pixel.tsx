@@ -54,6 +54,20 @@ declare global {
  * rather than throwing inside whatever was actually happening, which is
  * usually somebody trying to buy a sofa.
  */
+/**
+ * The id Meta's catalogue knows an item by.
+ *
+ * Shopify's Facebook channel publishes one catalogue entry per variant, keyed
+ * by the bare numeric variant id — not the handle, and not the
+ * `shopify_US_<product>_<variant>` form its older feeds used. Confirmed
+ * against the live catalogue before this was written, because a mismatch here
+ * fails silently: dynamic ads simply never match a product, the campaign
+ * spends without delivering, and nothing anywhere reports an error.
+ */
+export function catalogId(variantGid: string): string {
+  return variantGid.split('/').pop() ?? variantGid;
+}
+
 export function metaTrack(event: MetaEvent, payload?: MetaPayload): void {
   if (typeof window === 'undefined' || !window.fbq) return;
   try {

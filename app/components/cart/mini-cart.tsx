@@ -6,7 +6,7 @@ import { ShoppingBag } from 'lucide-react';
 
 import { formatMoney } from '../../../src/lib/format';
 import { HAPTIC, haptic } from '../../../src/lib/haptics';
-import { metaTrack } from '../meta-pixel';
+import { catalogId, metaTrack } from '../meta-pixel';
 import { trackFunnelStep } from '../track-event';
 import { Button, buttonStyles } from '../ui/button';
 import { Drawer } from '../ui/dialog';
@@ -137,8 +137,8 @@ export function MiniCart() {
                     onClick={() => {
                       haptic(HAPTIC.commit);
                       metaTrack('InitiateCheckout', {
-                        content_ids: cart.lines.map(
-                          (line) => line.merchandise.productHandle
+                        content_ids: cart.lines.map((line) =>
+                          catalogId(line.merchandise.variantId)
                         ),
                         content_type: 'product',
                         num_items: cart.totalQuantity,

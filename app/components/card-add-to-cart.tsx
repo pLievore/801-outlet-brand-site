@@ -5,7 +5,7 @@ import { Check, Loader2, Plus } from 'lucide-react';
 
 import { HAPTIC, haptic } from '../../src/lib/haptics';
 import { useCart } from './cart/cart-provider';
-import { metaTrack } from './meta-pixel';
+import { catalogId, metaTrack } from './meta-pixel';
 import { trackFunnelStep } from './track-event';
 
 /**
@@ -52,7 +52,7 @@ export function CardAddToCart({
     }
 
     metaTrack('AddToCart', {
-      content_ids: [productHandle],
+      content_ids: [catalogId(variantId)],
       content_type: 'product',
       content_name: productTitle,
       num_items: 1,

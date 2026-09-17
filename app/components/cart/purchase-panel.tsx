@@ -9,7 +9,7 @@ import type {
 } from '../../../src/lib/catalog/types';
 import { formatMoney } from '../../../src/lib/format';
 import { cn } from '../../../src/lib/cn';
-import { metaTrack } from '../meta-pixel';
+import { catalogId, metaTrack } from '../meta-pixel';
 import { trackFunnelStep } from '../track-event';
 import { useCart } from './cart-provider';
 import { HAPTIC, haptic } from '../../../src/lib/haptics';
@@ -104,16 +104,21 @@ export function PurchasePanel({
   // platform optimising for purchases needs the number, not just the visit.
   const reportedView = useRef(false);
   useEffect(() => {
-    if (reportedView.current || !productHandle) return;
+    if (reportedView.current) return;
+    // The variant the page is quoting a price for, which is the one the
+    // catalogue entry corresponds to.
+    const shown = variants.find((v) => v.availableForSale) ?? variants[0];
+    if (!shown) return;
+
     reportedView.current = true;
     metaTrack('ViewContent', {
-      content_ids: [productHandle],
+      content_ids: [catalogId(shown.id)],
       content_type: 'product',
       content_name: productTitle,
-      value: Number(variants[0]?.price.amount ?? 0) || undefined,
-      currency: variants[0]?.price.currencyCode,
+      value: Number(shown.price.amount) || undefined,
+      currency: shown.price.currencyCode,
     });
-  }, [productHandle, productTitle, variants]);
+  }, [productTitle, variants]);
 
   const onAdd = async () => {
     if (!selectedVariant || !inStock) return;
@@ -125,7 +130,7 @@ export function PurchasePanel({
     if (ok) {
       setQuantity(1);
       metaTrack('AddToCart', {
-        content_ids: productHandle ? [productHandle] : undefined,
+        content_ids: [catalogId(selectedVariant.id)],
         content_type: 'product',
         content_name: productTitle,
         num_items: boundedQuantity,
