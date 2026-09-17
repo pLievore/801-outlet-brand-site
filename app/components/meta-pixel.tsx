@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import Script from 'next/script';
 
 /**
  * The Meta Pixel.
@@ -89,8 +88,21 @@ export function MetaPixel() {
 
   return (
     <>
-      <Script id="meta-pixel" strategy="afterInteractive">
-        {`!function(f,b,e,v,n,t,s)
+      {/*
+        A plain script, rendered into the HTML by the server — not `next/script`.
+        With `afterInteractive` the snippet lives in the JS bundle and only
+        reaches the page after hydration, so it works for a real visitor but is
+        invisible to anything that reads the page without running it. Meta's
+        own setup tool is one of those: it fetched the page, found no `fbq` in
+        the source and reported no pixel on a site that had one.
+
+        The `if(f.fbq)return;` guard in Meta's snippet makes a second execution
+        a no-op, so rendering it inline is safe.
+      */}
+      <script
+        // Meta's own snippet, with only the id interpolated — no user input.
+        dangerouslySetInnerHTML={{
+          __html: `!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
 if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
@@ -99,10 +111,11 @@ t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window,document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '${PIXEL_ID}');
-fbq('track', 'PageView');`}
-      </Script>
-      {/* For a visitor with JavaScript off, and the marker Meta's own setup
-          tool looks for when it checks whether a site has a pixel. */}
+fbq('track', 'PageView');`,
+        }}
+      />
+      {/* For a visitor with JavaScript off, and a second marker for anything
+          reading the page without running it. */}
       <noscript>
         {/* eslint-disable-next-line @next/next/no-img-element -- Meta's tracking pixel is a bare 1x1 GIF, not content */}
         <img
