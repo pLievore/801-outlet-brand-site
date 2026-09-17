@@ -7,12 +7,17 @@
  * is published to nothing, so it exists in Shopify and simply does not exist
  * for the storefront, with no error anywhere (D-026).
  *
- *   npm run publish:channel              # read-only report
- *   npm run publish:channel -- --apply   # publish everything that is missing
+ *   npm run publish:channel                       # read-only report
+ *   npm run publish:channel -- --apply            # publish what is missing
+ *   npm run publish:channel -- --channel="Facebook & Instagram" --active-only
  *
- * Publishing is deliberately independent of status: a draft is published to the
- * channel too, so that flipping it to Active is the only step left when the
- * piece is ready.
+ * For the storefront channel, publishing is deliberately independent of status:
+ * a draft goes on the channel too, so that flipping it to Active is the only
+ * step left when the piece is ready.
+ *
+ * An advertising channel is the opposite case, hence `--active-only`. A
+ * catalogue that carries pieces the shop no longer sells buys clicks that land
+ * on something unavailable, and Meta marks the whole catalogue down for it.
  *
  * Requires read_publications (and write_publications to apply) on the token.
  */
@@ -140,6 +145,11 @@ async function publish(productId: string, publicationId: string) {
 async function main() {
   const args = process.argv.slice(2);
   const shouldApply = args.includes('--apply');
+  const activeOnly = args.includes('--active-only');
+  const byName = args
+    .find((arg) => arg.startsWith('--channel='))
+    ?.slice('--channel='.length)
+    .replace(/^["']|["']$/g, '');
 
   const configured = process.env.SHOPIFY_HEADLESS_PUBLICATION_ID?.trim();
   const publications = await listPublications();
@@ -151,27 +161,26 @@ async function main() {
     console.log(`    ${publication.id}`);
   }
 
-  if (!configured) {
-    console.error(
-      '\nSHOPIFY_HEADLESS_PUBLICATION_ID is not set. Copy the id of the channel' +
-        ' that serves the storefront from the list above into the env.'
-    );
-    process.exitCode = 1;
-    return;
-  }
+  // Named on the command line, or the storefront channel from the env.
+  const target = byName
+    ? publications.find((publication) => publication.name === byName)
+    : publications.find((publication) => publication.id === configured);
 
-  const target = publications.find(
-    (publication) => publication.id === configured
-  );
   if (!target) {
     console.error(
-      `\nSHOPIFY_HEADLESS_PUBLICATION_ID points at ${configured}, which this shop does not have.`
+      byName
+        ? `\nNo channel named "${byName}" on this shop. Pick one from the list above.`
+        : '\nSHOPIFY_HEADLESS_PUBLICATION_ID is not set, or points at a channel' +
+            ' this shop does not have. Use --channel="<name>" instead.'
     );
     process.exitCode = 1;
     return;
   }
 
-  const products = await listProducts();
+  const all = await listProducts();
+  const products = activeOnly
+    ? all.filter((product) => product.status === 'ACTIVE')
+    : all;
   const missing = products.filter(
     (product) =>
       !product.resourcePublications.nodes.some(
@@ -180,6 +189,11 @@ async function main() {
   );
 
   console.log(`\nTarget channel: ${target.name}`);
+  if (activeOnly) {
+    console.log(
+      `Considering ACTIVE only — ${all.length - products.length} skipped.`
+    );
+  }
   console.log(`Products: ${products.length}`);
   console.log(`  published:   ${products.length - missing.length}`);
   console.log(`  missing:     ${missing.length}`);
