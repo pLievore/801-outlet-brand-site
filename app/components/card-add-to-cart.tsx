@@ -5,6 +5,7 @@ import { Check, Loader2, Plus } from 'lucide-react';
 
 import { HAPTIC, haptic } from '../../src/lib/haptics';
 import { useCart } from './cart/cart-provider';
+import { metaTrack } from './meta-pixel';
 import { trackFunnelStep } from './track-event';
 
 /**
@@ -23,10 +24,13 @@ export function CardAddToCart({
   variantId,
   productHandle,
   productTitle,
+  price,
 }: {
   variantId: string;
   productHandle: string;
   productTitle: string;
+  /** Meta optimises for value, so the event carries the price. */
+  price?: { amount: string; currencyCode: string };
 }) {
   const { addLine, pending } = useCart();
   const [added, setAdded] = useState(false);
@@ -47,6 +51,14 @@ export function CardAddToCart({
       return;
     }
 
+    metaTrack('AddToCart', {
+      content_ids: [productHandle],
+      content_type: 'product',
+      content_name: productTitle,
+      num_items: 1,
+      value: price ? Number(price.amount) : undefined,
+      currency: price?.currencyCode,
+    });
     trackFunnelStep('add_to_cart', { handles: [productHandle] });
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2000);

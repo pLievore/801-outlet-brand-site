@@ -214,6 +214,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 variants={product.variants}
                 unavailableLabel={availability.label}
                 productHandle={product.handle}
+                productTitle={product.title}
               />
               <a
                 href={smsHref}

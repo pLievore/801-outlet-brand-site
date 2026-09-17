@@ -148,6 +148,7 @@ export function CatalogProductCard({
             variantId={product.soleVariantId}
             productHandle={product.handle}
             productTitle={product.title}
+            price={product.price}
           />
         </div>
       ) : null}

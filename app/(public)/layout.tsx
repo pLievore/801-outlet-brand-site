@@ -19,6 +19,7 @@ import { getMainNavigation } from '../../src/lib/shopify/navigation';
 import { CartProvider } from '../components/cart/cart-provider';
 import { CartButton, MiniCart } from '../components/cart/mini-cart';
 import { HapticTrigger } from '../components/haptic-trigger';
+import { MetaPixel } from '../components/meta-pixel';
 import { MobileTabBar } from '../components/mobile-tab-bar';
 import { NavLink } from '../components/nav-link';
 import { MobileNav } from '../components/mobile-nav';
@@ -77,6 +78,7 @@ export default async function PublicLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <TrackEvent />
+        <MetaPixel />
         <Suspense fallback={null}>
           <RouteProgress />
         </Suspense>

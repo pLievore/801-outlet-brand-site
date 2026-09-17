@@ -8,6 +8,7 @@ import { HAPTIC, haptic } from '../../../src/lib/haptics';
 import { CartCouponSection } from '../../components/cart/cart-coupon-section';
 import { CartLineItem } from '../../components/cart/cart-line-item';
 import { useCart } from '../../components/cart/cart-provider';
+import { metaTrack } from '../../components/meta-pixel';
 import { trackFunnelStep } from '../../components/track-event';
 import { buttonStyles } from '../../components/ui/button';
 import { Container } from '../../components/ui/container';
@@ -112,6 +113,15 @@ export function CartView() {
                   href={cart.checkoutUrl}
                   onClick={() => {
                     haptic(HAPTIC.commit);
+                    metaTrack('InitiateCheckout', {
+                      content_ids: cart.lines.map(
+                        (line) => line.merchandise.productHandle
+                      ),
+                      content_type: 'product',
+                      num_items: cart.totalQuantity,
+                      value: Number(cart.total?.amount ?? 0) || undefined,
+                      currency: cart.total?.currencyCode,
+                    });
                     trackFunnelStep('checkout_start', {
                       handles: cart.lines.map(
                         (line) => line.merchandise.productHandle

@@ -90,6 +90,18 @@ O client ID e o número do projeto **precisam ser do mesmo projeto** no Google C
 
 Como toda `NEXT_PUBLIC_*`, são inlined em build time: configurar no Vercel **exige redeploy**.
 
+### Meta Pixel
+
+| Variável | Pública? | Descrição |
+|---|---|---|
+| `NEXT_PUBLIC_META_PIXEL_ID` | sim | ID numérico do pixel no Gerenciador de Eventos da Meta |
+
+Sem ela **nada carrega** — nem script, nem `noscript` — e a vitrine fica sem rastreamento nenhum da Meta. O pixel é montado apenas no layout da vitrine, **nunca no `/admin`**: o que o operador faz o dia inteiro não é comportamento de comprador e ensinaria a campanha errado.
+
+Rompe a postura sem-cookie das D-017/D-024 por decisão explícita do dono (Fase 4 do plano): o pixel grava `_fbp` e reporta à Meta. Eventos enviados: `PageView`, `ViewContent`, `AddToCart` e `InitiateCheckout`, com valor e moeda, que é o que a campanha precisa para otimizar por venda.
+
+Como toda `NEXT_PUBLIC_*`, é inlined em build time: configurar no Vercel **exige redeploy**.
+
 ## Notas
 
 - Variáveis com prefixo `NEXT_PUBLIC_` são expostas ao browser. Não use esse prefixo em chaves secretas.

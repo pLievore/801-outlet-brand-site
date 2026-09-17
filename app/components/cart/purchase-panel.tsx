@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 
 import type {
@@ -9,6 +9,7 @@ import type {
 } from '../../../src/lib/catalog/types';
 import { formatMoney } from '../../../src/lib/format';
 import { cn } from '../../../src/lib/cn';
+import { metaTrack } from '../meta-pixel';
 import { trackFunnelStep } from '../track-event';
 import { useCart } from './cart-provider';
 import { HAPTIC, haptic } from '../../../src/lib/haptics';
@@ -23,6 +24,8 @@ type PurchasePanelProps = {
   unavailableLabel?: string;
   /** Attributes the add-to-cart event to this product in the funnel. */
   productHandle?: string;
+  /** Names the piece in the Meta events, so campaigns read titles not slugs. */
+  productTitle?: string;
 };
 
 function isDefaultOnly(
@@ -43,6 +46,7 @@ export function PurchasePanel({
   variants,
   unavailableLabel = 'Currently unavailable',
   productHandle,
+  productTitle,
 }: PurchasePanelProps) {
   const { addLine, pending } = useCart();
   const defaultOnly = isDefaultOnly(options, variants);
@@ -95,6 +99,22 @@ export function PurchasePanel({
       )
     );
 
+  // Meta's ViewContent for this page. Fired here rather than from the funnel
+  // beacon because this is the component that knows the price, and an ad
+  // platform optimising for purchases needs the number, not just the visit.
+  const reportedView = useRef(false);
+  useEffect(() => {
+    if (reportedView.current || !productHandle) return;
+    reportedView.current = true;
+    metaTrack('ViewContent', {
+      content_ids: [productHandle],
+      content_type: 'product',
+      content_name: productTitle,
+      value: Number(variants[0]?.price.amount ?? 0) || undefined,
+      currency: variants[0]?.price.currencyCode,
+    });
+  }, [productHandle, productTitle, variants]);
+
   const onAdd = async () => {
     if (!selectedVariant || !inStock) return;
     setFeedback(null);
@@ -104,6 +124,14 @@ export function PurchasePanel({
     haptic(ok ? HAPTIC.commit : HAPTIC.undo);
     if (ok) {
       setQuantity(1);
+      metaTrack('AddToCart', {
+        content_ids: productHandle ? [productHandle] : undefined,
+        content_type: 'product',
+        content_name: productTitle,
+        num_items: boundedQuantity,
+        value: Number(selectedVariant.price.amount) * boundedQuantity,
+        currency: selectedVariant.price.currencyCode,
+      });
       trackFunnelStep(
         'add_to_cart',
         productHandle ? { handles: [productHandle] } : undefined
