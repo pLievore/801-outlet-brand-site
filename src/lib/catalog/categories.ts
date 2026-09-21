@@ -18,6 +18,7 @@ export const PRODUCT_CATEGORIES = [
   'Accent chair',
   'Ottoman',
   'Sleeper',
+  'Set',
   'Bed',
   'Table',
   'Other',
@@ -50,6 +51,14 @@ const ALIASES: Record<string, ProductCategory> = {
   'side table': 'Table',
   'end table': 'Table',
   headboard: 'Bed',
+  // Sets are a piece of the catalogue in their own right: a sofa and a
+  // loveseat bought together is what the shopper is looking for, not a sofa.
+  'sofa & loveseat set': 'Set',
+  'sofa and loveseat set': 'Set',
+  'sofa loveseat set': 'Set',
+  'living room set': 'Set',
+  'complete living room set': 'Set',
+  'sofa set': 'Set',
 };
 
 /**
