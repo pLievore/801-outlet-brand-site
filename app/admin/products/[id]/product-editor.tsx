@@ -16,8 +16,15 @@ import {
 import type { PanelProductDetail } from '../../../../src/lib/panel/products';
 import {
   COMING_SOON_TAG_VALUE,
+  DROPSHIP_LEAD_TIME_WEEKS,
+  DROPSHIP_TAG_VALUE,
   hasComingSoonTag,
+  hasDropshipTag,
 } from '../../../../src/lib/catalog/availability';
+import {
+  PRODUCT_CATEGORIES,
+  isProductCategory,
+} from '../../../../src/lib/catalog/categories';
 import { cn } from '../../../../src/lib/cn';
 import { uploadProductImageAction } from '../new/actions';
 import { resizeImage } from '../image-resize';
@@ -64,6 +71,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
   const [title, setTitle] = useState(product.title);
   const [description, setDescription] = useState(product.descriptionText);
   const [tags, setTags] = useState(product.tags.join(', '));
+  const [category, setCategory] = useState(product.productType);
   const [mediaOrder, setMediaOrder] = useState(product.media);
   const [detailsFeedback, setDetailsFeedback] = useState<Feedback>(null);
   const [mediaFeedback, setMediaFeedback] = useState<Feedback>(null);
@@ -83,10 +91,12 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
     .map((tag) => tag.trim())
     .filter(Boolean);
   const comingSoon = hasComingSoonTag(tagList);
+  const dropship = hasDropshipTag(tagList);
 
   const detailsDirty =
     title !== product.title ||
     description !== product.descriptionText ||
+    category !== product.productType ||
     tags !== product.tags.join(', ');
 
   /**
@@ -99,6 +109,16 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
     setTags(
       (comingSoon ? without : [...without, COMING_SOON_TAG_VALUE]).join(', ')
     );
+  };
+
+  /**
+   * Saving this one also switches every variant to "continue selling when out
+   * of stock" — the tag alone would label a piece nobody could buy.
+   */
+  const toggleDropship = () => {
+    haptic(HAPTIC.tap);
+    const without = tagList.filter((tag) => !hasDropshipTag([tag]));
+    setTags((dropship ? without : [...without, DROPSHIP_TAG_VALUE]).join(', '));
   };
 
   const statusChanged = status !== product.status;
@@ -162,6 +182,9 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
         title,
         description,
         tags: tagList,
+        category,
+        dropship,
+        variantIds: product.variants.map((variant) => variant.id),
       });
       haptic(result.ok ? HAPTIC.commit : HAPTIC.undo);
       setDetailsFeedback(
@@ -344,7 +367,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
   };
 
   const inputClass =
-    'w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15';
+    'w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]';
 
   return (
     <div className="space-y-6">
@@ -359,7 +382,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
             className={cn(
               'min-h-9 rounded-full px-5 text-xs font-semibold transition',
               detailsDirty
-                ? 'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg))]/90'
+                ? 'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg)/0.9)]'
                 : 'border border-[rgb(var(--border))] text-[rgb(var(--muted))]',
               savingDetails && 'opacity-60'
             )}
@@ -390,6 +413,22 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
             />
           </label>
 
+          <label className="block text-xs font-semibold">
+            Category
+            <select
+              value={isProductCategory(category) ? category : ''}
+              onChange={(event) => setCategory(event.target.value)}
+              className={cn(inputClass, 'mt-1.5')}
+            >
+              <option value="">No category</option>
+              {PRODUCT_CATEGORIES.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <div>
             <label className="block text-xs font-semibold">
               Tags
@@ -416,6 +455,24 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
                 <span className="block text-[11px] leading-relaxed text-[rgb(var(--muted))]">
                   Shown instead of &ldquo;Out of stock&rdquo; while the product
                   has none. With stock available it sells as normal.
+                </span>
+              </span>
+            </label>
+
+            <label className="mt-2 flex items-start gap-2.5 rounded-xl bg-[rgb(var(--surface-muted))] px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={dropship}
+                onChange={toggleDropship}
+                className="mt-0.5 size-4"
+              />
+              <span className="text-xs">
+                <span className="font-semibold">Dropshipping</span>
+                <span className="block text-[11px] leading-relaxed text-[rgb(var(--muted))]">
+                  Keeps selling with no stock left, quoting up to{' '}
+                  {DROPSHIP_LEAD_TIME_WEEKS} weeks on the product page. Saving
+                  also switches the variants to &ldquo;continue selling&rdquo;
+                  in Shopify. Coming soon wins over this.
                 </span>
               </span>
             </label>
@@ -453,7 +510,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
             className={cn(
               'min-h-9 rounded-full px-5 text-xs font-semibold transition',
               sellingDirty
-                ? 'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg))]/90'
+                ? 'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg)/0.9)]'
                 : 'border border-[rgb(var(--border))] text-[rgb(var(--muted))]',
               savingSelling && 'opacity-60'
             )}
@@ -564,7 +621,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading !== null}
-            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-4 text-xs font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90 disabled:opacity-60"
+            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-4 text-xs font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)] disabled:opacity-60"
           >
             {uploading ? (
               <Loader2 aria-hidden="true" className="size-4 animate-spin" />
@@ -619,7 +676,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
                   'group relative overflow-hidden rounded-2xl border bg-[rgb(var(--surface-muted))] transition-[transform,box-shadow,border-color]',
                   mediaOrder.length > 1 && 'cursor-grab active:cursor-grabbing select-none',
                   drag.dragging === index
-                    ? 'z-30 scale-[1.05] cursor-grabbing border-[rgb(var(--accent))] shadow-2xl ring-2 ring-[rgb(var(--accent))]/30'
+                    ? 'z-30 scale-[1.05] cursor-grabbing border-[rgb(var(--accent))] shadow-2xl ring-2 ring-[rgb(var(--accent)/0.3)]'
                     : 'border-[rgb(var(--border))]'
                 )}
               >
@@ -639,7 +696,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
                     </div>
                   )}
                   {index === 0 ? (
-                    <span className="absolute left-2 top-2 rounded-full bg-[rgb(var(--fg))]/85 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                    <span className="absolute left-2 top-2 rounded-full bg-[rgb(var(--fg)/0.85)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                       Cover
                     </span>
                   ) : null}
@@ -701,7 +758,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
       </section>
 
       {/* Marketplace listing pack */}
-      <section className="rounded-3xl border border-[rgb(var(--border))] bg-[rgb(var(--sage-soft))]/50 p-5 md:p-6">
+      <section className="rounded-3xl border border-[rgb(var(--border))] bg-[rgb(var(--sage-soft)/0.5)] p-5 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold">Facebook Marketplace</h2>
@@ -713,7 +770,7 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
           <button
             type="button"
             onClick={() => void copyListing()}
-            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-[rgb(var(--sage-ink))] px-4 text-xs font-semibold text-white transition hover:bg-[rgb(var(--sage-ink))]/90"
+            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-[rgb(var(--sage-ink))] px-4 text-xs font-semibold text-white transition hover:bg-[rgb(var(--sage-ink)/0.9)]"
           >
             <ClipboardCopy aria-hidden="true" className="size-4" />
             {copied ? 'Copied!' : 'Copy listing text'}

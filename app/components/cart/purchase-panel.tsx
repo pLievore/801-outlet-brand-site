@@ -1,12 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, Truck } from 'lucide-react';
 
 import type {
   CatalogProductDetail,
   CatalogProductVariant,
 } from '../../../src/lib/catalog/types';
+import {
+  DROPSHIP_NOTICE,
+  getAvailability,
+} from '../../../src/lib/catalog/availability';
 import { formatMoney } from '../../../src/lib/format';
 import { cn } from '../../../src/lib/cn';
 import { catalogId, metaTrack } from '../meta-pixel';
@@ -22,6 +26,8 @@ type PurchasePanelProps = {
    * "Coming soon", decided by the page from the product's availability.
    */
   unavailableLabel?: string;
+  /** The product's Shopify tags, which decide the supplier-wait notice. */
+  productTags?: string[];
   /** Attributes the add-to-cart event to this product in the funnel. */
   productHandle?: string;
   /** Names the piece in the Meta events, so campaigns read titles not slugs. */
@@ -45,6 +51,7 @@ export function PurchasePanel({
   options,
   variants,
   unavailableLabel = 'Currently unavailable',
+  productTags,
   productHandle,
   productTitle,
 }: PurchasePanelProps) {
@@ -83,6 +90,15 @@ export function PurchasePanel({
   }, [defaultOnly, selected, variants]);
 
   const inStock = Boolean(selectedVariant?.availableForSale);
+  // Decided per variant: a sectional can have the green one on the floor and
+  // the sand one coming from the supplier.
+  const dropship =
+    selectedVariant != null &&
+    getAvailability({
+      availableForSale: selectedVariant.availableForSale,
+      tags: productTags,
+      quantityAvailable: selectedVariant.quantityAvailable,
+    }).state === 'dropship';
   const maxQuantity =
     selectedVariant?.quantityAvailable != null &&
     selectedVariant.quantityAvailable > 0
@@ -123,7 +139,7 @@ export function PurchasePanel({
   const onAdd = async () => {
     if (!selectedVariant || !inStock) return;
     setFeedback(null);
-    const ok = await addLine(selectedVariant.id, boundedQuantity);
+    const ok = await addLine(selectedVariant.id, boundedQuantity, dropship);
     setFeedback(ok ? null : 'We could not add this item. Please try again.');
     // The one moment on the whole storefront worth confirming in the hand.
     haptic(ok ? HAPTIC.commit : HAPTIC.undo);
@@ -240,7 +256,7 @@ export function PurchasePanel({
           type="button"
           onClick={onAdd}
           disabled={!inStock || pending}
-          className="min-h-11 flex-1 rounded-full bg-[rgb(var(--fg))] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90 disabled:cursor-not-allowed disabled:opacity-55"
+          className="min-h-11 flex-1 rounded-full bg-[rgb(var(--fg))] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)] disabled:cursor-not-allowed disabled:opacity-55"
         >
           {!selectedVariant
             ? 'Select options'
@@ -251,6 +267,13 @@ export function PurchasePanel({
                 : 'Add to cart'}
         </button>
       </div>
+
+      {dropship ? (
+        <p className="mt-3 flex items-center gap-2 text-xs font-medium text-[rgb(var(--muted))]">
+          <Truck aria-hidden className="size-4 shrink-0" />
+          {DROPSHIP_NOTICE}. Ordered from our supplier once you buy.
+        </p>
+      ) : null}
 
       {feedback ? (
         <p role="alert" className="mt-3 text-xs font-semibold text-[rgb(var(--accent))]">

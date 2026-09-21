@@ -5,6 +5,8 @@ export type CartLineView = {
   id: string;
   quantity: number;
   lineTotal: CatalogMoney;
+  /** What the shopper was told when the line was added; travels to the order. */
+  attributes: Array<{ key: string; value: string }>;
   merchandise: {
     variantId: string;
     variantTitle: string;

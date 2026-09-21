@@ -3,6 +3,10 @@
 import { cookies, headers } from 'next/headers';
 
 import {
+  DROPSHIP_LINE_ATTRIBUTE_KEY,
+  DROPSHIP_NOTICE,
+} from '../../src/lib/catalog/availability';
+import {
   toCartAttributes,
   type Attribution,
 } from '../../src/lib/analytics/attribution';
@@ -100,6 +104,67 @@ function toErrorResult(error: unknown): CartActionResult {
   return { cart: null, errors: [GENERIC_ERROR] };
 }
 
+/**
+ * Puts the supplier lead time on every line that needs it and does not have
+ * it yet.
+ *
+ * The product page knows to ask for the note, but the catalogue card adds in
+ * one tap and knows nothing about stock — and stock can run out between the
+ * page rendering and the shopper deciding. Reading it back off the cart, where
+ * Shopify reports what it will actually sell, covers all three: a line that is
+ * still sold with nothing left is coming from the supplier.
+ */
+type AnnotatableCart = {
+  id: string;
+  lines: {
+    nodes: Array<{
+      id: string;
+      quantity: number;
+      attributes: Array<{ key: string; value?: string | null }>;
+      merchandise: unknown;
+    }>;
+  };
+};
+
+async function noteSupplierLines<T extends AnnotatableCart>(
+  cart: T,
+  buyerIp?: string
+): Promise<T | null> {
+  const missing = cart.lines.nodes.filter((line) => {
+    const merchandise = line.merchandise as {
+      availableForSale?: boolean;
+      quantityAvailable?: number | null;
+    } | null;
+    if (!merchandise?.availableForSale) return false;
+    if (merchandise.quantityAvailable == null) return false;
+    if (merchandise.quantityAvailable > 0) return false;
+
+    return !line.attributes.some(
+      (attribute) => attribute.key === DROPSHIP_LINE_ATTRIBUTE_KEY
+    );
+  });
+
+  if (missing.length === 0) return cart;
+
+  try {
+    return (await updateCartLines(
+      cart.id,
+      missing.map((line) => ({
+        id: line.id,
+        quantity: line.quantity,
+        attributes: [
+          { key: DROPSHIP_LINE_ATTRIBUTE_KEY, value: DROPSHIP_NOTICE },
+        ],
+      })),
+      buyerIp
+    )) as T | null;
+  } catch {
+    // The note is information, not the sale: a cart that could not be
+    // annotated is still a cart the shopper can check out.
+    return cart;
+  }
+}
+
 export async function getCartAction(): Promise<CartActionResult> {
   const cartId = await readCartId();
   if (!cartId) return { cart: null };
@@ -115,13 +180,29 @@ export async function addCartLineAction(
   variantId: string,
   quantity: number,
   /** Campaign the visit arrived on; recorded only when the cart is created. */
-  attribution?: Attribution | null
+  attribution?: Attribution | null,
+  /**
+   * Whether the page quoted the supplier lead time for this piece. A flag
+   * rather than an attribute: the wording belongs to the storefront, and the
+   * browser cannot write arbitrary text onto an order line.
+   */
+  dropship?: boolean
 ): Promise<CartActionResult> {
   if (!VARIANT_GID_PATTERN.test(variantId)) {
     return { cart: null, errors: [GENERIC_ERROR] };
   }
 
-  const line = { merchandiseId: variantId, quantity: clampQuantity(quantity) };
+  const line = {
+    merchandiseId: variantId,
+    quantity: clampQuantity(quantity),
+    ...(dropship
+      ? {
+          attributes: [
+            { key: DROPSHIP_LINE_ATTRIBUTE_KEY, value: DROPSHIP_NOTICE },
+          ],
+        }
+      : {}),
+  };
   const buyerIp = await getBuyerIp();
 
   try {
@@ -144,6 +225,10 @@ export async function addCartLineAction(
           // Buyer identity is best-effort; the cart itself is intact.
         }
       }
+    }
+
+    if (cart) {
+      cart = (await noteSupplierLines(cart, buyerIp)) ?? cart;
     }
 
     if (cart) {

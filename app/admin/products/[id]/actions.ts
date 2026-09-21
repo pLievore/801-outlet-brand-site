@@ -2,6 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 
+import {
+  normalizeCategory,
+  unknownCategoryMessage,
+} from '../../../../src/lib/catalog/categories';
 import { hasValidPanelSession } from '../../../../src/lib/panel/session';
 import {
   appendProductMedia,
@@ -9,10 +13,12 @@ import {
   reorderProductMedia,
   textToDescriptionHtml,
   updatePanelProductDetails,
+  updateVariantInventoryPolicy,
 } from '../../../../src/lib/panel/products';
 import { AdminUserErrorsError, ShopifyAdminError } from '../../../../src/lib/shopify-admin/client';
 
 const PRODUCT_GID = /^gid:\/\/shopify\/Product\/\d+$/;
+const VARIANT_GID = /^gid:\/\/shopify\/ProductVariant\/\d+$/;
 const MEDIA_GID = /^gid:\/\/shopify\/MediaImage\/\d+$/;
 // Staged upload resource URLs always live on Shopify's storage.
 const RESOURCE_URL_PATTERN =
@@ -62,6 +68,15 @@ export async function saveDetailsAction(input: {
   title: string;
   description: string;
   tags?: string[];
+  /** One of `PRODUCT_CATEGORIES`, or an empty string to clear it. */
+  category?: string;
+  /**
+   * Ticking dropshipping also has to put every variant on `CONTINUE`, or
+   * Shopify refuses the cart line the moment stock runs out and the piece the
+   * operator meant to keep selling quietly stops selling.
+   */
+  dropship?: boolean;
+  variantIds?: string[];
 }): Promise<ActionResult> {
   if (!(await hasValidPanelSession())) {
     return { ok: false, error: 'Session expired. Sign in again.' };
@@ -74,6 +89,18 @@ export async function saveDetailsAction(input: {
     return { ok: false, error: 'Enter a product title.' };
   }
 
+  let productType: string | undefined;
+  if (input.category !== undefined) {
+    const typed = input.category.trim();
+    if (typed === '') {
+      productType = '';
+    } else {
+      const category = normalizeCategory(typed);
+      if (!category) return { ok: false, error: unknownCategoryMessage(typed) };
+      productType = category;
+    }
+  }
+
   try {
     const tags = normalizeTags(input.tags);
     await updatePanelProductDetails({
@@ -81,7 +108,24 @@ export async function saveDetailsAction(input: {
       title,
       descriptionHtml: textToDescriptionHtml(input.description),
       ...(tags ? { tags } : {}),
+      ...(productType !== undefined ? { productType } : {}),
     });
+
+    if (input.dropship !== undefined) {
+      const variantIds = (input.variantIds ?? []).filter((id) =>
+        VARIANT_GID.test(id)
+      );
+      if (variantIds.length > 0) {
+        await updateVariantInventoryPolicy(
+          input.productId,
+          variantIds.map((id) => ({
+            id,
+            inventoryPolicy: input.dropship ? 'CONTINUE' : 'DENY',
+          }))
+        );
+      }
+    }
+
     revalidateProduct(input.productId);
     return { ok: true };
   } catch (error) {

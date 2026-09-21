@@ -8,7 +8,10 @@ import {
   PRODUCT_ATTRIBUTES,
   parseFeatures,
 } from '../../../../src/lib/catalog/attributes';
-import { getAvailability } from '../../../../src/lib/catalog/availability';
+import {
+  getAvailability,
+  type AvailabilityState,
+} from '../../../../src/lib/catalog/availability';
 import { pickRelatedByPrice } from '../../../../src/lib/catalog/related';
 import { formatMoney } from '../../../../src/lib/format';
 import { safeJsonLd } from '../../../../src/lib/seo';
@@ -35,6 +38,14 @@ import { ProductGallery } from '../../../components/product-gallery';
 export const revalidate = 300;
 
 type PageProps = { params: Promise<{ slug: string }> };
+
+/** How each availability state reads to a shopping crawler. */
+const OFFER_AVAILABILITY: Record<AvailabilityState, string> = {
+  'in-stock': 'https://schema.org/InStock',
+  dropship: 'https://schema.org/BackOrder',
+  'coming-soon': 'https://schema.org/PreOrder',
+  'sold-out': 'https://schema.org/OutOfStock',
+};
 
 export async function generateStaticParams() {
   const products = await getProducts({ first: 250 });
@@ -87,9 +98,15 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const compareAtPrice =
     primaryVariant?.compareAtPrice ?? product.compareAtPrice;
   const inStock = Boolean(primaryVariant?.availableForSale);
-  // Sold out vs Coming soon: the operator marks the difference with a tag in
-  // Shopify instead of deleting the product. See `catalog/availability`.
-  const availability = getAvailability({ availableForSale: inStock, tags: product.tags });
+  // Sold out vs Coming soon vs shipping from the supplier: the operator marks
+  // the difference in Shopify instead of deleting the product, and the count
+  // tells a piece on the floor from one that is ordered in. See
+  // `catalog/availability`.
+  const availability = getAvailability({
+    availableForSale: inStock,
+    tags: product.tags,
+    quantityAvailable: primaryVariant?.quantityAvailable,
+  });
   // No count is shown to the shopper. The page says whether a piece can be
   // bought, not how nearly gone it is — how many are left is the shop's
   // business, and putting a number on it turns stock into a nudge.
@@ -120,9 +137,16 @@ export default async function ProductDetailPage({ params }: PageProps) {
       price: variant.price.amount,
       priceCurrency: variant.price.currencyCode,
       sku: variant.sku ?? undefined,
-      availability: variant.availableForSale
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
+      // A piece sold from the supplier is on back order, not out of stock:
+      // OutOfStock would have Google drop it from the shopping surfaces it is
+      // still perfectly buyable on.
+      availability: OFFER_AVAILABILITY[
+        getAvailability({
+          availableForSale: variant.availableForSale,
+          tags: product.tags,
+          quantityAvailable: variant.quantityAvailable,
+        }).state
+      ],
       url: `${env.siteUrl}/products/${product.handle}`,
     })),
   };
@@ -213,6 +237,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 options={product.options}
                 variants={product.variants}
                 unavailableLabel={availability.label}
+                productTags={product.tags}
                 productHandle={product.handle}
                 productTitle={product.title}
               />

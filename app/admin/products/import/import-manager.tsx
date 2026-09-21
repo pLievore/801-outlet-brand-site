@@ -2,133 +2,17 @@
 
 import { useState, useTransition } from 'react';
 
-import { PRODUCT_ATTRIBUTES } from '../../../../src/lib/catalog/attributes';
 import { cn } from '../../../../src/lib/cn';
-import type { ProductAttributes } from '../../../../src/lib/panel/products';
+import {
+  parseCsv,
+  toImportRows,
+  type ImportRow,
+} from '../../../../src/lib/panel/import-csv';
 import {
   applyImportAction,
   previewImportAction,
   type ImportPreviewRow,
-  type ImportRow,
 } from '../actions';
-
-/** Minimal CSV parser with quoted-field support. */
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = '';
-  let quoted = false;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    if (quoted) {
-      if (char === '"' && text[index + 1] === '"') {
-        cell += '"';
-        index += 1;
-      } else if (char === '"') {
-        quoted = false;
-      } else {
-        cell += char;
-      }
-    } else if (char === '"') {
-      quoted = true;
-    } else if (char === ',') {
-      row.push(cell);
-      cell = '';
-    } else if (char === '\n' || char === '\r') {
-      if (char === '\r' && text[index + 1] === '\n') index += 1;
-      row.push(cell);
-      cell = '';
-      if (row.some((value) => value !== '')) rows.push(row);
-      row = [];
-    } else {
-      cell += char;
-    }
-  }
-  row.push(cell);
-  if (row.some((value) => value !== '')) rows.push(row);
-  return rows;
-}
-
-function toImportRows(csv: string[][]): { rows?: ImportRow[]; error?: string } {
-  if (csv.length < 2) return { error: 'The file has no data rows.' };
-
-  // Excel writes a UTF-8 BOM into the first header cell; strip it or the
-  // first column never matches.
-  const header = csv[0].map((cell) =>
-    cell.replace(/^﻿/, '').trim().toLowerCase()
-  );
-  const columnOf = (name: string) => header.indexOf(name);
-
-  const variantIndex = columnOf('variant_id');
-  const skuIndex = columnOf('sku');
-  if (variantIndex === -1 && skuIndex === -1) {
-    return { error: 'The file needs a variant_id or an sku column.' };
-  }
-
-  const titleIndex = columnOf('product_title');
-  const descriptionIndex = columnOf('description');
-  const priceIndex = columnOf('price');
-  const compareIndex = columnOf('compare_at_price');
-  const quantityIndex = columnOf('quantity');
-  const attributeIndexes = PRODUCT_ATTRIBUTES.map((attribute) => ({
-    key: attribute.key,
-    index: columnOf(attribute.key),
-  }));
-
-  const editable = [
-    titleIndex,
-    descriptionIndex,
-    priceIndex,
-    compareIndex,
-    quantityIndex,
-    ...attributeIndexes.map((attribute) => attribute.index),
-  ].some((index) => index !== -1);
-  if (!editable) {
-    return {
-      error:
-        'Nothing to import: include at least one of product_title, description, price, compare_at_price, quantity, or an attribute column.',
-    };
-  }
-
-  const cellAt = (line: string[], index: number) =>
-    index === -1 ? undefined : (line[index] ?? '').trim();
-
-  const rows: ImportRow[] = [];
-  for (const line of csv.slice(1)) {
-    const variantId = cellAt(line, variantIndex) ?? '';
-    const sku = cellAt(line, skuIndex);
-    const title = cellAt(line, titleIndex);
-
-    // A row with no key and no title carries nothing we can act on.
-    if (!variantId && !sku && !title) continue;
-
-    const row: ImportRow = { variantId };
-    if (sku !== undefined) row.sku = sku;
-    if (title !== undefined) row.title = title;
-    if (descriptionIndex !== -1) {
-      row.description = line[descriptionIndex] ?? '';
-    }
-    if (priceIndex !== -1 && cellAt(line, priceIndex) !== '') {
-      row.price = cellAt(line, priceIndex);
-    }
-    if (compareIndex !== -1) row.compareAtPrice = cellAt(line, compareIndex);
-    if (quantityIndex !== -1 && cellAt(line, quantityIndex) !== '') {
-      row.quantity = Number(cellAt(line, quantityIndex));
-    }
-
-    const attributes: ProductAttributes = {};
-    for (const attribute of attributeIndexes) {
-      if (attribute.index === -1) continue;
-      attributes[attribute.key] = line[attribute.index] ?? '';
-    }
-    if (Object.keys(attributes).length > 0) row.attributes = attributes;
-
-    rows.push(row);
-  }
-
-  return { rows };
-}
 
 export function ImportManager() {
   const [rows, setRows] = useState<ImportRow[] | null>(null);
@@ -205,7 +89,7 @@ export function ImportManager() {
       {error ? (
         <p
           role="alert"
-          className="rounded-xl border border-[rgb(var(--accent))]/40 bg-[rgb(var(--accent-soft))] px-4 py-3 text-sm"
+          className="rounded-xl border border-[rgb(var(--accent)/0.4)] bg-[rgb(var(--accent-soft))] px-4 py-3 text-sm"
         >
           {error}
         </p>
@@ -214,7 +98,7 @@ export function ImportManager() {
       {done !== null ? (
         <p
           role="status"
-          className="rounded-xl border border-[rgb(var(--sage))]/50 bg-[rgb(var(--sage-soft))] px-4 py-3 text-sm font-semibold text-[rgb(var(--sage-ink))]"
+          className="rounded-xl border border-[rgb(var(--sage)/0.5)] bg-[rgb(var(--sage-soft))] px-4 py-3 text-sm font-semibold text-[rgb(var(--sage-ink))]"
         >
           Import applied: {done} {done === 1 ? 'change' : 'changes'}.
         </p>
@@ -276,7 +160,7 @@ export function ImportManager() {
             className={cn(
               'mt-5 min-h-11 rounded-full px-6 text-sm font-semibold transition',
               changed.length > 0 && invalid.length === 0
-                ? 'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg))]/90'
+                ? 'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg)/0.9)]'
                 : 'border border-[rgb(var(--border))] text-[rgb(var(--muted))]',
               pending && 'opacity-60'
             )}

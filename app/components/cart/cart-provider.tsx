@@ -35,7 +35,12 @@ type CartContextValue = {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addLine: (variantId: string, quantity: number) => Promise<boolean>;
+  addLine: (
+    variantId: string,
+    quantity: number,
+    /** The page quoted the supplier lead time when this was added. */
+    dropship?: boolean
+  ) => Promise<boolean>;
   updateLine: (lineId: string, quantity: number) => Promise<void>;
   removeLine: (lineId: string) => Promise<void>;
   applyDiscount: (code: string) => Promise<boolean>;
@@ -130,11 +135,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       isOpen,
       openCart: () => setIsOpen(true),
       closeCart: () => setIsOpen(false),
-      addLine: async (variantId, quantity) => {
+      addLine: async (variantId, quantity, dropship) => {
         // Read at add-to-cart time: only then does a cart exist to tag, and
         // the campaign is whatever opened this browser session.
         const ok = await run(
-          addCartLineAction(variantId, quantity, currentAttribution())
+          addCartLineAction(
+            variantId,
+            quantity,
+            currentAttribution(),
+            dropship
+          )
         );
         if (ok) setIsOpen(true);
         return ok;

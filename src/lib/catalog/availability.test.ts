@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { getAvailability } from './availability';
+import { getAvailability, hasDropshipTag } from './availability';
 
 test('an available product is in stock and purchasable', () => {
   const availability = getAvailability({ availableForSale: true, tags: [] });
@@ -55,4 +55,84 @@ test('unrelated tags never change the state', () => {
 
 test('missing tags are tolerated', () => {
   assert.equal(getAvailability({ availableForSale: false }).state, 'sold-out');
+});
+
+test('a variant Shopify still sells with nothing left ships from the supplier', () => {
+  const availability = getAvailability({
+    availableForSale: true,
+    tags: ['dropship'],
+    quantityAvailable: 0,
+  });
+
+  assert.equal(availability.state, 'dropship');
+  assert.equal(availability.label, 'Ships in up to 2 weeks');
+  // The point of the state: it is bought today and arrives later.
+  assert.equal(availability.purchasable, true);
+});
+
+test('the supplier wait is read from the stock, not from the tag', () => {
+  // Someone ticked "continue selling" in Shopify and never tagged the product.
+  const untagged = getAvailability({
+    availableForSale: true,
+    tags: [],
+    quantityAvailable: 0,
+  });
+  assert.equal(untagged.state, 'dropship');
+
+  // Tagged, but there are pieces on the floor: it sells as normal stock.
+  const onTheFloor = getAvailability({
+    availableForSale: true,
+    tags: ['dropship'],
+    quantityAvailable: 3,
+  });
+  assert.equal(onTheFloor.state, 'in-stock');
+});
+
+test('coming soon beats the supplier wait when both are true', () => {
+  const availability = getAvailability({
+    availableForSale: true,
+    tags: ['dropship', 'Coming Soon'],
+    quantityAvailable: 0,
+  });
+
+  assert.equal(availability.state, 'coming-soon');
+  assert.equal(availability.purchasable, false);
+});
+
+test('a surface that does not query the count keeps reading as in stock', () => {
+  assert.equal(
+    getAvailability({ availableForSale: true, tags: ['dropship'] }).state,
+    'in-stock'
+  );
+  assert.equal(
+    getAvailability({
+      availableForSale: true,
+      tags: ['dropship'],
+      quantityAvailable: null,
+    }).state,
+    'in-stock'
+  );
+});
+
+test('a product out of stock and unsellable is sold out, tag or no tag', () => {
+  assert.equal(
+    getAvailability({
+      availableForSale: false,
+      tags: ['dropship'],
+      quantityAvailable: 0,
+    }).state,
+    'sold-out'
+  );
+});
+
+test('the dropship tag is matched like the coming-soon one', () => {
+  for (const tag of ['Dropship', 'DROPSHIP', ' dropship ']) {
+    assert.equal(
+      hasDropshipTag([tag]),
+      true,
+      `expected ${JSON.stringify(tag)} to mark the product as dropship`
+    );
+  }
+  assert.equal(hasDropshipTag(['drop ship']), false);
+  assert.equal(hasDropshipTag(undefined), false);
 });

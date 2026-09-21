@@ -43,6 +43,10 @@ const CART_FRAGMENT = `#graphql
       nodes {
         id
         quantity
+        attributes {
+          key
+          value
+        }
         cost {
           totalAmount {
             amount
@@ -232,8 +236,19 @@ export async function fetchCart(cartId: string, buyerIp?: string) {
  * the campaign that opened the cart is the one that earns the sale, and
  * Shopify carries these through to the order's custom attributes.
  */
+/**
+ * A line as the storefront adds it. `attributes` carries what the shopper was
+ * told at the moment of adding — the supplier lead time — which Shopify then
+ * copies onto the order.
+ */
+export type CartLineAdd = {
+  merchandiseId: string;
+  quantity: number;
+  attributes?: Array<{ key: string; value: string }>;
+};
+
 export async function createCart(
-  lines: Array<{ merchandiseId: string; quantity: number }>,
+  lines: CartLineAdd[],
   buyerIp?: string,
   attributes?: Array<{ key: string; value: string }>
 ) {
@@ -254,7 +269,7 @@ export async function createCart(
 
 export async function addCartLines(
   cartId: string,
-  lines: Array<{ merchandiseId: string; quantity: number }>,
+  lines: CartLineAdd[],
   buyerIp?: string
 ) {
   const result = await shopifyStorefrontRequest<
@@ -274,7 +289,11 @@ export async function addCartLines(
 
 export async function updateCartLines(
   cartId: string,
-  lines: Array<{ id: string; quantity: number }>,
+  lines: Array<{
+    id: string;
+    quantity: number;
+    attributes?: Array<{ key: string; value: string }>;
+  }>,
   buyerIp?: string
 ) {
   const result = await shopifyStorefrontRequest<

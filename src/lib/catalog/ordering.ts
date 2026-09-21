@@ -12,12 +12,15 @@ import type { CatalogProductCard } from './types';
 import { getAvailability } from './availability';
 
 /**
- * Rank within the storefront: in stock, then arriving soon, then sold out.
- * "Coming soon" beats "Sold out" because it is a reason to come back.
+ * Rank within the storefront: what can be bought first, then arriving soon,
+ * then sold out. "Coming soon" beats "Sold out" because it is a reason to come
+ * back. A dropship piece ranks with the stock it is sold alongside — it can be
+ * bought today, it only arrives later — though the card does not query the
+ * count that tells the two apart, so in practice it reads as `in-stock` here.
  */
 function availabilityRank(product: CatalogProductCard): number {
   const state = getAvailability(product).state;
-  if (state === 'in-stock') return 0;
+  if (state === 'in-stock' || state === 'dropship') return 0;
   if (state === 'coming-soon') return 1;
   return 2;
 }

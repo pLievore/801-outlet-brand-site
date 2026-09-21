@@ -6,6 +6,15 @@ import {
   PRODUCT_ATTRIBUTES,
   toStoredAttributeValue,
 } from '../../../src/lib/catalog/attributes';
+import {
+  normalizeCategory,
+  unknownCategoryMessage,
+} from '../../../src/lib/catalog/categories';
+import {
+  DROPSHIP_TAG_VALUE,
+  hasDropshipTag,
+} from '../../../src/lib/catalog/availability';
+import type { ImportRow } from '../../../src/lib/panel/import-csv';
 import { hasValidPanelSession } from '../../../src/lib/panel/session';
 import {
   createPanelProduct,
@@ -15,6 +24,7 @@ import {
   textToDescriptionHtml,
   updatePanelProductDetails,
   updateProductStatus,
+  updateVariantInventoryPolicy,
   updateVariantPricing,
   type PanelProduct,
   type ProductAttributes,
@@ -119,17 +129,7 @@ export async function saveProductAction(input: {
   }
 }
 
-export type ImportRow = {
-  /** Empty when the row describes a product that does not exist yet. */
-  variantId: string;
-  sku?: string;
-  title?: string;
-  description?: string;
-  price?: string;
-  compareAtPrice?: string;
-  quantity?: number;
-  attributes?: ProductAttributes;
-};
+export type { ImportRow };
 
 export type ImportPreviewRow = {
   /** Stable identity for React, and for pairing preview rows with input rows. */
@@ -218,6 +218,69 @@ function attributeChanges(
   return changes;
 }
 
+/**
+ * A product's category and its dropshipping flag belong to the product, while
+ * the spreadsheet has one line per variant. Two lines of the same product
+ * disagreeing is a mistake in the file, not something to resolve by letting
+ * the last line win in silence.
+ */
+type ProductIntent = {
+  category?: string;
+  dropship?: boolean;
+};
+
+function intentConflict(
+  seen: Map<string, ProductIntent>,
+  productId: string,
+  intent: ProductIntent
+): string | null {
+  const previous = seen.get(productId);
+  if (!previous) {
+    seen.set(productId, intent);
+    return null;
+  }
+
+  if (
+    intent.category !== undefined &&
+    previous.category !== undefined &&
+    intent.category !== previous.category
+  ) {
+    return 'The file gives this product two different categories.';
+  }
+  if (
+    intent.dropship !== undefined &&
+    previous.dropship !== undefined &&
+    intent.dropship !== previous.dropship
+  ) {
+    return 'The file turns dropshipping both on and off for this product.';
+  }
+
+  seen.set(productId, { ...previous, ...intent });
+  return null;
+}
+
+/** The category a row asks for, or the reason it cannot be read. */
+function resolveCategory(
+  row: ImportRow
+): { category?: string; error?: string } {
+  if (row.category === undefined) return {};
+
+  const category = normalizeCategory(row.category);
+  if (!category) return { error: unknownCategoryMessage(row.category) };
+  return { category };
+}
+
+/** Whether a variant is currently sold past its stock. */
+function sellsWithoutStock(variant: PanelProduct['variants'][number]): boolean {
+  return variant.inventoryPolicy === 'CONTINUE';
+}
+
+/** The tag list a product should carry once dropshipping is on or off. */
+function tagsWithDropship(tags: string[], dropship: boolean): string[] {
+  const without = tags.filter((tag) => !hasDropshipTag([tag]));
+  return dropship ? [...without, DROPSHIP_TAG_VALUE] : without;
+}
+
 /** Rejects a row that cannot become a product, with the reason to show. */
 function validateNewRow(
   row: ImportRow,
@@ -277,6 +340,8 @@ export async function previewImportAction(
   // Guard against a file that would create the same product twice.
   const seenTitles = new Set<string>();
   const seenSkus = new Set<string>();
+  // Product-level intent, collected across the variant rows of each product.
+  const intents = new Map<string, ProductIntent>();
 
   const preview = rows.map((row, position): ImportPreviewRow => {
     const match = resolveRow(row, index);
@@ -291,12 +356,26 @@ export async function previewImportAction(
         return { key, label, action: 'none', changes: [], valid: false, error };
       }
 
+      const category = resolveCategory(row);
+      if (category.error) {
+        return {
+          key,
+          label,
+          action: 'none',
+          changes: [],
+          valid: false,
+          error: category.error,
+        };
+      }
+
       seenTitles.add(title.toLowerCase());
       const sku = row.sku?.trim().toLowerCase();
       if (sku) seenSkus.add(sku);
 
       const changes = [`create as draft at ${row.price}`];
       if (row.quantity !== undefined) changes.push(`stock ${row.quantity}`);
+      if (category.category) changes.push(`category ${category.category}`);
+      if (row.dropship) changes.push('dropshipping on');
       const filled = PRODUCT_ATTRIBUTES.filter(
         (spec) => (row.attributes?.[spec.key] ?? '').trim() !== ''
       );
@@ -349,6 +428,34 @@ export async function previewImportAction(
     }
     changes.push(...attributeChanges(product.attributes, row.attributes));
 
+    const category = resolveCategory(row);
+    if (category.error) {
+      return {
+        key,
+        label,
+        action: 'none',
+        changes,
+        valid: false,
+        error: category.error,
+      };
+    }
+    const conflict = intentConflict(intents, product.id, {
+      category: category.category,
+      dropship: row.dropship,
+    });
+    if (conflict) {
+      return { key, label, action: 'none', changes, valid: false, error: conflict };
+    }
+
+    if (category.category && category.category !== product.productType) {
+      changes.push(
+        `category ${product.productType || 'none'} to ${category.category}`
+      );
+    }
+    if (row.dropship !== undefined && row.dropship !== sellsWithoutStock(variant)) {
+      changes.push(row.dropship ? 'dropshipping on' : 'dropshipping off');
+    }
+
     return {
       key,
       label,
@@ -384,11 +491,23 @@ export async function applyImportAction(
     Array<{ id: string; price: string; compareAtPrice: string | null }>
   >();
   const stockUpdates: Array<{ inventoryItemId: string; quantity: number }> = [];
-  const detailUpdates: Array<{
-    productId: string;
-    title: string;
-    description: string;
-  }> = [];
+  // One `productUpdate` per product: title, description, category and the
+  // dropship tag all live on the product, and a row that only changes the
+  // category still has to send the fields it is not changing.
+  const detailUpdates = new Map<
+    string,
+    {
+      productId: string;
+      title: string;
+      description: string;
+      productType?: string;
+      tags?: string[];
+    }
+  >();
+  const policyUpdates = new Map<
+    string,
+    Array<{ id: string; inventoryPolicy: 'DENY' | 'CONTINUE' }>
+  >();
   const attributeUpdates: Array<{
     productId: string;
     attributes: ProductAttributes;
@@ -441,14 +560,36 @@ export async function applyImportAction(
     const titleChanged = Boolean(nextTitle) && nextTitle !== product.title;
     const descriptionChanged =
       row.description !== undefined && row.description !== product.description;
-    if (titleChanged || descriptionChanged) {
-      detailUpdates.push({
+
+    const category = resolveCategory(row).category;
+    const categoryChanged = Boolean(category) && category !== product.productType;
+    const tagChanged =
+      row.dropship !== undefined && row.dropship !== hasDropshipTag(product.tags);
+
+    if (titleChanged || descriptionChanged || categoryChanged || tagChanged) {
+      const current = detailUpdates.get(product.id);
+      detailUpdates.set(product.id, {
         productId: product.id,
-        title: nextTitle || product.title,
+        title: nextTitle || current?.title || product.title,
         description:
-          row.description === undefined ? product.description : row.description,
+          row.description === undefined
+            ? (current?.description ?? product.description)
+            : row.description,
+        ...(categoryChanged ? { productType: category } : {}),
+        ...(tagChanged
+          ? { tags: tagsWithDropship(product.tags, row.dropship as boolean) }
+          : {}),
       });
       applied += 1;
+    }
+
+    if (row.dropship !== undefined && row.dropship !== sellsWithoutStock(variant)) {
+      const list = policyUpdates.get(product.id) ?? [];
+      list.push({
+        id: variant.id,
+        inventoryPolicy: row.dropship ? 'CONTINUE' : 'DENY',
+      });
+      policyUpdates.set(product.id, list);
     }
 
     if (attributeChanges(product.attributes, row.attributes).length > 0) {
@@ -467,12 +608,21 @@ export async function applyImportAction(
     if (stockUpdates.length > 0) {
       await setInventoryQuantities(stockUpdates);
     }
-    for (const update of detailUpdates) {
+    for (const update of detailUpdates.values()) {
       await updatePanelProductDetails({
         productId: update.productId,
         title: update.title,
         descriptionHtml: textToDescriptionHtml(update.description),
+        ...(update.productType !== undefined
+          ? { productType: update.productType }
+          : {}),
+        ...(update.tags ? { tags: update.tags } : {}),
       });
+    }
+    // After the tag, so a product never carries the label without Shopify
+    // being willing to sell it.
+    for (const [productId, variants] of policyUpdates) {
+      await updateVariantInventoryPolicy(productId, variants);
     }
     for (const update of attributeUpdates) {
       await setProductAttributes(update.productId, update.attributes);
@@ -491,6 +641,12 @@ export async function applyImportAction(
         sku: row.sku?.trim() || null,
         quantity: row.quantity ?? 0,
         imageResourceUrls: [],
+        ...(resolveCategory(row).category
+          ? { productType: resolveCategory(row).category }
+          : {}),
+        ...(row.dropship
+          ? { tags: [DROPSHIP_TAG_VALUE], inventoryPolicy: 'CONTINUE' as const }
+          : {}),
       });
       if (row.attributes) {
         await setProductAttributes(productId, row.attributes);

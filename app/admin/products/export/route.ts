@@ -30,6 +30,8 @@ export async function GET() {
     'variant_title',
     'sku',
     'status',
+    'category',
+    'dropship',
     'price',
     'compare_at_price',
     'quantity',
@@ -45,6 +47,11 @@ export async function GET() {
         variant.title,
         variant.sku ?? '',
         product.status,
+        product.productType,
+        // Read from the variant's own setting rather than from the tag: the
+        // spreadsheet should show what Shopify will actually do when the
+        // stock runs out. See `catalog/availability`.
+        variant.inventoryPolicy === 'CONTINUE' ? 'yes' : 'no',
         variant.price,
         variant.compareAtPrice ?? '',
         variant.inventoryQuantity,

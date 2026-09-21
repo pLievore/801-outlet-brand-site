@@ -12,6 +12,9 @@ function adaptCartLine(line: ShopifyCartLine): CartLineView | null {
   return {
     id: line.id,
     quantity: line.quantity,
+    attributes: (line.attributes ?? []).flatMap((attribute) =>
+      attribute.value ? [{ key: attribute.key, value: attribute.value }] : []
+    ),
     lineTotal: {
       amount: line.cost.totalAmount.amount,
       currencyCode: line.cost.totalAmount.currencyCode,

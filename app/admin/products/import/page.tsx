@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 
 import { PRODUCT_ATTRIBUTES } from '../../../../src/lib/catalog/attributes';
+import { DROPSHIP_LEAD_TIME_WEEKS } from '../../../../src/lib/catalog/availability';
+import { PRODUCT_CATEGORIES } from '../../../../src/lib/catalog/categories';
 import { PageHeader } from '../../_components/ui';
 import { ImportManager } from './import-manager';
 
@@ -47,12 +49,35 @@ export default function ImportPage() {
             <dd className="text-xs leading-relaxed">
               <code>product_title</code>, <code>sku</code>, <code>price</code>,{' '}
               <code>compare_at_price</code>, <code>quantity</code>,{' '}
-              <code>description</code>,{' '}
+              <code>description</code>, <code>category</code>,{' '}
+              <code>dropship</code>,{' '}
               {PRODUCT_ATTRIBUTES.map((attribute) => (
                 <code key={attribute.key}>{attribute.key} </code>
               ))}
               . Columns you leave out are not touched; an empty cell in a column
-              you include clears that value.
+              you include clears that value — except <code>category</code> and{' '}
+              <code>dropship</code>, where an empty cell leaves the product as
+              it is.
+            </dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-[rgb(var(--fg))]">Category</dt>
+            <dd className="text-xs leading-relaxed">
+              One of: {PRODUCT_CATEGORIES.join(', ')}. Anything else stops the
+              row and says so, so a typo cannot open a category of its own.
+            </dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-[rgb(var(--fg))]">
+              Dropshipping
+            </dt>
+            <dd className="text-xs leading-relaxed">
+              <code>yes</code> keeps a piece on sale with no stock left, and the
+              product page quotes up to {DROPSHIP_LEAD_TIME_WEEKS} weeks. It
+              also switches the variant to &ldquo;continue selling&rdquo; in
+              Shopify, which is what lets the sale go through. <code>no</code>{' '}
+              turns it back off; an empty cell changes nothing. While there is
+              stock on the floor, the piece sells as normal with no notice.
             </dd>
           </div>
           <div>

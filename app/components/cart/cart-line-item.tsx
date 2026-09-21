@@ -2,8 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Minus, Plus, Trash2, Truck } from 'lucide-react';
 
+import { DROPSHIP_LINE_ATTRIBUTE_KEY } from '../../../src/lib/catalog/availability';
 import type { CartLineView } from '../../../src/lib/catalog/cart-view';
 import { formatMoney } from '../../../src/lib/format';
 import { useCart } from './cart-provider';
@@ -23,6 +24,11 @@ export function CartLineItem({
   const atMax =
     merchandise.quantityAvailable !== null &&
     line.quantity >= merchandise.quantityAvailable;
+  // Written onto the line when it was added, and carried to the order: the
+  // shopper reads the same wait here that the product page quoted.
+  const supplierNote = line.attributes.find(
+    (attribute) => attribute.key === DROPSHIP_LINE_ATTRIBUTE_KEY
+  )?.value;
 
   return (
     <div className="flex gap-4 py-4">
@@ -61,6 +67,13 @@ export function CartLineItem({
         {showVariantTitle ? (
           <p className="mt-0.5 text-xs text-[rgb(var(--muted))]">
             {merchandise.variantTitle}
+          </p>
+        ) : null}
+
+        {supplierNote ? (
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-[rgb(var(--muted))]">
+            <Truck aria-hidden className="size-3.5 shrink-0" />
+            {supplierNote}
           </p>
         ) : null}
 

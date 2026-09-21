@@ -22,6 +22,11 @@ export type PanelVariant = {
   compareAtPrice: string | null;
   inventoryQuantity: number;
   inventoryItemId: string;
+  /**
+   * `CONTINUE` is what lets a variant be sold with nothing left — the state a
+   * dropship piece must be in. See `catalog/availability`.
+   */
+  inventoryPolicy: 'DENY' | 'CONTINUE';
 };
 
 export type PanelProduct = {
@@ -32,8 +37,13 @@ export type PanelProduct = {
   description: string;
   status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
   imageUrl: string | null;
-  /** Free-form Shopify tags; `coming-soon` drives the storefront label. */
+  /**
+   * Free-form Shopify tags; `coming-soon` drives the storefront label and
+   * `dropship` records that the piece is sold from the supplier's stock.
+   */
   tags: string[];
+  /** Shopify's own `productType`, holding the category — see `catalog/categories`. */
+  productType: string;
   attributes: ProductAttributes;
   variants: PanelVariant[];
 };
@@ -48,6 +58,7 @@ type ProductsResponse = {
       description: string | null;
       status: PanelProduct['status'];
       tags: string[];
+      productType: string | null;
       featuredImage: { url: string } | null;
       metafields: { nodes: Array<{ key: string; value: string }> };
       variants: {
@@ -58,6 +69,7 @@ type ProductsResponse = {
           price: string;
           compareAtPrice: string | null;
           inventoryQuantity: number | null;
+          inventoryPolicy: PanelVariant['inventoryPolicy'];
           inventoryItem: { id: string };
         }>;
       };
@@ -76,6 +88,7 @@ const PRODUCTS_PAGE_QUERY = `#graphql
         description
         status
         tags
+        productType
         featuredImage { url }
         metafields(first: 10, namespace: "${ATTRIBUTE_NAMESPACE}") {
           nodes { key value }
@@ -88,6 +101,7 @@ const PRODUCTS_PAGE_QUERY = `#graphql
             price
             compareAtPrice
             inventoryQuantity
+            inventoryPolicy
             inventoryItem { id }
           }
         }
@@ -110,6 +124,7 @@ function adaptProduct(node: ProductsResponse['products']['nodes'][number]): Pane
     description: node.description ?? '',
     status: node.status,
     tags: node.tags ?? [],
+    productType: node.productType ?? '',
     imageUrl: node.featuredImage?.url ?? null,
     attributes,
     variants: node.variants.nodes.map((variant) => ({
@@ -119,6 +134,7 @@ function adaptProduct(node: ProductsResponse['products']['nodes'][number]): Pane
       price: variant.price,
       compareAtPrice: variant.compareAtPrice,
       inventoryQuantity: variant.inventoryQuantity ?? 0,
+      inventoryPolicy: variant.inventoryPolicy,
       inventoryItemId: variant.inventoryItem.id,
     })),
   };
@@ -232,6 +248,7 @@ export async function getPanelProductDetail(
       status: PanelProduct['status'];
       description: string;
       tags: string[];
+      productType: string | null;
       featuredImage: { url: string } | null;
       metafields: { nodes: Array<{ key: string; value: string }> };
       media: {
@@ -253,6 +270,7 @@ export async function getPanelProductDetail(
         status
         description
         tags
+        productType
         featuredImage { url }
         metafields(first: 10, namespace: "${ATTRIBUTE_NAMESPACE}") {
           nodes { key value }
@@ -272,6 +290,7 @@ export async function getPanelProductDetail(
             price
             compareAtPrice
             inventoryQuantity
+            inventoryPolicy
             inventoryItem { id }
           }
         }
@@ -298,6 +317,7 @@ export async function getPanelProductDetail(
     description: product.description,
     descriptionText: product.description,
     tags: product.tags ?? [],
+    productType: product.productType ?? '',
     attributes,
     imageUrl: product.featuredImage?.url ?? null,
     media: product.media.nodes.map((node) => ({
@@ -312,6 +332,7 @@ export async function getPanelProductDetail(
       price: variant.price,
       compareAtPrice: variant.compareAtPrice,
       inventoryQuantity: variant.inventoryQuantity ?? 0,
+      inventoryPolicy: variant.inventoryPolicy,
       inventoryItemId: variant.inventoryItem.id,
     })),
   };
@@ -323,6 +344,8 @@ export async function updatePanelProductDetails(input: {
   descriptionHtml: string;
   /** Replaces the whole tag list when provided; omit to leave tags alone. */
   tags?: string[];
+  /** The category, in Shopify's own field; omit to leave it alone. */
+  productType?: string;
 }) {
   const data = await adminGraphql<{
     productUpdate: {
@@ -344,6 +367,9 @@ export async function updatePanelProductDetails(input: {
         title: input.title,
         descriptionHtml: input.descriptionHtml,
         ...(input.tags ? { tags: input.tags } : {}),
+        ...(input.productType !== undefined
+          ? { productType: input.productType }
+          : {}),
       },
     }
   );
@@ -657,6 +683,11 @@ export async function createPanelProduct(input: {
   sku: string | null;
   quantity: number;
   imageResourceUrls: string[];
+  /** The category, in Shopify's own field; omitted when the row left it blank. */
+  productType?: string;
+  tags?: string[];
+  /** `CONTINUE` for a piece sold from the supplier's stock. */
+  inventoryPolicy?: 'DENY' | 'CONTINUE';
 }): Promise<{ productId: string }> {
   const data = await adminGraphql<{
     productCreate: {
@@ -687,6 +718,8 @@ export async function createPanelProduct(input: {
         title: input.title,
         descriptionHtml: input.descriptionHtml,
         status: input.status,
+        ...(input.productType ? { productType: input.productType } : {}),
+        ...(input.tags?.length ? { tags: input.tags } : {}),
       },
       media: input.imageResourceUrls.map((resourceUrl) => ({
         originalSource: resourceUrl,
@@ -721,6 +754,9 @@ export async function createPanelProduct(input: {
           id: variant.id,
           price: input.price,
           compareAtPrice: input.compareAtPrice,
+          ...(input.inventoryPolicy
+            ? { inventoryPolicy: input.inventoryPolicy }
+            : {}),
           inventoryItem: {
             tracked: true,
             ...(input.sku ? { sku: input.sku } : {}),
@@ -810,6 +846,39 @@ export async function updateVariantPricing(
   }>(
     `#graphql
     mutation PanelVariantPricing($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+        userErrors { field message }
+      }
+    }
+  `,
+    { productId, variants }
+  );
+  assertNoUserErrors(
+    'productVariantsBulkUpdate',
+    data.productVariantsBulkUpdate.userErrors
+  );
+}
+
+/**
+ * Whether a variant may still be sold once its stock reaches zero.
+ *
+ * This is the switch behind dropshipping: Shopify refuses the cart line for an
+ * out-of-stock variant under `DENY`, so a piece the shop sells from the
+ * supplier's stock has to sit on `CONTINUE`. The panel and the spreadsheet own
+ * it, which is why ticking the box is enough — nobody has to remember to flip
+ * "continue selling when out of stock" in Shopify as a second step.
+ */
+export async function updateVariantInventoryPolicy(
+  productId: string,
+  variants: Array<{ id: string; inventoryPolicy: 'DENY' | 'CONTINUE' }>
+) {
+  const data = await adminGraphql<{
+    productVariantsBulkUpdate: {
+      userErrors: Array<{ field?: string[] | null; message: string }>;
+    };
+  }>(
+    `#graphql
+    mutation PanelVariantInventoryPolicy($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
       productVariantsBulkUpdate(productId: $productId, variants: $variants) {
         userErrors { field message }
       }
