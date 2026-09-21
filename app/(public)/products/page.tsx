@@ -109,7 +109,7 @@ export default async function ProductsPage({
   );
   const inputClass =
     'w-full rounded-xl border border-[rgb(var(--border))] bg-white px-4 py-2.5 text-sm transition ' +
-    'focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20';
+    'focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent)/0.2)]';
 
   return (
     <main>
@@ -235,7 +235,7 @@ export default async function ProductsPage({
             >
               See all products
             </Link>
-            <div className="pointer-events-none absolute inset-x-0 -bottom-12 mx-auto h-40 max-w-sm rounded-full bg-[rgb(var(--accent))]/10 blur-3xl" />
+            <div className="pointer-events-none absolute inset-x-0 -bottom-12 mx-auto h-40 max-w-sm rounded-full bg-[rgb(var(--accent)/0.1)] blur-3xl" />
           </div>
         ) : (
           <StaggerGrid className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

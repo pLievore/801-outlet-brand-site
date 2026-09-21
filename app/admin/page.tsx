@@ -214,7 +214,7 @@ export default async function AdminOverviewPage() {
                     </div>
                     <div className="mt-1.5 h-6 overflow-hidden rounded-lg bg-[rgb(var(--surface-muted))]">
                       <div
-                        className="h-full rounded-lg bg-[rgb(var(--panel-chart))]/80"
+                        className="h-full rounded-lg bg-[rgb(var(--panel-chart)/0.8)]"
                         style={{ width: `${width}%` }}
                       />
                     </div>
@@ -377,7 +377,7 @@ export default async function AdminOverviewPage() {
               </>
             );
             const className =
-              'group flex flex-col items-center gap-2 rounded-2xl border border-[rgb(var(--border))] bg-white px-3 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-[rgb(var(--sage-ink))]/40 hover:shadow-md';
+              'group flex flex-col items-center gap-2 rounded-2xl border border-[rgb(var(--border))] bg-white px-3 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-[rgb(var(--sage-ink)/0.4)] hover:shadow-md';
             return shortcut.external ? (
               <a key={shortcut.href} href={shortcut.href} className={className}>
                 {inner}

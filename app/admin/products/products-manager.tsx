@@ -144,14 +144,14 @@ function ProductRow({ product }: { product: PanelProduct }) {
   const numericId = product.id.split('/').pop();
   const single = product.variants.length === 1;
   const fieldClass =
-    'w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white py-2 text-sm tabular-nums outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15';
+    'w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white py-2 text-sm tabular-nums outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]';
 
   return (
     <div
       className={cn(
         'rounded-3xl border bg-white p-5 transition',
         dirty
-          ? 'border-[rgb(var(--accent))]/40 shadow-[0_4px_20px_rgba(0,0,0,0.05)]'
+          ? 'border-[rgb(var(--accent)/0.4)] shadow-[0_4px_20px_rgba(0,0,0,0.05)]'
           : 'border-[rgb(var(--border))]'
       )}
     >
@@ -220,7 +220,7 @@ function ProductRow({ product }: { product: PanelProduct }) {
       </div>
 
       {/* Inline pricing/stock editor */}
-      <div className="mt-4 rounded-2xl bg-[rgb(var(--surface-muted))]/60 p-4">
+      <div className="mt-4 rounded-2xl bg-[rgb(var(--surface-muted)/0.6)] p-4">
         {single ? (
           <div className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[1fr_1fr_1fr_auto_auto]">
             {(() => {
@@ -306,8 +306,8 @@ function ProductRow({ product }: { product: PanelProduct }) {
               className={cn(
                 'col-span-2 min-h-10 rounded-full px-6 text-xs font-bold transition sm:col-span-1',
                 dirty
-                  ? 'bg-[rgb(var(--fg))] text-white shadow-sm hover:bg-[rgb(var(--fg))]/90'
-                  : 'cursor-default border border-[rgb(var(--border))] bg-white text-[rgb(var(--muted))]/60',
+                  ? 'bg-[rgb(var(--fg))] text-white shadow-sm hover:bg-[rgb(var(--fg)/0.9)]'
+                  : 'cursor-default border border-[rgb(var(--border))] bg-white text-[rgb(var(--muted)/0.6)]',
                 pending && 'opacity-60'
               )}
             >
@@ -343,8 +343,8 @@ function ProductRow({ product }: { product: PanelProduct }) {
                 className={cn(
                   'min-h-9 rounded-full px-5 text-xs font-bold transition',
                   dirty
-                    ? 'bg-[rgb(var(--fg))] text-white shadow-sm hover:bg-[rgb(var(--fg))]/90'
-                    : 'cursor-default border border-[rgb(var(--border))] bg-white text-[rgb(var(--muted))]/60',
+                    ? 'bg-[rgb(var(--fg))] text-white shadow-sm hover:bg-[rgb(var(--fg)/0.9)]'
+                    : 'cursor-default border border-[rgb(var(--border))] bg-white text-[rgb(var(--muted)/0.6)]',
                   pending && 'opacity-60'
                 )}
               >

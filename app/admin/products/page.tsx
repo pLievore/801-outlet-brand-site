@@ -80,7 +80,7 @@ export default async function PanelProductsPage({
             </Link>
             <Link
               href="/admin/products/new"
-              className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-4 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-4 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)]"
             >
               <Plus aria-hidden="true" className="size-4" />
               New product
@@ -122,7 +122,7 @@ export default async function PanelProductsPage({
           type="search"
           defaultValue={search ?? ''}
           placeholder="Search by title…"
-          className="min-h-10 w-full flex-1 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15 sm:w-auto"
+          className="min-h-10 w-full flex-1 rounded-full border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)] sm:w-auto"
         />
         <label htmlFor="status" className="sr-only">
           Status
@@ -153,7 +153,7 @@ export default async function PanelProductsPage({
         </select>
         <button
           type="submit"
-          className="inline-flex min-h-10 items-center rounded-full bg-[rgb(var(--fg))] px-5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90"
+          className="inline-flex min-h-10 items-center rounded-full bg-[rgb(var(--fg))] px-5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)]"
         >
           Apply
         </button>

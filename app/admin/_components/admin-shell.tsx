@@ -338,7 +338,7 @@ export function AdminShell({
               <span className="text-[rgb(var(--muted))]">Panel</span>
               <ChevronRight
                 aria-hidden="true"
-                className="size-3.5 text-[rgb(var(--muted))]/60"
+                className="size-3.5 text-[rgb(var(--muted)/0.6)]"
               />
               <span className="font-semibold">{currentLabel}</span>
             </div>

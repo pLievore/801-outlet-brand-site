@@ -193,7 +193,7 @@ export function MobileTabBar() {
         isDragging.current = false;
         setHover(null);
       }}
-      className="pb-tab-bar fixed inset-x-0 bottom-0 z-40 flex border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 backdrop-blur-xl lg:hidden print:hidden"
+      className="pb-tab-bar fixed inset-x-0 bottom-0 z-40 flex border-t border-[rgb(var(--border))] bg-[rgb(var(--bg)/0.95)] backdrop-blur-xl lg:hidden print:hidden"
     >
       {/* Sliding orange indicator */}
       <span

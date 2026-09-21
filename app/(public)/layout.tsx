@@ -122,7 +122,7 @@ function SiteHeader({
   phoneHref: string;
 }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--bg))]/95 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--bg)/0.95)] backdrop-blur-xl">
       <Container size="wide" className="flex min-h-16 items-center gap-3 sm:gap-4 py-2">
         <Link
           href="/"

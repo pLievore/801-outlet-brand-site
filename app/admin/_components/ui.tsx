@@ -77,7 +77,7 @@ export function StatCard({
   const body = (
     <>
       {accent ? (
-        <span className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-[rgb(var(--sage-ink))]/10 blur-2xl" />
+        <span className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-[rgb(var(--sage-ink)/0.1)] blur-2xl" />
       ) : null}
       <p className="relative text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(var(--muted))]">
         {title}
@@ -109,7 +109,7 @@ export function StatCard({
 
   const className = `group relative overflow-hidden rounded-2xl border p-4 transition ${
     accent
-      ? 'border-[rgb(var(--sage-ink))]/25 bg-[rgb(var(--sage-soft))]/40'
+      ? 'border-[rgb(var(--sage-ink)/0.25)] bg-[rgb(var(--sage-soft)/0.4)]'
       : 'border-[rgb(var(--border))] bg-white'
   } ${href ? 'hover:-translate-y-0.5 hover:shadow-md' : ''}`;
 
@@ -199,7 +199,7 @@ export function BiHero({
     <section className="relative overflow-hidden rounded-3xl bg-[rgb(var(--panel))] p-6 text-white md:p-8">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-[rgb(var(--panel-marker))]/15 blur-3xl"
+        className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-[rgb(var(--panel-marker)/0.15)] blur-3xl"
       />
       <div className="relative flex flex-wrap items-end justify-between gap-4">
         <div>

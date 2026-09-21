@@ -97,7 +97,7 @@ export default async function HomePage() {
             <div className="relative">
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-br from-[rgb(var(--accent))]/15 via-transparent to-[rgb(var(--sage))]/20 blur-2xl"
+                className="pointer-events-none absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-br from-[rgb(var(--accent)/0.15)] via-transparent to-[rgb(var(--sage)/0.2)] blur-2xl"
               />
               <div className="relative aspect-4/5 overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white shadow-lg">
                 <HeroVideo />
@@ -197,14 +197,14 @@ export default async function HomePage() {
             <StaggerItem key={c.title}>
               <Link
                 href={c.href}
-                className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white p-6 transition will-change-transform hover:-translate-y-[2px] hover:border-[rgb(var(--accent))]/50 hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]"
+                className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white p-6 transition will-change-transform hover:-translate-y-[2px] hover:border-[rgb(var(--accent)/0.5)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]"
               >
                 <span className="font-display text-3xl italic text-[rgb(var(--accent))]">
                   {c.n}
                 </span>
                 <span
                   aria-hidden="true"
-                  className="absolute right-5 top-6 h-px w-12 bg-[rgb(var(--border))] transition group-hover:bg-[rgb(var(--accent))]/40"
+                  className="absolute right-5 top-6 h-px w-12 bg-[rgb(var(--border))] transition group-hover:bg-[rgb(var(--accent)/0.4)]"
                 />
                 <div className="mt-6 text-base font-semibold tracking-tight">{c.title}</div>
                 <div className="mt-1 text-xs text-[rgb(var(--muted))]">{c.desc}</div>
@@ -322,7 +322,7 @@ export default async function HomePage() {
             <div className="bg-grid relative overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white px-6 py-16 text-center md:py-20">
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 -bottom-16 mx-auto h-48 max-w-md rounded-full bg-[rgb(var(--accent))]/10 blur-3xl"
+                className="pointer-events-none absolute inset-x-0 -bottom-16 mx-auto h-48 max-w-md rounded-full bg-[rgb(var(--accent)/0.1)] blur-3xl"
               />
               <h2
                 id="final-cta-heading"

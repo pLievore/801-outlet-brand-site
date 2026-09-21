@@ -46,7 +46,7 @@ export default async function LoginPage({
           {error ? (
             <p
               role="alert"
-              className="mt-4 rounded-xl border border-[rgb(var(--accent))]/40 bg-[rgb(var(--accent-soft))] px-4 py-3 text-sm"
+              className="mt-4 rounded-xl border border-[rgb(var(--accent)/0.4)] bg-[rgb(var(--accent-soft))] px-4 py-3 text-sm"
             >
               We could not sign you in. Please try again.
             </p>

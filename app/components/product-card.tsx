@@ -24,7 +24,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
     >
       <Link
         href={`/products/${p.slug}`}
-        className="group flex h-full flex-col rounded-2xl border border-[rgb(var(--border))] bg-white p-3 sm:p-4 transition-colors hover:border-[rgb(var(--accent))]/30"
+        className="group flex h-full flex-col rounded-2xl border border-[rgb(var(--border))] bg-white p-3 sm:p-4 transition-colors hover:border-[rgb(var(--accent)/0.3)]"
       >
         <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-neutral-100">
           {primary ? (
@@ -99,7 +99,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
               </span>
             ) : null}
             {p.stockQty > 0 && p.stockQty <= 3 ? (
-              <span className="rounded-full border border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/10 px-2.5 py-0.5 text-[10px] font-semibold text-[rgb(var(--accent))]">
+              <span className="rounded-full border border-[rgb(var(--accent))] bg-[rgb(var(--accent)/0.1)] px-2.5 py-0.5 text-[10px] font-semibold text-[rgb(var(--accent))]">
                 Only {p.stockQty} left
               </span>
             ) : null}

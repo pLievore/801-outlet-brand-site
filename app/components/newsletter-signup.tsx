@@ -51,7 +51,7 @@ export function NewsletterSignup() {
           type="submit"
           disabled={state !== 'idle'}
           whileTap={{ scale: 0.97 }}
-          className="rounded-full bg-[rgb(var(--fg))] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full bg-[rgb(var(--fg))] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {state === 'submitting' ? 'Subscribing…' : 'Subscribe'}
         </motion.button>

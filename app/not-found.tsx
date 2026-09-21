@@ -37,7 +37,7 @@ export default function NotFound() {
         </Link>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 mx-auto h-72 max-w-md -translate-y-1/2 rounded-full bg-[rgb(var(--accent))]/10 blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 mx-auto h-72 max-w-md -translate-y-1/2 rounded-full bg-[rgb(var(--accent)/0.1)] blur-3xl" />
     </main>
   );
 }

@@ -203,7 +203,7 @@ export function PredictiveSearch({
               }
             }}
             className={cn(
-              'min-h-11 w-full rounded-full border border-[rgb(var(--border-strong))] bg-white py-2 pl-11 pr-4 text-sm outline-none transition placeholder:text-[rgb(var(--muted))] focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15',
+              'min-h-11 w-full rounded-full border border-[rgb(var(--border-strong))] bg-white py-2 pl-11 pr-4 text-sm outline-none transition placeholder:text-[rgb(var(--muted))] focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]',
               inputClassName
             )}
           />

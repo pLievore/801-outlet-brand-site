@@ -221,8 +221,8 @@ export function ProductGallery({ images, productName }: Props) {
                   className={
                     'group relative overflow-hidden rounded-2xl border bg-white transition will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2 ' +
                     (!isOverflowTile && i === activeIndex
-                      ? 'border-[rgb(var(--accent))] ring-1 ring-[rgb(var(--accent))]/30'
-                      : 'border-[rgb(var(--border))] hover:-translate-y-[1px] hover:border-[rgb(var(--accent))]/40 hover:shadow-sm')
+                      ? 'border-[rgb(var(--accent))] ring-1 ring-[rgb(var(--accent)/0.3)]'
+                      : 'border-[rgb(var(--border))] hover:-translate-y-[1px] hover:border-[rgb(var(--accent)/0.4)] hover:shadow-sm')
                   }
                 >
                   <div className="relative aspect-4/3 bg-neutral-100">

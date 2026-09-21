@@ -165,7 +165,7 @@ export default function PrivacyPage() {
 
           <div className="mt-6 rounded-3xl border border-[rgb(var(--border))] bg-white p-8 md:p-10">
             <div className="flex items-start gap-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--accent))]/10">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--accent)/0.1)]">
                 <svg
                   className="size-5 text-[rgb(var(--accent))]"
                   fill="none"

@@ -66,7 +66,7 @@ export function EditDiscountForm({ discount }: { discount: AdminDiscountItem }) 
   };
 
   const inputClass =
-    'min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15';
+    'min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]';
 
   return (
     <div className="max-w-2xl space-y-6">

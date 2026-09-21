@@ -25,11 +25,11 @@ export function buttonStyles({
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))] focus-visible:ring-offset-2',
     'disabled:pointer-events-none disabled:opacity-50 motion-safe:hover:-translate-y-px',
     variant === 'primary' &&
-      'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg))]/90',
+      'bg-[rgb(var(--fg))] text-white hover:bg-[rgb(var(--fg)/0.9)]',
     variant === 'secondary' &&
       'border border-[rgb(var(--border-strong))] bg-white text-[rgb(var(--fg))] hover:bg-neutral-50',
     variant === 'sage' &&
-      'bg-[rgb(var(--sage-ink))] text-white hover:bg-[rgb(var(--sage-ink))]/90',
+      'bg-[rgb(var(--sage-ink))] text-white hover:bg-[rgb(var(--sage-ink)/0.9)]',
     variant === 'ghost' &&
       'text-[rgb(var(--fg))] hover:bg-[rgb(var(--surface-muted))]',
     size === 'sm' && 'min-h-9 px-4 py-2 text-xs',

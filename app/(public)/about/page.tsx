@@ -75,7 +75,7 @@ export default function AboutPage() {
   return (
     <main>
       {/* Hero */}
-      <section className="border-b border-[rgb(var(--border))] bg-[rgb(var(--accent-soft))]/60">
+      <section className="border-b border-[rgb(var(--border))] bg-[rgb(var(--accent-soft)/0.6)]">
         <Container size="narrow" className="py-16 text-center md:py-24">
           <FadeMount delay={0.05}>
             <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[rgb(var(--accent))]">
@@ -185,7 +185,7 @@ export default function AboutPage() {
             <StaggerItem key={category.name}>
               <Link
                 href={category.href}
-                className="group flex h-full flex-col rounded-3xl border border-[rgb(var(--border))] bg-white p-6 transition hover:-translate-y-[2px] hover:border-[rgb(var(--accent))]/50 hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]"
+                className="group flex h-full flex-col rounded-3xl border border-[rgb(var(--border))] bg-white p-6 transition hover:-translate-y-[2px] hover:border-[rgb(var(--accent)/0.5)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]"
               >
                 <Sparkles
                   aria-hidden="true"
@@ -225,7 +225,7 @@ export default function AboutPage() {
                 Call (801) 854-6060
               </ButtonLink>
             </div>
-            <p className="mt-6 text-xs text-[rgb(var(--sage-ink))]/80">
+            <p className="mt-6 text-xs text-[rgb(var(--sage-ink)/0.8)]">
               Have questions?{' '}
               <Link href="/contact" className="font-semibold underline underline-offset-4">
                 Send us a message

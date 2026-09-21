@@ -30,7 +30,7 @@ export function FormError({ children }: { children: string | null }) {
       ref={ref}
       role="alert"
       tabIndex={-1}
-      className="flex items-start gap-2.5 rounded-xl border border-[rgb(var(--accent))]/40 bg-[rgb(var(--accent-soft))] px-4 py-3 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))]"
+      className="flex items-start gap-2.5 rounded-xl border border-[rgb(var(--accent)/0.4)] bg-[rgb(var(--accent-soft))] px-4 py-3 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent))]"
     >
       <AlertCircle
         aria-hidden="true"

@@ -8,7 +8,7 @@ import type { BookingDay } from '../../../src/lib/content/booking';
 import { requestAppointmentAction } from '../../actions/appointment';
 
 const inputClass =
-  'min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15';
+  'min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]';
 
 export function AppointmentForm({ days }: { days: BookingDay[] }) {
   const [selectedDate, setSelectedDate] = useState(days[0]?.date ?? '');
@@ -172,7 +172,7 @@ export function AppointmentForm({ days }: { days: BookingDay[] }) {
             name="notes"
             rows={3}
             placeholder="What are you looking for? (optional)"
-            className="w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 py-3 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15"
+            className="w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 py-3 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]"
           />
         </label>
         {/* Honeypot */}

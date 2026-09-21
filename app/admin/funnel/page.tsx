@@ -76,7 +76,7 @@ function BreakdownList({
           </div>
           <div className="mt-1 h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-muted))]">
             <div
-              className="h-full rounded-full bg-[rgb(var(--panel-chart))]/80"
+              className="h-full rounded-full bg-[rgb(var(--panel-chart)/0.8)]"
               style={{ width: `${Math.max((entry.count / max) * 100, 3)}%` }}
             />
           </div>
@@ -322,7 +322,7 @@ export default async function FunnelPage({
                   </div>
                   <div className="mt-1.5 h-8 overflow-hidden rounded-lg bg-[rgb(var(--surface-muted))]">
                     <div
-                      className="h-full rounded-lg bg-[rgb(var(--panel-chart))]/80"
+                      className="h-full rounded-lg bg-[rgb(var(--panel-chart)/0.8)]"
                       style={{ width: `${width}%` }}
                     />
                   </div>

@@ -46,7 +46,7 @@ export function CatalogProductCard({
       }
       whileTap={reduced ? {} : { scale: 0.98 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="flex h-full flex-col overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-white transition-colors hover:border-[rgb(var(--accent))]/30"
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-white transition-colors hover:border-[rgb(var(--accent)/0.3)]"
     >
       <Link
         href={`/products/${product.handle}`}

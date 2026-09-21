@@ -105,7 +105,7 @@ export function NewProductForm() {
   }
 
   const inputClass =
-    'min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15';
+    'min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]';
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
@@ -321,7 +321,7 @@ export function NewProductForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90 disabled:opacity-60"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)] disabled:opacity-60"
         >
           {submitting ? (
             <Loader2 aria-hidden="true" className="size-4 animate-spin" />

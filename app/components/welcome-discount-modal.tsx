@@ -180,7 +180,7 @@ export function WelcomeDiscountModal() {
           className="fixed bottom-[calc(var(--tab-bar-total)+1rem)] left-4 z-30 flex items-center gap-2 rounded-full border border-[rgb(var(--border-strong))] bg-white/95 px-3 py-1.5 text-xs font-bold text-[rgb(var(--fg))] shadow-lg backdrop-blur-md transition hover:border-[rgb(var(--accent))] hover:bg-white lg:bottom-6 lg:left-6 print:hidden"
           aria-label="Unlock $50 Off Coupon"
         >
-          <span className="flex size-5 items-center justify-center rounded-full bg-[rgb(var(--accent))]/15 text-[rgb(var(--accent))]">
+          <span className="flex size-5 items-center justify-center rounded-full bg-[rgb(var(--accent)/0.15)] text-[rgb(var(--accent))]">
             <Gift className="size-3.5" />
           </span>
           <span>$50 Off</span>
@@ -234,7 +234,7 @@ export function WelcomeDiscountModal() {
               {!isUnlocked ? (
                 /* Capture View */
                 <div className="space-y-4 text-center sm:text-left">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[rgb(var(--accent))]/10 px-3 py-1 text-[11px] font-bold text-[rgb(var(--accent))]">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[rgb(var(--accent)/0.1)] px-3 py-1 text-[11px] font-bold text-[rgb(var(--accent))]">
                     <Sparkles className="size-3.5" />
                     <span>WELCOME OFFER</span>
                   </div>
@@ -265,7 +265,7 @@ export function WelcomeDiscountModal() {
                           setContactInput(e.target.value);
                           if (inputError) setInputError(null);
                         }}
-                        className="min-h-12 w-full rounded-2xl border border-[rgb(var(--border-strong))] bg-neutral-50/50 px-4 text-sm font-medium outline-none transition focus:border-[rgb(var(--accent))] focus:bg-white focus:ring-2 focus:ring-[rgb(var(--accent))]/15"
+                        className="min-h-12 w-full rounded-2xl border border-[rgb(var(--border-strong))] bg-neutral-50/50 px-4 text-sm font-medium outline-none transition focus:border-[rgb(var(--accent))] focus:bg-white focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]"
                       />
                       {inputError ? (
                         <p className="mt-1.5 text-left text-xs text-red-600">

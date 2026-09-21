@@ -70,7 +70,7 @@ export function CardAddToCart({
       onClick={onAdd}
       disabled={pending}
       aria-label={`Add ${productTitle} to cart`}
-      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--fg))] px-5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90 disabled:opacity-60"
+      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--fg))] px-5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)] disabled:opacity-60"
     >
       {pending ? (
         <Loader2 aria-hidden="true" className="size-4 animate-spin" />

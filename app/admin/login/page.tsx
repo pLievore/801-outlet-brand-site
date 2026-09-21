@@ -49,7 +49,7 @@ function LoginForm() {
               // message was only announced, never tied to the input.
               aria-invalid={state.error ? true : undefined}
               aria-describedby={state.error ? 'login-error' : undefined}
-              className="min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15"
+              className="min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]"
             />
           </div>
           {state.error ? (
@@ -64,7 +64,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={pending}
-            className="min-h-11 w-full rounded-full bg-[rgb(var(--fg))] text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90 disabled:opacity-60"
+            className="min-h-11 w-full rounded-full bg-[rgb(var(--fg))] text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)] disabled:opacity-60"
           >
             {pending ? 'Signing in…' : 'Sign in'}
           </button>

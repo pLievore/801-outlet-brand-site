@@ -16,7 +16,7 @@ export function NewDiscountForm() {
   const [hasUsageLimit, setHasUsageLimit] = useState(false);
 
   const inputClass =
-    'min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/15';
+    'min-h-11 w-full rounded-xl border border-[rgb(var(--border-strong))] bg-white px-4 text-sm outline-none transition focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent)/0.15)]';
 
   return (
     <form action={formAction} className="max-w-2xl space-y-6">
@@ -102,7 +102,7 @@ export function NewDiscountForm() {
             }}
             className={`flex items-center justify-center gap-2 rounded-2xl border p-4 text-xs font-bold transition ${
               discountType === 'percentage'
-                ? 'border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/5 text-[rgb(var(--fg))] ring-2 ring-[rgb(var(--accent))]/20'
+                ? 'border-[rgb(var(--accent))] bg-[rgb(var(--accent)/0.05)] text-[rgb(var(--fg))] ring-2 ring-[rgb(var(--accent)/0.2)]'
                 : 'border-[rgb(var(--border))] bg-neutral-50/50 text-[rgb(var(--muted))] hover:bg-neutral-100'
             }`}
           >
@@ -117,7 +117,7 @@ export function NewDiscountForm() {
             }}
             className={`flex items-center justify-center gap-2 rounded-2xl border p-4 text-xs font-bold transition ${
               discountType === 'fixed_amount'
-                ? 'border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/5 text-[rgb(var(--fg))] ring-2 ring-[rgb(var(--accent))]/20'
+                ? 'border-[rgb(var(--accent))] bg-[rgb(var(--accent)/0.05)] text-[rgb(var(--fg))] ring-2 ring-[rgb(var(--accent)/0.2)]'
                 : 'border-[rgb(var(--border))] bg-neutral-50/50 text-[rgb(var(--muted))] hover:bg-neutral-100'
             }`}
           >

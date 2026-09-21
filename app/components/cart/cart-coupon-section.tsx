@@ -65,7 +65,7 @@ export function CartCouponSection({
           {appliedCodes.map((discount) => (
             <div
               key={discount.code}
-              className="flex items-center justify-between rounded-xl border border-[rgb(var(--sage))]/40 bg-[rgb(var(--sage-soft))] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--sage-ink))]"
+              className="flex items-center justify-between rounded-xl border border-[rgb(var(--sage)/0.4)] bg-[rgb(var(--sage-soft))] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--sage-ink))]"
             >
               <span className="flex items-center gap-1.5">
                 <Tag className="size-3.5" aria-hidden="true" />
@@ -104,7 +104,7 @@ export function CartCouponSection({
               value={couponInput}
               onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
               disabled={loading || pending}
-              className={`min-w-0 flex-1 rounded-xl border border-[rgb(var(--border))] bg-white px-3 text-xs font-semibold uppercase tracking-wider transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20 ${
+              className={`min-w-0 flex-1 rounded-xl border border-[rgb(var(--border))] bg-white px-3 text-xs font-semibold uppercase tracking-wider transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent)/0.2)] ${
                 compact ? 'py-1.5' : 'py-2'
               }`}
             />

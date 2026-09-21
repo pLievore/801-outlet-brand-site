@@ -65,7 +65,7 @@ export function MiniCart() {
         {errors.length > 0 ? (
           <div
             role="alert"
-            className="mb-4 rounded-xl border border-[rgb(var(--accent))]/40 bg-[rgb(var(--accent-soft))] p-3 text-xs leading-5 text-[rgb(var(--fg))]"
+            className="mb-4 rounded-xl border border-[rgb(var(--accent)/0.4)] bg-[rgb(var(--accent-soft))] p-3 text-xs leading-5 text-[rgb(var(--fg))]"
           >
             {errors.map((message) => (
               <p key={message}>{message}</p>

@@ -180,7 +180,7 @@ export default function ContactForm() {
               key={index}
               className="rounded-2xl border border-[rgb(var(--border))] bg-white p-6 transition hover:-translate-y-[1px] hover:shadow-sm"
             >
-              <div className="mb-4 flex size-10 items-center justify-center rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--accent))]/10 text-[rgb(var(--accent))]">
+              <div className="mb-4 flex size-10 items-center justify-center rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--accent)/0.1)] text-[rgb(var(--accent))]">
                 {method.icon}
               </div>
               <h3 className="text-sm font-semibold">{method.title}</h3>
@@ -216,7 +216,7 @@ export default function ContactForm() {
             </p>
 
             {submitted ? (
-              <div className="mt-6 rounded-2xl border border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/10 p-6">
+              <div className="mt-6 rounded-2xl border border-[rgb(var(--accent))] bg-[rgb(var(--accent)/0.1)] p-6">
                 <div className="flex items-center gap-3">
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--accent))]">
                     <svg
@@ -272,7 +272,7 @@ export default function ContactForm() {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20"
+                    className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent)/0.2)]"
                     placeholder="Your name"
                   />
                 </div>
@@ -292,7 +292,7 @@ export default function ContactForm() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20"
+                      className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent)/0.2)]"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -310,7 +310,7 @@ export default function ContactForm() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20"
+                      className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent)/0.2)]"
                       placeholder="(801) 555-0123"
                     />
                   </div>
@@ -329,7 +329,7 @@ export default function ContactForm() {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20"
+                    className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent)/0.2)]"
                   >
                     <option value="">Select a topic</option>
                     <option value="product">Product inquiry</option>
@@ -354,7 +354,7 @@ export default function ContactForm() {
                     onChange={handleChange}
                     required
                     rows={5}
-                    className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent))]/20"
+                    className="w-full rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] px-4 py-3 text-sm transition focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent)/0.2)]"
                     placeholder="Tell us how we can help..."
                   />
                 </div>

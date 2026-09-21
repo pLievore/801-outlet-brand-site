@@ -31,7 +31,7 @@ export function CartView() {
         {errors.length > 0 ? (
           <div
             role="alert"
-            className="mt-6 rounded-xl border border-[rgb(var(--accent))]/40 bg-[rgb(var(--accent-soft))] p-4 text-sm leading-6"
+            className="mt-6 rounded-xl border border-[rgb(var(--accent)/0.4)] bg-[rgb(var(--accent-soft))] p-4 text-sm leading-6"
           >
             {errors.map((message) => (
               <p key={message}>{message}</p>

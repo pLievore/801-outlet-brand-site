@@ -42,7 +42,7 @@ export function PanelRouteError({
         <button
           type="button"
           onClick={reset}
-          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg))]/90"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[rgb(var(--fg))] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(var(--fg)/0.9)]"
         >
           <RotateCw aria-hidden="true" className="size-4" />
           Try again

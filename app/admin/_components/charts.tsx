@@ -379,7 +379,7 @@ export function HBar({
                 initial={{ width: 0 }}
                 animate={{ width: `${(row.value / max) * 100}%` }}
                 transition={{ delay: index * 0.04, duration: 0.45, ease: 'easeOut' }}
-                className="h-full rounded bg-[rgb(var(--panel-chart))]/80"
+                className="h-full rounded bg-[rgb(var(--panel-chart)/0.8)]"
               />
             </div>
             <span className="w-20 shrink-0 text-right text-xs font-semibold tabular-nums sm:text-sm">

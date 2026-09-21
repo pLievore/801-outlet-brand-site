@@ -85,7 +85,7 @@ export function PolicyCallout({
   return (
     <div className="rounded-3xl bg-[rgb(var(--sage-soft))] p-6 md:p-8">
       <h3 className="text-sm font-bold text-[rgb(var(--sage-ink))]">{title}</h3>
-      <div className="mt-2 text-xs leading-relaxed text-[rgb(var(--sage-ink))]/85">
+      <div className="mt-2 text-xs leading-relaxed text-[rgb(var(--sage-ink)/0.85)]">
         {children}
       </div>
     </div>

@@ -270,12 +270,12 @@ export default function DeliveryPage() {
           </StaggerItem>
           <StaggerItem>
             <div className="flex h-full flex-col rounded-3xl border border-[rgb(var(--border))] bg-white p-7 transition hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]">
-              <span className="flex size-11 items-center justify-center rounded-full bg-[rgb(var(--accent))]/10 text-[rgb(var(--accent))]">
+              <span className="flex size-11 items-center justify-center rounded-full bg-[rgb(var(--accent)/0.1)] text-[rgb(var(--accent))]">
                 <Zap aria-hidden="true" className="size-5" />
               </span>
               <h3 className="mt-5 text-base font-semibold">
                 Express delivery
-                <span className="ml-2 rounded-full bg-[rgb(var(--accent))]/10 px-2.5 py-1 text-xs font-bold text-[rgb(var(--accent))]">
+                <span className="ml-2 rounded-full bg-[rgb(var(--accent)/0.1)] px-2.5 py-1 text-xs font-bold text-[rgb(var(--accent))]">
                   +{formatDeliveryPrice(EXPRESS_DELIVERY.surchargeCents)}
                 </span>
               </h3>
@@ -343,7 +343,7 @@ export default function DeliveryPage() {
                 Call (801) 854-6060
               </ButtonLink>
             </div>
-            <p className="mt-6 text-xs text-[rgb(var(--sage-ink))]/80">
+            <p className="mt-6 text-xs text-[rgb(var(--sage-ink)/0.8)]">
               Questions about delivery?{' '}
               <Link href="/contact" className="font-semibold underline underline-offset-4">
                 Send us a message
