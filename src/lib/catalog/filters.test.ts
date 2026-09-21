@@ -6,6 +6,7 @@ import {
   normalizeCatalogSearch,
   normalizePriceRange,
   parseCatalogAvailability,
+  parseCatalogCategory,
   parseCatalogPrice,
   parseCatalogSort,
 } from './filters';
@@ -34,4 +35,24 @@ test('builds only supported Shopify product filters', () => {
     minPrice: 500,
     maxPrice: 1800,
   });
+});
+
+test('a category filters by product type, quoted so it survives its spaces', () => {
+  assert.equal(
+    buildProductQuery({ availability: 'all', category: 'Sofa & Loveseat' }),
+    'product_type:"Sofa & Loveseat"'
+  );
+  assert.equal(
+    buildProductQuery({ availability: 'available', category: 'Sectional' }),
+    'available_for_sale:true AND product_type:"Sectional"'
+  );
+});
+
+test('a category in the URL is read through the catalogue list', () => {
+  assert.equal(parseCatalogCategory('sectional'), 'Sectional');
+  assert.equal(parseCatalogCategory('sofa & loveseat set'), 'Sofa & Loveseat');
+  // A category the shop does not have filters nothing rather than everything.
+  assert.equal(parseCatalogCategory('chandelier'), undefined);
+  assert.equal(parseCatalogCategory(''), undefined);
+  assert.equal(parseCatalogCategory(undefined), undefined);
 });

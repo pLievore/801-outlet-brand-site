@@ -1,3 +1,5 @@
+import { normalizeCategory, type ProductCategory } from './categories';
+
 export type CatalogSort =
   | 'featured'
   | 'newest'
@@ -22,6 +24,19 @@ export function parseCatalogAvailability(
   value: string | undefined
 ): CatalogAvailability {
   return value === 'available' ? 'available' : 'all';
+}
+
+/**
+ * The category a visitor asked for, or `undefined` for "every category".
+ *
+ * Read through `normalizeCategory`, so a link or a hand-typed `?category=sofa`
+ * lands on the stored spelling instead of quietly matching nothing.
+ */
+export function parseCatalogCategory(
+  value: string | undefined
+): ProductCategory | undefined {
+  if (!value) return undefined;
+  return normalizeCategory(value) ?? undefined;
 }
 
 export function parseCatalogPrice(value: string | undefined) {
@@ -52,6 +67,7 @@ function formatFilterPrice(amount: number) {
 
 export function buildProductQuery(filters: {
   availability: CatalogAvailability;
+  category?: ProductCategory;
   minPrice?: number;
   maxPrice?: number;
 }) {
@@ -59,6 +75,11 @@ export function buildProductQuery(filters: {
 
   if (filters.availability === 'available') {
     terms.push('available_for_sale:true');
+  }
+  if (filters.category) {
+    // Quoted: every category with a space or an ampersand would otherwise be
+    // read as two terms, and `Sofa & Loveseat` would match nothing.
+    terms.push(`product_type:"${filters.category}"`);
   }
   if (filters.minPrice !== undefined) {
     terms.push(`variants.price:>=${formatFilterPrice(filters.minPrice)}`);

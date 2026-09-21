@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { ProductCategory } from '../catalog/categories';
 import type {
   CatalogAvailability,
   CatalogSort,
@@ -55,6 +56,7 @@ export type ShopifyCatalogPage = {
 export type ShopifyCatalogInput = {
   search: string;
   availability: CatalogAvailability;
+  category?: ProductCategory;
   sort: CatalogSort;
   minPrice?: number;
   maxPrice?: number;
@@ -91,11 +93,15 @@ function searchSort(sort: CatalogSort) {
 function searchFilters(input: ShopifyCatalogInput) {
   const filters: Array<{
     available?: boolean;
+    productType?: string;
     price?: { min?: number; max?: number };
   }> = [];
 
   if (input.availability === 'available') {
     filters.push({ available: true });
+  }
+  if (input.category) {
+    filters.push({ productType: input.category });
   }
   if (input.minPrice !== undefined || input.maxPrice !== undefined) {
     filters.push({

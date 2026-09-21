@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ShieldCheck, Store, Truck } from 'lucide-react';
+import { Layers, ShieldCheck, Store, Truck } from 'lucide-react';
 
 import { env } from '../../../../src/config/env';
 import {
@@ -12,6 +12,7 @@ import {
   getAvailability,
   type AvailabilityState,
 } from '../../../../src/lib/catalog/availability';
+import { isProductCategory } from '../../../../src/lib/catalog/categories';
 import { pickRelatedByPrice } from '../../../../src/lib/catalog/related';
 import { formatMoney } from '../../../../src/lib/format';
 import { safeJsonLd } from '../../../../src/lib/seo';
@@ -107,6 +108,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
     tags: product.tags,
     quantityAvailable: primaryVariant?.quantityAvailable,
   });
+  // Only a category the catalogue can actually filter by becomes a link: a
+  // productType typed straight into Shopify would lead to an empty page.
+  const category = isProductCategory(product.productType)
+    ? product.productType
+    : null;
   // No count is shown to the shopper. The page says whether a piece can be
   // bought, not how nearly gone it is — how many are left is the shop's
   // business, and putting a number on it turns stock into a nudge.
@@ -198,6 +204,18 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <h1 className="mt-3 font-display text-4xl font-medium leading-tight tracking-tight sm:text-5xl">
               {product.title}
             </h1>
+
+            {/* The category, where it is read rather than at the foot of the
+                specifications, and as a way into the rest of its kind. */}
+            {category ? (
+              <Link
+                href={`/products?category=${encodeURIComponent(category)}`}
+                className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-[rgb(var(--border))] bg-white px-3 py-1 text-xs font-semibold text-[rgb(var(--muted))] transition hover:border-[rgb(var(--accent)/0.4)] hover:text-[rgb(var(--fg))]"
+              >
+                <Layers className="size-3.5" aria-hidden />
+                {category}
+              </Link>
+            ) : null}
 
             <div className="mt-5 flex items-end gap-3">
               <div className="text-2xl font-semibold">
@@ -295,8 +313,19 @@ export default async function ProductDetailPage({ params }: PageProps) {
               <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 {product.productType ? (
                   <div>
-                    <dt className="text-xs text-[rgb(var(--muted))]">Type</dt>
-                    <dd className="font-medium">{product.productType}</dd>
+                    <dt className="text-xs text-[rgb(var(--muted))]">Category</dt>
+                    <dd className="font-medium">
+                      {category ? (
+                        <Link
+                          href={`/products?category=${encodeURIComponent(category)}`}
+                          className="underline decoration-[rgb(var(--border-strong))] underline-offset-4 transition hover:text-[rgb(var(--accent))]"
+                        >
+                          {product.productType}
+                        </Link>
+                      ) : (
+                        product.productType
+                      )}
+                    </dd>
                   </div>
                 ) : null}
                 {primaryVariant?.sku ? (

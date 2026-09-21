@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { PRODUCT_CATEGORIES } from '../../../src/lib/catalog/categories';
 import {
   normalizeCatalogSearch,
   normalizePriceRange,
   parseCatalogAvailability,
+  parseCatalogCategory,
   parseCatalogPrice,
   parseCatalogSort,
 } from '../../../src/lib/catalog/filters';
@@ -32,6 +34,7 @@ const SORT_OPTIONS = [
 type SearchParams = {
   q?: string;
   sort?: string;
+  category?: string;
   availability?: string;
   priceMin?: string;
   priceMax?: string;
@@ -66,6 +69,7 @@ export default async function ProductsPage({
   const search = normalizeCatalogSearch(params.q);
   const sort = parseCatalogSort(params.sort);
   const availability = parseCatalogAvailability(params.availability);
+  const category = parseCatalogCategory(params.category);
   const parsedPrices = normalizePriceRange(
     parseCatalogPrice(params.priceMin),
     parseCatalogPrice(params.priceMax)
@@ -76,6 +80,7 @@ export default async function ProductsPage({
     search,
     sort,
     availability,
+    category,
     ...parsedPrices,
     page,
     pageSize: 12,
@@ -86,6 +91,7 @@ export default async function ProductsPage({
     sort: sort === 'featured' ? undefined : sort,
     availability:
       availability === 'available' ? availability : undefined,
+    category: category || undefined,
     priceMin: params.priceMin || undefined,
     priceMax: params.priceMax || undefined,
   };
@@ -94,6 +100,7 @@ export default async function ProductsPage({
   // empty.
   const activeFilterCount = [
     search,
+    category ?? '',
     availability === 'available' ? availability : '',
     params.priceMin,
     params.priceMax,
@@ -102,6 +109,7 @@ export default async function ProductsPage({
 
   const hasFilters = Boolean(
     search ||
+      category ||
       availability === 'available' ||
       parsedPrices.minPrice !== undefined ||
       parsedPrices.maxPrice !== undefined ||
@@ -172,6 +180,19 @@ export default async function ProductsPage({
               className={inputClass}
               aria-label="Maximum price in US dollars"
             />
+            <select
+              name="category"
+              defaultValue={category ?? ''}
+              className={inputClass}
+              aria-label="Category"
+            >
+              <option value="">All categories</option>
+              {PRODUCT_CATEGORIES.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
             <select
               name="availability"
               defaultValue={availability}
