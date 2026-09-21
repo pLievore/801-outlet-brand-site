@@ -220,21 +220,39 @@ export function ProductEditor({ product }: { product: PanelProductDetail }) {
       }
       setSavingOrder(true);
       saveOrderTimer.current = setTimeout(async () => {
-        const result = await reorderMediaAction({
-          productId: product.id,
-          orderedMediaIds: next.map((media) => media.id),
-        });
-        setSavingOrder(false);
-        if (!result.ok) {
+        try {
+          const result = await reorderMediaAction({
+            productId: product.id,
+            orderedMediaIds: next.map((media) => media.id),
+          });
+          if (!result.ok) {
+            setMediaOrder(baselineOrder.current);
+            setMediaFeedback({
+              ok: false,
+              text: result.error ?? 'Failed to save photo order.',
+            });
+          } else {
+            baselineOrder.current = next;
+            setMediaFeedback({ ok: true, text: 'Photo order saved.' });
+            setTimeout(() => setMediaFeedback(null), 2500);
+          }
+        } catch (error) {
+          // The call never came back: the network dropped it, or the tab is
+          // older than the deployment that answers it. Without this, the
+          // rejection skipped the line below and left the panel saying
+          // "Saving order..." for as long as the tab stayed open, with no
+          // hint of what went wrong.
+          console.error('reorderMediaAction failed', error);
           setMediaOrder(baselineOrder.current);
           setMediaFeedback({
             ok: false,
-            text: result.error ?? 'Failed to save photo order.',
+            text:
+              error instanceof Error && error.message
+                ? `Could not reach the server: ${error.message}. Reload the page and try again.`
+                : 'Could not reach the server. Reload the page and try again.',
           });
-        } else {
-          baselineOrder.current = next;
-          setMediaFeedback({ ok: true, text: 'Photo order saved.' });
-          setTimeout(() => setMediaFeedback(null), 2500);
+        } finally {
+          setSavingOrder(false);
         }
       }, 500);
     },
