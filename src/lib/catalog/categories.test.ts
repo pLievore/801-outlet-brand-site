@@ -62,3 +62,22 @@ test('a stored productType is only ours when spelled exactly', () => {
   assert.equal(isProductCategory('sectional'), false);
   assert.equal(isProductCategory('Chandelier'), false);
 });
+
+test('a sofa sold with its loveseat is its own category', () => {
+  assert.equal(normalizeCategory('Sofa & Loveseat'), 'Sofa & Loveseat');
+  for (const typed of [
+    'sofa & loveseat set',
+    'Sofa and Loveseat',
+    'SOFA + LOVESEAT',
+    'sofa&loveseat',
+  ]) {
+    assert.equal(
+      normalizeCategory(typed),
+      'Sofa & Loveseat',
+      `expected ${JSON.stringify(typed)} to resolve to Sofa & Loveseat`
+    );
+  }
+
+  // Everything else sold together stays under Set.
+  assert.equal(normalizeCategory('Complete Living Room Set'), 'Set');
+});

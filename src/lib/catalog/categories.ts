@@ -14,6 +14,7 @@ export const PRODUCT_CATEGORIES = [
   'Sectional',
   'Sofa',
   'Loveseat',
+  'Sofa & Loveseat',
   'Recliner',
   'Accent chair',
   'Ottoman',
@@ -51,11 +52,15 @@ const ALIASES: Record<string, ProductCategory> = {
   'side table': 'Table',
   'end table': 'Table',
   headboard: 'Bed',
-  // Sets are a piece of the catalogue in their own right: a sofa and a
-  // loveseat bought together is what the shopper is looking for, not a sofa.
-  'sofa & loveseat set': 'Set',
-  'sofa and loveseat set': 'Set',
-  'sofa loveseat set': 'Set',
+  // A sofa sold with its matching loveseat is its own thing, and the most
+  // common pairing in the shop -- hence a category rather than a spelling of
+  // "Set", which stays for everything else sold together.
+  'sofa & loveseat set': 'Sofa & Loveseat',
+  'sofa and loveseat': 'Sofa & Loveseat',
+  'sofa and loveseat set': 'Sofa & Loveseat',
+  'sofa loveseat set': 'Sofa & Loveseat',
+  'sofa + loveseat': 'Sofa & Loveseat',
+  'sofa&loveseat': 'Sofa & Loveseat',
   'living room set': 'Set',
   'complete living room set': 'Set',
   'sofa set': 'Set',
