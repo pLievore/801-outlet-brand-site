@@ -129,7 +129,6 @@ export async function saveProductAction(input: {
   }
 }
 
-export type { ImportRow };
 
 export type ImportPreviewRow = {
   /** Stable identity for React, and for pairing preview rows with input rows. */
