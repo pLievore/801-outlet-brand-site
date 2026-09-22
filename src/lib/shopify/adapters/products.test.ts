@@ -40,6 +40,9 @@ test('adapts a Shopify collection product without leaking GraphQL types', () => 
     id: 'gid://shopify/Product/1',
     handle: 'linen-sofa',
     title: 'Linen Sofa',
+    // Carried on the card so the home page can group by it without a second
+    // request; empty here because this fixture has no category set.
+    productType: '',
     description: null,
     availableForSale: true,
     tags: [],

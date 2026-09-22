@@ -18,6 +18,8 @@ export type CatalogProductCard = {
   id: string;
   handle: string;
   title: string;
+  /** Shopify's own field, holding the category — see `catalog/categories`. */
+  productType: string;
   description: string | null;
   availableForSale: boolean;
   /** Drives the Coming soon / Sold out label; see `catalog/availability`. */
@@ -61,7 +63,6 @@ export type CatalogProductOption = {
 
 export type CatalogProductDetail = CatalogProductCard & {
   vendor: string;
-  productType: string;
   tags: string[];
   /** Hand-maintained attributes from Shopify metafields. */
   attributes: ProductAttributeValues;

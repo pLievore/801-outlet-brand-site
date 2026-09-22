@@ -55,11 +55,14 @@ export function PredictiveSearch({
   className,
   inputClassName,
   onNavigate,
+  autoFocus,
 }: {
   className?: string;
   inputClassName?: string;
   /** Called after a suggestion is chosen (e.g. to close the mobile drawer). */
   onNavigate?: () => void;
+  /** Opened deliberately to search, so the keyboard should already be up. */
+  autoFocus?: boolean;
 }) {
   const router = useRouter();
   const listboxId = useId();
@@ -178,6 +181,10 @@ export function PredictiveSearch({
             name="q"
             type="search"
             placeholder="Search furniture"
+            // Only ever true in the search drawer, which exists for nothing
+            // else: landing anywhere but the field would be a step backwards
+            // for the shopper who just tapped the magnifier.
+            autoFocus={autoFocus}
             autoComplete="off"
             role="combobox"
             aria-expanded={open}

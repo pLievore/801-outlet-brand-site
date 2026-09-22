@@ -24,6 +24,7 @@ import { MobileTabBar } from '../components/mobile-tab-bar';
 import { NavLink } from '../components/nav-link';
 import { MobileNav } from '../components/mobile-nav';
 import { PredictiveSearch } from '../components/predictive-search';
+import { SearchButton } from '../components/search-button';
 import { RouteProgress } from '../components/route-progress';
 import { TrackEvent } from '../components/track-event';
 import { buttonStyles } from '../components/ui/button';
@@ -160,6 +161,8 @@ function SiteHeader({
             small screens, so the auto margin has to live on the group. */}
         <div className="ml-auto flex items-center gap-2.5 sm:gap-3 md:w-full md:max-w-xs md:flex-1 xl:max-w-sm">
           <PredictiveSearch className="hidden w-full md:block" />
+
+          <SearchButton />
 
           <CartButton />
 

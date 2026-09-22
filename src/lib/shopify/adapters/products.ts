@@ -101,6 +101,7 @@ export function adaptProductCard(product: ProductSummary): CatalogProductCard {
     id: product.id,
     handle: product.handle,
     title: product.title,
+    productType: product.productType,
     description: summaryDescription(product),
     availableForSale: product.availableForSale,
     tags: 'tags' in product ? product.tags : [],

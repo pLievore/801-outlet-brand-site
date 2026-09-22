@@ -13,6 +13,7 @@ function product(
     id: `gid://shopify/Product/${handle}`,
     handle,
     title: handle,
+    productType: 'Sectional',
     description: null,
     availableForSale,
     tags,

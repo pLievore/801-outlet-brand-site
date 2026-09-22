@@ -7,7 +7,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 
 import type { NavigationLink } from '../../src/lib/navigation/types';
 import { HAPTIC, haptic } from '../../src/lib/haptics';
-import { PredictiveSearch } from './predictive-search';
 import { Button, buttonStyles } from './ui/button';
 import { Drawer } from './ui/dialog';
 import { NewTabHint } from './ui/new-tab-hint';
@@ -57,10 +56,9 @@ export function MobileNav({
         description="Explore 801 Outlet"
       >
         <nav className="flex min-h-full flex-col p-5" aria-label="Mobile navigation">
-          <PredictiveSearch
-            className="mb-4"
-            onNavigate={() => setOpen(false)}
-          />
+          {/* Search left this menu for the header, next to the cart: it was
+              two taps and a scroll away from the one control a shopper uses
+              most. See `SearchButton`. */}
           <ul className="space-y-1">
             {links.map((link) => {
               const active =

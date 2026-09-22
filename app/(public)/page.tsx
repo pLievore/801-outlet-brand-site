@@ -15,6 +15,9 @@ import { ReviewsSection } from '../components/reviews-section';
 import { env } from '../../src/config/env';
 import { MODE_LABEL, SHOWROOM_HOURS } from '../../src/lib/content/hours';
 import { sortAvailableFirst } from '../../src/lib/catalog/ordering';
+import Image from 'next/image';
+
+import { buildCategoryShelf } from '../../src/lib/catalog/category-shelf';
 import { getProducts } from '../../src/lib/shopify';
 import { adaptProductCard } from '../../src/lib/shopify/adapters/products';
 import { FadeIn, FadeMount, StaggerGrid, StaggerItem } from '../components/motion';
@@ -29,9 +32,13 @@ export default async function HomePage() {
   // Pull a wider slice than we show, order it, then take the first four: the
   // home page should lead with pieces someone can actually buy, and only fall
   // back to sold-out ones when there is nothing left to offer.
-  const featured = sortAvailableFirst(
-    (await getProducts({ first: 24 })).nodes.map(adaptProductCard)
-  ).slice(0, 4);
+  // One pass over the catalogue feeds both shelves below: the pieces to lead
+  // with, and the categories the shop actually has.
+  const catalogue = sortAvailableFirst(
+    (await getProducts({ first: 250 })).nodes.map(adaptProductCard)
+  );
+  const featured = catalogue.slice(0, 4);
+  const categories = buildCategoryShelf(catalogue);
 
   return (
     <main>
@@ -187,32 +194,55 @@ export default async function HomePage() {
           </div>
         </FadeIn>
 
-        <StaggerGrid className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { n: '01', title: 'Sectionals', href: '/products?q=Sectional', desc: 'Space to stretch out' },
-            { n: '02', title: 'Sleeper sofas', href: '/products?q=Sleeper', desc: 'Comfort that converts' },
-            { n: '03', title: 'Leather', href: '/products?q=Leather', desc: 'Durable, timeless comfort' },
-            { n: '04', title: 'In stock', href: '/products?availability=available', desc: 'Available right now' },
-          ].map((c) => (
-            <StaggerItem key={c.title}>
+        <StaggerGrid className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((entry, index) => (
+            <StaggerItem key={entry.category}>
               <Link
-                href={c.href}
-                className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white p-6 transition will-change-transform hover:-translate-y-[2px] hover:border-[rgb(var(--accent)/0.5)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]"
+                href={`/products?category=${encodeURIComponent(entry.category)}`}
+                className="group relative flex h-full min-h-36 flex-col overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white p-6 transition will-change-transform hover:-translate-y-[2px] hover:border-[rgb(var(--accent)/0.5)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.07)]"
               >
-                <span className="font-display text-3xl italic text-[rgb(var(--accent))]">
-                  {c.n}
-                </span>
-                <span
-                  aria-hidden="true"
-                  className="absolute right-5 top-6 h-px w-12 bg-[rgb(var(--border))] transition group-hover:bg-[rgb(var(--accent)/0.4)]"
-                />
-                <div className="mt-6 text-base font-semibold tracking-tight">{c.title}</div>
-                <div className="mt-1 text-xs text-[rgb(var(--muted))]">{c.desc}</div>
-                <div className="mt-6 inline-flex items-center gap-1 text-xs font-semibold text-[rgb(var(--accent))] transition group-hover:translate-x-0.5">
-                  Browse
-                  <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
+                {entry.image ? (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 right-0 w-[68%]"
+                  >
+                    <Image
+                      src={entry.image.url}
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 68vw, 260px"
+                      className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                    />
+                    {/* Written out rather than composed from gradient
+                        utilities: those compile to custom properties an older
+                        browser drops, and losing this one would leave the
+                        photo sitting on top of the words. */}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage:
+                          'linear-gradient(to right, rgb(255,255,255) 0%, rgba(255,255,255,0.92) 28%, rgba(255,255,255,0.45) 62%, rgba(255,255,255,0) 100%)',
+                      }}
+                    />
+                  </div>
+                ) : null}
+
+                <div className="relative z-10 flex h-full max-w-[62%] flex-col">
+                  <span className="font-display text-3xl italic text-[rgb(var(--accent))]">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div className="mt-5 text-base font-semibold tracking-tight">
+                    {entry.category}
+                  </div>
+                  <div className="mt-1 text-xs text-[rgb(var(--muted))]">
+                    {entry.count} {entry.count === 1 ? 'piece' : 'pieces'}
+                  </div>
+                  <div className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-[rgb(var(--accent))] transition group-hover:translate-x-0.5">
+                    Browse
+                    <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
               </Link>
             </StaggerItem>
