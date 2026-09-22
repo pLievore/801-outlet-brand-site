@@ -5,7 +5,11 @@ import type {
   CatalogAvailability,
   CatalogSort,
 } from '../catalog/filters';
-import { buildProductQuery } from '../catalog/filters';
+import {
+  buildProductQuery,
+  priceBoundsOf,
+  withinPriceRange,
+} from '../catalog/filters';
 import { sortAvailableFirst } from '../catalog/ordering';
 import type { CatalogProductCard } from '../catalog/types';
 import { adaptProductCard, type SearchProduct } from './adapters/products';
@@ -51,6 +55,11 @@ export type ShopifyCatalogPage = {
   products: CatalogProductCard[];
   totalCount: number | null;
   pageInfo: CatalogPageInfo;
+  /**
+   * The catalogue's own price range, before the price filter is applied, so
+   * the slider's ends stay put while the shopper drags between them.
+   */
+  priceBounds: { min: number; max: number } | null;
 };
 
 export type ShopifyCatalogInput = {
@@ -94,7 +103,6 @@ function searchFilters(input: ShopifyCatalogInput) {
   const filters: Array<{
     available?: boolean;
     productType?: string;
-    price?: { min?: number; max?: number };
   }> = [];
 
   if (input.availability === 'available') {
@@ -103,12 +111,6 @@ function searchFilters(input: ShopifyCatalogInput) {
   if (input.category) {
     filters.push({ productType: input.category });
   }
-  if (input.minPrice !== undefined || input.maxPrice !== undefined) {
-    filters.push({
-      price: { min: input.minPrice, max: input.maxPrice },
-    });
-  }
-
   return filters.length > 0 ? filters : undefined;
 }
 
@@ -129,12 +131,17 @@ export async function getShopifyCatalogPage(
       (node): node is SearchProduct => node.__typename === 'Product'
     );
     const ordered = sortAvailableFirst(matches.map(adaptProductCard));
-    const paged = paginate(ordered, requestedPage, pageSize);
+    const bounds = priceBoundsOf(ordered.map((product) => product.price.amount));
+    const inRange = ordered.filter((product) =>
+      withinPriceRange(product.price.amount, input.minPrice, input.maxPrice)
+    );
+    const paged = paginate(inRange, requestedPage, pageSize);
 
     return {
       products: paged.products,
-      totalCount: result.totalCount ?? ordered.length,
+      totalCount: inRange.length,
       pageInfo: paged.pageInfo,
+      priceBounds: bounds,
     };
   }
 
@@ -144,11 +151,16 @@ export async function getShopifyCatalogPage(
     query: buildProductQuery(input),
   });
   const ordered = sortAvailableFirst(result.nodes.map(adaptProductCard));
-  const paged = paginate(ordered, requestedPage, pageSize);
+  const bounds = priceBoundsOf(ordered.map((product) => product.price.amount));
+  const inRange = ordered.filter((product) =>
+    withinPriceRange(product.price.amount, input.minPrice, input.maxPrice)
+  );
+  const paged = paginate(inRange, requestedPage, pageSize);
 
   return {
     products: paged.products,
-    totalCount: ordered.length,
+    totalCount: inRange.length,
     pageInfo: paged.pageInfo,
+    priceBounds: bounds,
   };
 }

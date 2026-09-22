@@ -9,6 +9,8 @@ import {
   parseCatalogCategory,
   parseCatalogPrice,
   parseCatalogSort,
+  priceBoundsOf,
+  withinPriceRange,
 } from './filters';
 
 test('normalizes catalog query parameters without accepting arbitrary syntax', () => {
@@ -23,18 +25,34 @@ test('normalizes catalog query parameters without accepting arbitrary syntax', (
 
 test('builds only supported Shopify product filters', () => {
   assert.equal(
-    buildProductQuery({
-      availability: 'available',
-      minPrice: 500,
-      maxPrice: 1800,
-    }),
-    'available_for_sale:true AND variants.price:>=500.00 AND variants.price:<=1800.00'
+    buildProductQuery({ availability: 'available' }),
+    'available_for_sale:true'
   );
   assert.equal(buildProductQuery({ availability: 'all' }), undefined);
   assert.deepEqual(normalizePriceRange(1800, 500), {
     minPrice: 500,
     maxPrice: 1800,
   });
+});
+
+test('price is filtered in memory, against the price the card shows', () => {
+  assert.equal(withinPriceRange('1899.00', 1000, 2000), true);
+  assert.equal(withinPriceRange('1899.00', 1900, undefined), false);
+  assert.equal(withinPriceRange('1899.00', undefined, 1800), false);
+  // No range asked for, and a price Shopify did not give us, both pass through
+  // rather than emptying the catalogue.
+  assert.equal(withinPriceRange('1899.00'), true);
+  assert.equal(withinPriceRange('', 1000, 2000), true);
+});
+
+test('the slider ends round outwards to a figure worth reading', () => {
+  assert.deepEqual(priceBoundsOf(['1199.00', '2499.00', '1899.00']), {
+    min: 1150,
+    max: 2500,
+  });
+  // One product still needs two distinct ends, or the slider has no travel.
+  assert.deepEqual(priceBoundsOf(['1200.00']), { min: 1200, max: 1250 });
+  assert.equal(priceBoundsOf([]), null);
 });
 
 test('a category filters by product type, quoted so it survives its spaces', () => {

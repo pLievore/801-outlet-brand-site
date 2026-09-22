@@ -12,6 +12,7 @@ import {
 } from '../../../src/lib/catalog/filters';
 import { getShopifyCatalogPage } from '../../../src/lib/shopify/catalog';
 import { CatalogProductCard } from '../../components/catalog-product-card';
+import { CatalogFilters } from '../../components/catalog-filters';
 import { FilterDisclosure } from '../../components/filter-disclosure';
 import { StaggerGrid, StaggerItem } from '../../components/motion';
 
@@ -115,9 +116,6 @@ export default async function ProductsPage({
       parsedPrices.maxPrice !== undefined ||
       sort !== 'featured'
   );
-  const inputClass =
-    'w-full rounded-xl border border-[rgb(var(--border))] bg-white px-4 py-2.5 text-sm transition ' +
-    'focus:border-[rgb(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent)/0.2)]';
 
   return (
     <main>
@@ -143,88 +141,21 @@ export default async function ProductsPage({
           </p>
         </div>
 
-        <form
-          method="get"
-          action="/products"
-          className="mt-8 rounded-2xl border border-[rgb(var(--border))] bg-white/70 p-4 sm:p-5"
-        >
+        <div className="mt-8">
           <FilterDisclosure activeCount={activeFilterCount}>
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,0.7fr))_auto]">
-            <input
-              type="search"
-              name="q"
-              defaultValue={search}
-              placeholder="Search sofas, sectionals, colors…"
-              className={inputClass}
-              aria-label="Search products"
-            />
-            <input
-              type="number"
-              name="priceMin"
-              defaultValue={params.priceMin ?? ''}
-              placeholder="Min price"
-              min="0"
-              step="1"
-              inputMode="decimal"
-              className={inputClass}
-              aria-label="Minimum price in US dollars"
-            />
-            <input
-              type="number"
-              name="priceMax"
-              defaultValue={params.priceMax ?? ''}
-              placeholder="Max price"
-              min="0"
-              step="1"
-              inputMode="decimal"
-              className={inputClass}
-              aria-label="Maximum price in US dollars"
-            />
-            <select
-              name="category"
-              defaultValue={category ?? ''}
-              className={inputClass}
-              aria-label="Category"
-            >
-              <option value="">All categories</option>
-              {PRODUCT_CATEGORIES.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <select
-              name="availability"
-              defaultValue={availability}
-              className={inputClass}
-              aria-label="Availability"
-            >
-              <option value="all">All availability</option>
-              <option value="available">In stock</option>
-            </select>
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-full bg-[rgb(var(--fg))] px-6 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-px hover:shadow-sm"
-            >
-              Apply
-            </button>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <label className="text-xs font-semibold text-[rgb(var(--muted))]">
-              Sort by
-              <select
-                name="sort"
-                defaultValue={sort}
-                className="ml-2 rounded-lg border border-[rgb(var(--border))] bg-white px-3 py-1.5 text-xs text-[rgb(var(--fg))]"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <CatalogFilters
+            categories={PRODUCT_CATEGORIES}
+            sortOptions={SORT_OPTIONS}
+            priceBounds={result.priceBounds}
+            initial={{
+              q: search,
+              category: category ?? '',
+              availability,
+              sort,
+              priceMin: parsedPrices.minPrice,
+              priceMax: parsedPrices.maxPrice,
+            }}
+          >
             {hasFilters ? (
               <Link
                 href="/products"
@@ -233,9 +164,9 @@ export default async function ProductsPage({
                 Clear filters
               </Link>
             ) : null}
-          </div>
+            </CatalogFilters>
           </FilterDisclosure>
-        </form>
+        </div>
 
         {result.products.length === 0 ? (
           <div className="relative mt-12 overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white p-12 text-center sm:p-16">

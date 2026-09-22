@@ -61,15 +61,18 @@ export function normalizeCatalogSearch(value: string | undefined) {
     .slice(0, 100);
 }
 
-function formatFilterPrice(amount: number) {
-  return amount.toFixed(2);
-}
-
+/**
+ * The Shopify-side half of the filters.
+ *
+ * Price is deliberately absent: the slider needs the catalogue's real range to
+ * draw its ends, and asking Shopify for a filtered set would make those ends
+ * move with the filter — drag the maximum down once and the track would shrink
+ * around it. The catalogue is small enough to filter by price in memory, where
+ * the unfiltered range is still in hand. See `shopify/catalog`.
+ */
 export function buildProductQuery(filters: {
   availability: CatalogAvailability;
   category?: ProductCategory;
-  minPrice?: number;
-  maxPrice?: number;
 }) {
   const terms: string[] = [];
 
@@ -81,14 +84,41 @@ export function buildProductQuery(filters: {
     // read as two terms, and `Sofa & Loveseat` would match nothing.
     terms.push(`product_type:"${filters.category}"`);
   }
-  if (filters.minPrice !== undefined) {
-    terms.push(`variants.price:>=${formatFilterPrice(filters.minPrice)}`);
-  }
-  if (filters.maxPrice !== undefined) {
-    terms.push(`variants.price:<=${formatFilterPrice(filters.maxPrice)}`);
-  }
 
   return terms.length > 0 ? terms.join(' AND ') : undefined;
+}
+
+/** Whether a card's price sits inside the requested range. */
+export function withinPriceRange(
+  amount: string,
+  minPrice?: number,
+  maxPrice?: number
+): boolean {
+  // A price we cannot read is not a price outside the range: `Number('')` is
+  // zero, and treating that as cheap would drop the piece from every filter
+  // with a minimum.
+  if (!amount.trim()) return true;
+  const price = Number(amount);
+  if (!Number.isFinite(price)) return true;
+  if (minPrice !== undefined && price < minPrice) return false;
+  if (maxPrice !== undefined && price > maxPrice) return false;
+  return true;
+}
+
+/**
+ * The ends of the slider: the cheapest and dearest piece in the catalogue,
+ * rounded outwards to a round number so the track reads as $1,000-$2,500
+ * rather than $1,199-$2,499.
+ */
+export function priceBoundsOf(amounts: string[]): { min: number; max: number } | null {
+  const prices = amounts.map(Number).filter((price) => Number.isFinite(price));
+  if (prices.length === 0) return null;
+
+  const step = 50;
+  const min = Math.floor(Math.min(...prices) / step) * step;
+  const max = Math.ceil(Math.max(...prices) / step) * step;
+
+  return { min: Math.max(0, min), max: max > min ? max : min + step };
 }
 
 export function normalizePriceRange(minPrice?: number, maxPrice?: number) {
