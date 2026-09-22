@@ -154,6 +154,19 @@ a:focus-visible {
   letter-spacing: -0.01em;
 }
 
+/*
+ * A swipeable row keeps its scrollbar out of the design. The row is still a
+ * scroll container, so the keyboard and assistive technology reach it as
+ * usual; only the bar is hidden.
+ */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Premium image fade-in */
 @keyframes premium-fade-up {
   from {

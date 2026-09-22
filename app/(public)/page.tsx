@@ -10,13 +10,14 @@ import {
 } from 'lucide-react';
 
 import HeroVideo from '../components/herovideo';
-import { CatalogProductCard } from '../components/catalog-product-card';
 import { ReviewsSection } from '../components/reviews-section';
 import { env } from '../../src/config/env';
 import { MODE_LABEL, SHOWROOM_HOURS } from '../../src/lib/content/hours';
 import { sortAvailableFirst } from '../../src/lib/catalog/ordering';
 import Image from 'next/image';
 
+import { CompactProductCard } from '../components/compact-product-card';
+import { ProductCarousel } from '../components/product-carousel';
 import { buildCategoryShelf } from '../../src/lib/catalog/category-shelf';
 import { getProducts } from '../../src/lib/shopify';
 import { adaptProductCard } from '../../src/lib/shopify/adapters/products';
@@ -38,6 +39,9 @@ export default async function HomePage() {
     (await getProducts({ first: 250 })).nodes.map(adaptProductCard)
   );
   const featured = catalogue.slice(0, 4);
+  // The shelf under the featured row: more of the shop without leaving the
+  // home page, small enough that two fit across a phone.
+  const moreOptions = catalogue.slice(4, 12);
   const categories = buildCategoryShelf(catalogue);
 
   return (
@@ -154,15 +158,24 @@ export default async function HomePage() {
             </div>
           </FadeIn>
 
-          <StaggerGrid className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featured.map((product) => (
-              <StaggerItem key={product.id}>
-                <CatalogProductCard product={product} />
-              </StaggerItem>
-            ))}
-          </StaggerGrid>
+          <ProductCarousel products={featured} />
 
-          <div className="mt-5 md:hidden">
+          {moreOptions.length > 0 ? (
+            <div className="mt-10">
+              <p className="text-xs font-semibold tracking-[0.22em] text-[rgb(var(--muted))]">
+                MORE OPTIONS
+              </p>
+              <StaggerGrid className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                {moreOptions.map((product) => (
+                  <StaggerItem key={product.id}>
+                    <CompactProductCard product={product} />
+                  </StaggerItem>
+                ))}
+              </StaggerGrid>
+            </div>
+          ) : null}
+
+          <div className="mt-6 md:hidden">
             <Link
               href="/products"
               className="inline-block text-sm font-semibold text-[rgb(var(--accent))] transition hover:opacity-80"

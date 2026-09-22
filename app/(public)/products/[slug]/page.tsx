@@ -194,7 +194,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           )}
         </FadeMount>
 
-        <FadeMount delay={0.15} distance={24}>
+        <FadeMount delay={0.15} distance={24} className="md:row-span-2">
           <div className="flex flex-col">
             {product.vendor ? (
               <p className="text-xs font-semibold tracking-[0.2em] text-[rgb(var(--accent))]">
@@ -308,83 +308,89 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="mt-7 rounded-2xl border border-[rgb(var(--border))] bg-white p-5">
-              <div className="text-sm font-semibold">Product details</div>
-              <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                {product.productType ? (
-                  <div>
-                    <dt className="text-xs text-[rgb(var(--muted))]">Category</dt>
-                    <dd className="font-medium">
-                      {category ? (
-                        <Link
-                          href={`/products?category=${encodeURIComponent(category)}`}
-                          className="underline decoration-[rgb(var(--border-strong))] underline-offset-4 transition hover:text-[rgb(var(--accent))]"
-                        >
-                          {product.productType}
-                        </Link>
-                      ) : (
-                        product.productType
-                      )}
-                    </dd>
-                  </div>
-                ) : null}
-                {primaryVariant?.sku ? (
-                  <div>
-                    <dt className="text-xs text-[rgb(var(--muted))]">SKU</dt>
-                    <dd className="font-medium">{primaryVariant.sku}</dd>
-                  </div>
-                ) : null}
-                {primaryVariant?.selectedOptions
-                  .filter((option) => option.name.toLowerCase() !== 'title')
-                  .map((option) => (
-                    <div key={option.name}>
-                      <dt className="text-xs text-[rgb(var(--muted))]">
-                        {option.name}
-                      </dt>
-                      <dd className="font-medium">{option.value}</dd>
-                    </div>
-                  ))}
-                {PRODUCT_ATTRIBUTES.filter(
-                  (spec) =>
-                    spec.key !== 'features' &&
-                    product.attributes[spec.key] &&
-                    // Some products carry colour as a variant option, which is
-                    // already listed above — don't say it twice.
-                    !primaryVariant?.selectedOptions.some(
-                      (option) =>
-                        option.name.toLowerCase() === spec.label.toLowerCase()
-                    )
-                ).map((spec) => (
-                  <div key={spec.key}>
-                    <dt className="text-xs text-[rgb(var(--muted))]">
-                      {spec.label}
-                    </dt>
-                    <dd className="font-medium">{product.attributes[spec.key]}</dd>
-                  </div>
-                ))}
-              </dl>
+          </div>
+        </FadeMount>
 
-              {product.attributes.features ? (
-                <div className="mt-5 border-t border-[rgb(var(--border))] pt-4">
-                  <div className="text-xs text-[rgb(var(--muted))]">Features</div>
-                  <ul className="mt-2 space-y-1.5 text-sm">
-                    {parseFeatures(product.attributes.features).map((feature) => (
-                      <li key={feature} className="flex gap-2">
-                        <span
-                          aria-hidden="true"
-                          className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[rgb(var(--accent))]"
-                        />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+        {/* Third cell: on a wide screen it lands under the gallery, in the
+            space the buy column used to leave empty. Stacked on a phone it
+            keeps its place at the end, after the reasons to buy. */}
+        <FadeMount delay={0.2} distance={24}>
+          <div className="rounded-2xl border border-[rgb(var(--border))] bg-white p-5">
+            <div className="text-sm font-semibold">Product details</div>
+            <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+              {product.productType ? (
+                <div>
+                  <dt className="text-xs text-[rgb(var(--muted))]">Category</dt>
+                  <dd className="font-medium">
+                    {category ? (
+                      <Link
+                        href={`/products?category=${encodeURIComponent(category)}`}
+                        className="underline decoration-[rgb(var(--border-strong))] underline-offset-4 transition hover:text-[rgb(var(--accent))]"
+                      >
+                        {product.productType}
+                      </Link>
+                    ) : (
+                      product.productType
+                    )}
+                  </dd>
                 </div>
               ) : null}
-              <p className="mt-4 text-xs leading-relaxed text-[rgb(var(--muted))]">
-                Delivery and pickup availability are confirmed during Shopify
-                checkout.
-              </p>
-            </div>
+              {primaryVariant?.sku ? (
+                <div>
+                  <dt className="text-xs text-[rgb(var(--muted))]">SKU</dt>
+                  <dd className="font-medium">{primaryVariant.sku}</dd>
+                </div>
+              ) : null}
+              {primaryVariant?.selectedOptions
+                .filter((option) => option.name.toLowerCase() !== 'title')
+                .map((option) => (
+                  <div key={option.name}>
+                    <dt className="text-xs text-[rgb(var(--muted))]">
+                      {option.name}
+                    </dt>
+                    <dd className="font-medium">{option.value}</dd>
+                  </div>
+                ))}
+              {PRODUCT_ATTRIBUTES.filter(
+                (spec) =>
+                  spec.key !== 'features' &&
+                  product.attributes[spec.key] &&
+                  // Some products carry colour as a variant option, which is
+                  // already listed above — don't say it twice.
+                  !primaryVariant?.selectedOptions.some(
+                    (option) =>
+                      option.name.toLowerCase() === spec.label.toLowerCase()
+                  )
+              ).map((spec) => (
+                <div key={spec.key}>
+                  <dt className="text-xs text-[rgb(var(--muted))]">
+                    {spec.label}
+                  </dt>
+                  <dd className="font-medium">{product.attributes[spec.key]}</dd>
+                </div>
+              ))}
+            </dl>
+  
+            {product.attributes.features ? (
+              <div className="mt-5 border-t border-[rgb(var(--border))] pt-4">
+                <div className="text-xs text-[rgb(var(--muted))]">Features</div>
+                <ul className="mt-2 space-y-1.5 text-sm">
+                  {parseFeatures(product.attributes.features).map((feature) => (
+                    <li key={feature} className="flex gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[rgb(var(--accent))]"
+                      />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <p className="mt-4 text-xs leading-relaxed text-[rgb(var(--muted))]">
+              Delivery and pickup availability are confirmed during Shopify
+              checkout.
+            </p>
           </div>
         </FadeMount>
       </div>
