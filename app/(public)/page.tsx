@@ -108,7 +108,7 @@ export default async function HomePage() {
             <div className="relative">
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-br from-[rgb(var(--accent)/0.15)] via-transparent to-[rgb(var(--sage)/0.2)] blur-2xl"
+                className="pointer-events-none absolute -inset-5 -z-10 rounded-[3rem] bg-gradient-to-br from-[rgb(var(--accent)/0.15)] via-transparent to-[rgb(var(--sage)/0.2)] blur-2xl"
               />
               <div className="relative aspect-4/5 overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-white shadow-lg">
                 <HeroVideo />
