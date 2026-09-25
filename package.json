@@ -28,6 +28,7 @@
     "@shopify/storefront-api-client": "^1.0.10",
     "@supabase/supabase-js": "^2.105.4",
     "@vercel/analytics": "^1.6.1",
+    "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.27.1",
     "lucide-react": "^0.562.0",
